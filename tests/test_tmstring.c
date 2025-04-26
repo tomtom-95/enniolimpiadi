@@ -3,12 +3,12 @@
 #include <assert.h>
 
 #include "../log.c"
-#include "../tmstring.c"
+#include "../tm_string.c"
 
 int main(void) {
     log_set_level(LOG_DEBUG);
 
-    FILE *logfile = fopen("tests/test.log", "w");
+    FILE *logfile = fopen("tests/logs/test_tmstring.log", "w");
     if (!logfile) {
         printf("Failed to open file for logging");
         return 1;
@@ -21,7 +21,7 @@ int main(void) {
 
     String a = str_lit("ciao");
     String b = str_lit("ciao");
-    if (tmstring_are_equal(a, b)) {
+    if (string_are_equal(a, b)) {
         log_info("test succeded!");
     }
     else {
@@ -30,12 +30,18 @@ int main(void) {
 
     a = str_lit("ciao");
     b = str_lit("hello");
-    if (!tmstring_are_equal(a, b)) {
+    if (!string_are_equal(a, b)) {
         log_info("test succeded!");
     }
     else {
         log_error("test_failed");
     }
+
+    String str = string_write((u8 *)"Hello");
+    str = string_replace(str, (u8 *)"Hello World!");
+    string_delete(&str);
+    u8 *data = str.str;
+    printf("%c", *data);
 
     log_info("String tests finished");
 }

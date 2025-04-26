@@ -13,13 +13,16 @@ struct LinkedListV2 {
 };
 
 struct Node {
-    u64 data;
+    String data;
+
+    // I should put something like this in the data, when a new node is allocated, a new arena is spawned for that specific node.
+    // When the node is deallocated trough the linked list removal, I must also free the tournaments arena.
+    // void *tournaments 
     Node *next;
 };
 
-
 LinkedListV2
-linked_list_v2_init(Arena *arena, u64 data) {
+linked_list_v2_init(Arena *arena, String data) {
     LinkedListV2 ll = {0};
 
     ll.pool = pool_init(arena, sizeof(Node));
@@ -31,9 +34,8 @@ linked_list_v2_init(Arena *arena, u64 data) {
     return ll;
 }
 
-
 LinkedListV2
-linked_list_v2_push_left(Arena *arena, LinkedListV2 ll, u64 data) {
+linked_list_v2_push_left(Arena *arena, LinkedListV2 ll, String data) {
     Node *node = pool_alloc(arena, ll.pool);
 
     node->data = data;
@@ -44,9 +46,8 @@ linked_list_v2_push_left(Arena *arena, LinkedListV2 ll, u64 data) {
     return ll;
 }
 
-
 LinkedListV2
-linked_list_v2_push_right(Arena *arena, LinkedListV2 ll, u64 data) {
+linked_list_v2_push_right(Arena *arena, LinkedListV2 ll, String data) {
     Node **node = &(ll.head);
     while (*node) {
         node = &((*node)->next);
@@ -57,7 +58,6 @@ linked_list_v2_push_right(Arena *arena, LinkedListV2 ll, u64 data) {
 
     return ll;
 }
-
 
 LinkedListV2
 linked_list_v2_pop_right(LinkedListV2 ll) {

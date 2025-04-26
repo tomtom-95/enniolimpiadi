@@ -3,30 +3,25 @@
 
 #include "log.c"
 
+#include "tm_utils.c"
 #include "tm_arena.c"
+#include "tm_pool.c"
+#include "tm_linkedlistv2.c"
 #include "tm_hashmap.c"
-
 
 typedef struct Player Player;
 typedef struct Tournament Tournament;
-typedef struct PlayerRegistration PlayerRegistration;
 
 struct Player {
     String player_name;
     Player *next;
+    LinkedListV2 *tournaments;
 };
 
 struct Tournament {
     String tournament_name;
     Tournament *next;
 };
-
-struct PlayerRegistration {
-    String player_name;
-    Tournament *tournament;
-    PlayerRegistration *next;
-};
-
 
 HashMap
 player_registration_init(

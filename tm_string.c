@@ -12,7 +12,7 @@ typedef struct {
     u64 size;
 } String;
 
-#define str_lit(S)  tmstring((u8*)(S), sizeof(S) - 1)
+#define str_lit(S)  string((u8*)(S), sizeof(S) - 1)
 #define str_lit_comp(S) {(u8*)(S), sizeof(S) - 1,}
 
 u64
@@ -25,24 +25,13 @@ cstring_length(u8 *c) {
 }
 
 String
-tmstring(u8 *string, u64 size) {
+string(u8 *string, u64 size) {
     String res = {.str = string, .size = size};
     return res;
 }
 
 String
-tmstring_arena_write(Arena *arena, String string) {
-    u8 *start = arena_push(arena, string.size + 1);
-    memcpy(start, string.str, string.size);
-    start[string.size] = 0;
-    
-    String str = {.str = start, .size = string.size};
-    return str;
-}
-
-/* allocation and initialization */
-String
-tmstring_alloc_and_init(u8 *cstring) {
+string_write(u8 *cstring) {
     u64 size = cstring_length(cstring);
 
     u8 *str = malloc(size);
@@ -52,21 +41,28 @@ tmstring_alloc_and_init(u8 *cstring) {
     return string;
 }
 
-void
-tmstring_realloc_and_reinit(String *string, u8 *cstring) {
+String
+string_replace(String string, u8 *cstring) {
     u64 size = cstring_length(cstring);
 
-    string->str = realloc(string->str, size);
-    memcpy(string->str, cstring, size);
+    free(string.str);
+    string.str = malloc(size);
+
+    memcpy(string.str, cstring, size);
+    string.size = size;
+
+    return string;
 }
 
 void
-tmstring_free(String *string) {
+string_delete(String *string) {
     free(string->str);
+    string->str = NULL;
+    string->size = 0;
 }
 
 bool
-tmstring_are_equal(String a, String b) {
+string_are_equal(String a, String b) {
     if (a.size != b.size) {
         return false;
     }

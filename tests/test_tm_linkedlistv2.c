@@ -9,16 +9,23 @@
 
 void
 linked_list_v2_test_0(void) {
+    log_info("testing");
+
     Arena arena = arena_alloc(MegaByte(1));
     if (!arena.data) {
         log_error("test failed");
     }
 
-    LinkedListV2 ll = linked_list_v2_init(&arena, 2000);
-    ll = linked_list_v2_push_left(&arena, ll, 3000);
-    ll = linked_list_v2_push_right(&arena, ll, 4000);
+    u32 data0 = 2000;
+    u32 data1 = 3000;
+    u32 data2 = 4000;
+    u32 data3 = 5000;
+
+    LinkedListV2 ll = linked_list_v2_init(&arena, &(data0));
+    ll = linked_list_v2_push_left(&arena, ll, &(data1));
+    ll = linked_list_v2_push_right(&arena, ll, &(data2));
     ll = linked_list_v2_pop_right(ll);
-    ll = linked_list_v2_push_right(&arena, ll, 5000);
+    ll = linked_list_v2_push_right(&arena, ll, &(data3));
 }
 
 int
