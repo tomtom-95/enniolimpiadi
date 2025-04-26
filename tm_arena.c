@@ -1,0 +1,73 @@
+#ifndef TMARENA_C
+#define TMARENA_C
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <assert.h>
+#include <inttypes.h>
+
+#include "log.c"
+
+#include "tm_utils.c"
+
+typedef struct
+{
+    u8 *data;
+    u64 pos;
+    u64 size;
+} Arena;
+
+// TODO: proper align on push and pop
+Arena
+arena_alloc(u64 size) {
+    log_info("Allocating %" PRIu64 " bytes for the arena ...", size);
+
+    Arena arena = {0};
+
+    u8 *data = malloc(size);
+
+    if (!data) {
+        log_error("Arena allocation of size %" PRIu64 " failed. ", size);
+    }
+    else {
+        arena.pos  = 0;
+        arena.data = data;
+        arena.size = size;
+        
+        log_info("Arena of size %" PRIu64 " has been allocated", size);
+    }
+
+    return arena;
+}
+
+
+void *
+arena_push(Arena *arena, u64 size)
+{
+    // TODO: this must become a proper handling
+    assert(arena->pos + size <= arena->size);
+
+    void *result = arena->data + arena->pos;
+    arena->pos += size;
+
+    return result;
+}
+
+
+void
+arena_pop(Arena *arena, u64 size)
+{
+    assert(arena->pos > arena->size);
+
+    arena->pos -= arena->size;
+}
+
+
+void
+arena_clear(Arena *arena)
+{
+    arena->pos = 0;
+}
+
+#endif // TMARENA_C
