@@ -17,7 +17,7 @@ int main(void)
 {
     log_set_level(LOG_INFO);
 
-    FILE *logfile = fopen("app.log", "w");
+    FILE *logfile = fopen("logs/app.log", "w");
     if (!logfile)
     {
         printf("Failed to open file for logging");
