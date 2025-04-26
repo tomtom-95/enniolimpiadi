@@ -52,7 +52,5 @@ Mkfile.old
 dkms.conf
 
 # Project specific
-main
-app.log
-build/
+build
 logs
