@@ -41,6 +41,12 @@ arena_alloc(u64 size) {
     return arena;
 }
 
+void
+arena_dealloc(Arena *arena) {
+    free(arena->data);
+    arena->data = NULL;
+}
+
 
 void *
 arena_push(Arena *arena, u64 size)

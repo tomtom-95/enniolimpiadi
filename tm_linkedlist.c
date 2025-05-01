@@ -17,7 +17,7 @@ struct LinkedList {
 };
 
 struct Node {
-    u64 data;
+    String data;
     Node *next;
 };
 
@@ -33,7 +33,7 @@ linked_list_init(Arena *arena) {
 }
 
 void
-linked_list_push_left(Arena *arena, LinkedList *ll, u64 data) {
+linked_list_push_left(Arena *arena, LinkedList *ll, String data) {
     Node *node = ll->first_free_entry;
 
     if (node) {
@@ -49,7 +49,7 @@ linked_list_push_left(Arena *arena, LinkedList *ll, u64 data) {
 }
 
 void
-linked_list_push_right(Arena *arena, LinkedList *ll, u64 data) {
+linked_list_push_right(Arena *arena, LinkedList *ll, String data) {
     /* walk the linked list and append node to the end */
     Node **node = &(ll->head);
     while (*node) {
@@ -84,6 +84,27 @@ linked_list_pop_right(LinkedList *ll) {
 
         /* set second to last node.next pointer to NULL */
         *node = NULL;
+    }
+}
+
+void
+linked_list_pop(LinkedList *ll, String data) {
+    Node **node = &(ll->head);
+    while (*node) {
+        if (string_are_equal((*node)->data, data)) {
+            Node *tmp = ll->first_free_entry;
+            Node *node_to_remove = *node;
+
+            *node = (*node)->next;
+
+            ll->first_free_entry = *node;
+            node_to_remove->next = tmp;
+
+            return;
+        }
+        else {
+            node = &((*node)->next);
+        }
     }
 }
 

@@ -8,7 +8,7 @@
 #include "tm_utils.c"
 #include "tm_arena.c"
 #include "tm_pool.c"
-#include "test_tm_linkedlistv2.c"
+#include "tm_linkedlistv3.c"
 #include "tm_string.c"
 
 typedef struct HashMap HashMap;
@@ -21,15 +21,21 @@ struct HashMap {
 };
 
 struct Bucket {
-    LinkedListV2 *nodes;
+    Pool *pool;
+    BucketNode *head;
+};
+
+struct BucketNode {
+    String key;
+    BucketNode *next;
+    LinkedListV3 *data;
 };
 
 HashMap
-hashmap_init(Arena *arena, u64 bucket_count)
-{
+hashmap_init(Arena *arena, u64 bucket_count) {
     HashMap hash_map = {0};
 
-    hash_map.buckets = arena_push(arena, sizeof(Bucket)*bucket_count);
+    hash_map.buckets = arena_push(arena, sizeof(*(hash_map.buckets))*bucket_count);
     if (hash_map.buckets) {
         hash_map.bucket_count = bucket_count;
     }
@@ -37,12 +43,16 @@ hashmap_init(Arena *arena, u64 bucket_count)
         log_error("HashMap allocation failed");
     }
 
+    for (u64 i; i < bucket_count; i++) {
+        hash_map.buckets[i].pool = pool_init(arena, sizeof(BucketNode));
+        hash_map.buckets[i].head = NULL;
+    }
+
     return hash_map;
 }
 
 u64
-hash_string(String string)
-{
+hash_string(String string) {
     u64 hash = 5381;
 
     for (u64 i = 0; i < string.size; i++) {
@@ -56,50 +66,43 @@ hash_string(String string)
 }
 
 u64
-choose_bucket(u64 hash, u64 bucket_count)
-{
+choose_bucket(u64 hash, u64 bucket_count) {
     return hash % bucket_count;
 }
 
 u8
-hashmap_add(Arena *arena, HashMap hash_map, String string) {
+hashmap_add(Arena *arena, HashMap hash_map, String player_name) {
     u64 bucket_num = choose_bucket(
-        hash_string(string), hash_map.bucket_count
+        hash_string(player_name), hash_map.bucket_count
     );
-    log_info("string.str: %s, bucket_num: %lu", string.str, bucket_num);
 
     Bucket *bucket = hash_map.buckets + bucket_num;
 
-    if (!bucket->ll) {
-        linked_list_v2_init(arena, string);
-    }
-}
-
-BucketNode *
-hashmap_find(
-    String string,
-    HashMap hash_map
-) {
-    u64 bucket_num = choose_bucket(
-        hash_string(string), hash_map.bucket_count
-    );
-
-    BucketState *bucket_state = hash_map.bucket_state + bucket_num;
-
-    BucketNode **bucket_node = &(bucket_state->first_bucket_node);
-
-    /* Check if in the bucket there is a Node that uses string */
-    while (*bucket_node != NULL) {
-        if (tmstring_are_equal((*bucket_node)->string, string)) {
-            return *bucket_node;
-        } 
+    BucketNode **bucket_node = &(bucket->head);
+    while (*bucket_node) {
+        if (string_are_equal((*bucket_node)->key, player_name)) {
+            log_error("Hash map has already key %s", player_name);
+        }
         else {
             bucket_node = &((*bucket_node)->next);
         }
     }
 
-    /* string not found */
-    return NULL;
+    *bucket_node = pool_alloc(arena, bucket->pool);
+    (*bucket_node)->key = player_name;
+    *(*bucket_node)->data = linked_list_v3_init(arena);
+    (*bucket_node)->next = NULL;
+}
+
+Node *
+hashmap_find(String key, HashMap hash_map) {
+    u64 bucket_num = choose_bucket(
+        hash_string(key), hash_map.bucket_count
+    );
+
+    LinkedListV3 *bucket = hash_map.buckets + bucket_num;
+
+    return linked_list_v3_find(*bucket, &key, string_are_equal);
 }
 
 #endif // TMHASHMAP_C

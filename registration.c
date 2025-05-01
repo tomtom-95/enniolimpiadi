@@ -1,83 +1,160 @@
 #ifndef REGISTRATION_C
 #define REGISTRATION_C
 
-#include "log.c"
-
 #include "tm_utils.c"
-#include "tm_arena.c"
-#include "tm_pool.c"
-#include "tm_linkedlistv2.c"
-#include "tm_hashmap.c"
+#include "tm_string.c"
+#include "tm_linkedlist.c"
 
-typedef struct Player Player;
-typedef struct Tournament Tournament;
+typedef struct Players Players;
+typedef struct PlayerNode PlayerNode;
 
-struct Player {
+typedef struct Tournaments Tournaments;
+typedef struct TournamentNode TournamentNode;
+
+struct Players {
+    PlayerNode *head;
+    PlayerNode *first_free_entry;
+};
+
+struct Tournaments {
+    TournamentNode *first_free_entry;
+};
+
+struct PlayerNode {
     String player_name;
-    Player *next;
-    LinkedListV2 *tournaments;
+    TournamentNode *tournament_head;
+    PlayerNode *next;
 };
 
-struct Tournament {
+struct TournamentNode {
     String tournament_name;
-    Tournament *next;
+    TournamentNode *next;
 };
 
-HashMap
-player_registration_init(
-    Arena *arena,
-    uint64_t bucket_count
-) {
-    log_info("Initializing hashmap used for player registration ...");
+Players *
+players_init(Arena *arena) {
+    Players *players = arena_push(arena, sizeof(*players));
+    if (players) {
+        players->head = NULL;
+        players->first_free_entry = NULL;
+    }
 
-    HashMap hash_map_player_registration = hashmap_init(arena, bucket_count);
+    return players;
+}
 
-    log_info("Hashmap used for player registration successfully created");
+Tournaments *
+tournaments_init(Arena *arena) {
+    Tournaments *tournaments = arena_push(arena, sizeof(*tournaments));
+    if (tournaments) {
+        tournaments->first_free_entry = NULL;
+    }
 
-    return hash_map_player_registration;
+    return tournaments;
 }
 
 void
-player_create(
-    Arena *arena,
-    HashMap player_registration,
-    String player_name
-) {
-    log_info("Creating a new player ...");
-    /* Create a player and add it to the player registration hashmap */
-    /* TODO(tommaso): error handling */
-    hashmap_add(arena, player_registration, player_name);
+players_add(Arena *arena, Players *players, String player_name) {
+    PlayerNode *node = players->first_free_entry;
 
-    log_info("New player successfully created");
+    if (node) {
+        players->first_free_entry = players->first_free_entry->next;
+    }
+    else {
+        node = arena_push(arena, sizeof(*node));
+    }
+
+    node->player_name = player_name;
+    node->tournament_head = NULL; 
+    node->next = players->head;
+
+    players->head = node;
 }
 
 void
-player_register_to_tournament(
-    Arena *arena_player_registration,
-    Arena *arena_tournament,
-    HashMap player_registration,
+players_remove(Players *players, Tournaments *tournaments, String player_name) {
+    PlayerNode **player = &(players->head);
+    while (*player) {
+        if (string_are_equal((*player)->player_name, player_name)) {
+            PlayerNode *tmp = players->first_free_entry;
+            PlayerNode *player_to_remove = *player;
+
+            // TODO(tommaso): Dealloc all the tournaments, this is wrong now
+            TournamentNode *tmp = tournaments->first_free_entry;
+            tournaments->first_free_entry = (*player)->tournament_head;
+
+
+            *player = (*player)->next;
+
+            players->first_free_entry = *player;
+            player_to_remove->next = tmp;
+
+            return;
+        }
+        else {
+            player = &((*player)->next);
+        }
+    }
+}
+
+void
+players_register(
+    Arena *arena,
+    Players *players,
+    Tournaments *tournaments,
     String player_name,
     String tournament_name
 ) {
-    log_info("Registering player to a tournament ...");
+    PlayerNode **player = &(players->head);
+    while (*player) {
+        if (string_are_equal((*player)->player_name, player_name)) {
+            TournamentNode **tournament = &((*player)->tournament_head);
+            while (*tournament) {
+                // TODO(tommaso): check that player is not actually already registered
+                tournament = &((*tournament)->next);
+            }
+            *tournament = tournaments->first_free_entry;
+            if (*tournament) {
+                tournaments->first_free_entry = tournaments->first_free_entry->next;
+            }
+            else {
+                *tournament = arena_push(arena, sizeof(TournamentNode));
+            }
 
-    BucketNode *player = hashmap_find(player_name, player_registration);
+            (*tournament)->tournament_name = tournament_name;
+            (*tournament)->next = NULL;
 
-    Tournament **tournament = (Tournament **)(&(player->data));
-    while (*tournament) {
-        if (
-            tmstring_are_equal(
-                (*tournament)->tournament_name, tournament_name
-            )
-        ) {
-            /* TODO(tommaso): error, this should not happen */
+            return;
         }
-        tournament = &((*tournament)->next);
+        else {
+            player = &((*player)->next);
+        }
     }
 
-    if (player.)
-
-    log_info("To be completed ...");
+    assert(0);
 }
 
-#endif /* REGISTRATION_C */
+// void
+// people_unregister(
+//     Players *players,
+//     Tournaments *tournaments,
+//     String player_name,
+//     String tournament_name
+// ) {
+//     // deregister a person from a tournament
+//     PlayerNode **player = &(players->head);
+//     while (*player) {
+//         if (string_are_equal((*player)->name, player_name)) {
+//             linked_list_pop(
+//                 (*player)->tournaments,
+//                 tournament_name
+//             );
+// 
+//             return;
+//         }
+//         else {
+//             player = &((*player)->next);
+//         }
+//     }
+// }
+
+#endif // REGISTRATION_C
