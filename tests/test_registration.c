@@ -5,9 +5,7 @@
 #include "../log.c"
 
 #include "../tm_utils.c"
-#include "../tm_string.c"
 #include "../registration.c"
-
 
 void
 registration_test(void) {
@@ -19,15 +17,12 @@ registration_test(void) {
     String gianni = string_write((u8 *)"Gianni");
     String ping_pong = string_write((u8 *)"Ping Pong");
 
-    Players *players = players_init(&arena);
-    Tournaments *tournaments = tournaments_init(&arena);
-
-    players_add(&arena, players, gianni);
-    players_register(&arena, players, tournaments, gianni, ping_pong);
+    PlayerMap *player_map = player_map_init(&arena, 16);
+    player_map_add(&arena, player_map, gianni);
+    player_map_register(&arena, player_map, gianni, ping_pong);
 }
 
-int
-main(void) {
+int main(void) {
     log_set_level(LOG_DEBUG);
 
     FILE *logfile = fopen("tests/logs/test.log", "w");
@@ -39,7 +34,7 @@ main(void) {
     // Log all levels to file
     log_add_fp(logfile, LOG_TRACE);
 
-    log_info("tmlinkedlist tests started");
+    log_info("tm_hashmap tests started");
     registration_test();
-    log_info("tmlinkedlist tests ended");
+    log_info("tm_hashmap tests ended");
 }
