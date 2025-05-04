@@ -70,4 +70,12 @@ small_string_print(SmallString *string) {
     printf("%.*s\n", string->size, string->str);
 }
 
+// Helper function to get a null-terminated string from SmallString
+const char* smallstring_to_cstr(const struct SmallString* ss) {
+    static char buffer[SMALL_STRING_MAX_LEN + 1];
+    memcpy(buffer, ss->str, ss->size);
+    buffer[ss->size] = '\0';
+    return buffer;
+}
+
 #endif // NAMES_C

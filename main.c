@@ -1,71 +1,104 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdalign.h>
-
-#include "log.c"
+#define CLAY_IMPLEMENTATION
+#include "clay.h"
+#include "raylib/clay_renderer_raylib.c"
+#include "clay-video-demo.c"
 
 #include "tm_utils.c"
-#include "tm_arena.c"
-#include "tm_string.c"
-#include "tm_hashmap.c"
-
 #include "registration.c"
+#include "names.c"
 
+// This function is new since the video was published
+void HandleClayErrors(Clay_ErrorData errorData) {
+    printf("%s", errorData.errorText.chars);
+}
 
-int main(void)
-{
-    log_set_level(LOG_INFO);
-
-    FILE *logfile = fopen("logs/app.log", "w");
-    if (!logfile)
-    {
-        printf("Failed to open file for logging");
-        return 1;
-    }
-
-    // Log all levels to file
-    log_add_fp(logfile, LOG_TRACE);
-
-    log_info("Application started");
-    
-    Arena arena_string = arena_alloc(MegaByte(1));
-    if (!arena_string.data) {
-        return 1;
-    }
-    Arena arena_player = arena_alloc(MegaByte(1));
-    if (!arena_player.data) {
-        return 1;
-    }
-    Arena arena_tournament = arena_alloc(MegaByte(1));
-    if (!arena_tournament.data) {
-        return 1;
-    }
-    Arena arena_player_registration = arena_alloc(MegaByte(1));
-    if (!arena_player_registration.data) {
-        return 1;
-    }
-
-    String pippo = tmstring_arena_write(&arena_string, str_lit("Pippo"));
-    String ping_pong = tmstring_arena_write(&arena_string, str_lit("Ping Pong"));
-
-    HashMap player_registration = (
-        player_registration_init(&arena_player_registration, 16)
+int main(void) {
+    Clay_Raylib_Initialize(
+        1024, 768,
+        "Enniolimpiadi",
+        FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT
     );
 
-    player_create(
-        &arena_player_registration,
-        player_registration,
-        pippo
-    );
-    player_register(
-        &arena_player_registration,
-        player_registration,
-        pippo,
-        ping_pong
+    uint64_t clayRequiredMemory = Clay_MinMemorySize();
+    Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(
+        clayRequiredMemory, malloc(clayRequiredMemory)
     );
 
-    log_info("Application Ended");
+    Clay_Initialize(clayMemory, (Clay_Dimensions) {
+       .width = GetScreenWidth(),
+       .height = GetScreenHeight()
+    }, (Clay_ErrorHandler) { HandleClayErrors });
 
-    return 0;
+    Font fonts[1];
+    fonts[FONT_ID_BODY_16] = LoadFontEx("resources/Roboto-Regular.ttf", 48, 0, 400);
+    SetTextureFilter(fonts[FONT_ID_BODY_16].texture, TEXTURE_FILTER_BILINEAR);
+    Clay_SetMeasureTextFunction(Raylib_MeasureText, fonts);
+
+    // My stuff to test if I can get what I want on the UI
+    Arena arena = arena_alloc(MegaByte(1));
+    if (!arena.data) {
+        log_error("test failed");
+    }
+
+    SmallString *gianni = small_string_from_cstring(&arena, (u8 *)"Gianni");
+    SmallString *giulio = small_string_from_cstring(&arena, (u8 *)"Giulio");
+    SmallString *ping_pong = small_string_from_cstring(&arena, (u8 *)"Ping Pong");
+    SmallString *machiavelli = small_string_from_cstring(&arena, (u8 *)"Machiavelli");
+
+    PlayerMap *player_map = player_map_init(&arena, 16);
+    player_map_add(&arena, player_map, gianni);
+    player_map_register(&arena, player_map, gianni, ping_pong);
+
+    player_map_add(&arena, player_map, giulio);
+    player_map_register(&arena, player_map, giulio, ping_pong);
+
+    player_map_remove(player_map, giulio);
+
+    player_map_add(&arena, player_map, giulio);
+    player_map_register(&arena, player_map, giulio, machiavelli);
+
+    // UI Initialization
+    documents.documents[0] = (Document){
+        .title = CLAY_STRING("Players"),
+        .contents = CLAY_STRING("TODO: every player must be displayed here, one rectangle for player\n")
+    };
+    documents.documents[1] = (Document){
+        .title = CLAY_STRING("Tournaments"),
+        .contents = CLAY_STRING("TODO: every tournament must be displayed here, one rectangle for tournament\n")
+    };
+
+    ClayVideoDemo_Data data = {
+        .frameArena = { .memory = (intptr_t)malloc(1024) },
+        .player_map = player_map,
+        .arena = &arena,
+    };
+
+    while (!WindowShouldClose()) {
+        // Run once per frame
+        Clay_SetLayoutDimensions((Clay_Dimensions) {
+            .width = GetScreenWidth(),
+            .height = GetScreenHeight()
+        });
+
+        Vector2 mousePosition = GetMousePosition();
+        Vector2 scrollDelta = GetMouseWheelMoveV();
+        Clay_SetPointerState(
+            (Clay_Vector2) { mousePosition.x, mousePosition.y },
+            IsMouseButtonDown(0)
+        );
+        Clay_UpdateScrollContainers(
+            true,
+            (Clay_Vector2) { scrollDelta.x, scrollDelta.y },
+            GetFrameTime()
+        );
+
+        Clay_RenderCommandArray renderCommands = CreateLayout(&data);
+
+        BeginDrawing();
+        ClearBackground(BLACK);
+        Clay_Raylib_Render(renderCommands, fonts);
+        EndDrawing();
+    }
+    // This function is new since the video was published
+    Clay_Raylib_Close();
 }
