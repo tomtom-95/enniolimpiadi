@@ -7,10 +7,12 @@
 #include "tm_utils.c"
 #include "tm_arena.c"
 
-typedef struct {
+typedef struct String String;
+
+struct String {
     u8 *str;
     u64 size;
-} String;
+};
 
 #define str_lit(S)  string((u8*)(S), sizeof(S) - 1)
 #define str_lit_comp(S) {(u8*)(S), sizeof(S) - 1,}

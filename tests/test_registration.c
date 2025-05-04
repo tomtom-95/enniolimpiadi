@@ -6,6 +6,7 @@
 
 #include "../tm_utils.c"
 #include "../registration.c"
+#include "../names.c"
 
 void
 registration_test(void) {
@@ -14,12 +15,25 @@ registration_test(void) {
         log_error("test failed");
     }
 
-    String gianni = string_write((u8 *)"Gianni");
-    String ping_pong = string_write((u8 *)"Ping Pong");
+    SmallString *gianni = small_string_from_cstring(&arena, (u8 *)"Gianni");
+    SmallString *giulio = small_string_from_cstring(&arena, (u8 *)"Giulio");
+    SmallString *ping_pong = small_string_from_cstring(&arena, (u8 *)"Ping Pong");
+    SmallString *machiavelli = small_string_from_cstring(&arena, (u8 *)"Machiavelli");
 
     PlayerMap *player_map = player_map_init(&arena, 16);
     player_map_add(&arena, player_map, gianni);
     player_map_register(&arena, player_map, gianni, ping_pong);
+
+    player_map_add(&arena, player_map, giulio);
+    player_map_register(&arena, player_map, giulio, ping_pong);
+
+    player_map_remove(player_map, giulio);
+
+    player_map_add(&arena, player_map, giulio);
+    player_map_register(&arena, player_map, giulio, machiavelli);
+
+    PlayerNode *player_node = player_map_find(player_map, giulio);
+    small_string_print(player_node->player_name);
 }
 
 int main(void) {
