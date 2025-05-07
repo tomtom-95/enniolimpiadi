@@ -32,19 +32,33 @@ void RenderDropdownMenuItem(Clay_String text) {
 
 typedef struct {
     Clay_String title;
-    Clay_String contents;
 } Document;
+
+typedef struct {
+    Clay_String content;
+} ButtonClickMe;
 
 typedef struct {
     Document *documents;
     uint32_t length;
 } DocumentArray;
 
-Document documentsRaw[5];
+typedef struct {
+    ButtonClickMe *buttonsClickMe;
+    uint32_t length;
+} ButtonClickMeArray;
+
+Document documentsRaw[2];
+ButtonClickMe buttonsClickMeRaw[2];
 
 DocumentArray documents = {
     .length = 2,
     .documents = documentsRaw
+};
+
+ButtonClickMeArray buttonsClickMe = {
+    .length = 2,
+    .buttonsClickMe = buttonsClickMeRaw
 };
 
 typedef struct {
@@ -58,12 +72,24 @@ typedef struct {
     ClayVideoDemo_Arena frameArena;
     PlayerMap *player_map;
     Arena *arena;
+    int32_t button_index;
 } ClayVideoDemo_Data;
 
 typedef struct {
     int32_t requestedDocumentIndex;
     int32_t* selectedDocumentIndex;
 } SidebarClickData;
+
+typedef struct {
+    int32_t* button_index;
+} ButtonClickMeData;
+
+// Define a structure to hold the text display data
+typedef struct {
+    const char *normalText;
+    const char *pressedText;
+    bool isPressed;
+} TextButtonData;
 
 void HandleSidebarInteraction(
     Clay_ElementId elementId,
@@ -73,12 +99,28 @@ void HandleSidebarInteraction(
     SidebarClickData *clickData = (SidebarClickData*)userData;
     // If this button was clicked
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        if (clickData->requestedDocumentIndex >= 0 && clickData->requestedDocumentIndex < documents.length) {
+        if (
+            clickData->requestedDocumentIndex >= 0 &&
+            clickData->requestedDocumentIndex < documents.length
+        ) {
             // Select the corresponding document
             *clickData->selectedDocumentIndex = clickData->requestedDocumentIndex;
         }
     }
 }
+
+// Handler function for the button interaction
+void HandleTextButtonInteraction(
+    Clay_ElementId elementId,
+    Clay_PointerData pointerData,
+    intptr_t userData
+) {
+    ButtonClickMeData *data = (ButtonClickMeData*)userData;
+    if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        *(data->button_index) = (*(data->button_index) + 1) % 2;
+    } 
+}
+
 
 Clay_RenderCommandArray CreateLayout(ClayVideoDemo_Data *data) {
     data->frameArena.offset = 0;
@@ -135,7 +177,8 @@ Clay_RenderCommandArray CreateLayout(ClayVideoDemo_Data *data) {
                     ||
                     Clay_PointerOver(Clay_GetElementId(CLAY_STRING("FileMenu")));
 
-                if (fileMenuVisible) { // Below has been changed slightly to fix the small bug where the menu would dismiss when mousing over the top gap
+                // Below has been changed slightly to fix the small bug where the menu would dismiss when mousing over the top gap
+                if (fileMenuVisible) {
                     CLAY({ .id = CLAY_ID("FileMenu"),
                         .floating = {
                             .attachTo = CLAY_ATTACH_TO_PARENT,
@@ -151,7 +194,7 @@ Clay_RenderCommandArray CreateLayout(ClayVideoDemo_Data *data) {
                             .layout = {
                                 .layoutDirection = CLAY_TOP_TO_BOTTOM,
                                 .sizing = {
-                                        .width = CLAY_SIZING_FIXED(200)
+                                    .width = CLAY_SIZING_FIXED(200)
                                 },
                             },
                             .backgroundColor = {40, 40, 40, 255 },
@@ -209,10 +252,19 @@ Clay_RenderCommandArray CreateLayout(ClayVideoDemo_Data *data) {
                             }));
                         }
                     } else {
-                        SidebarClickData *clickData = (SidebarClickData *)(data->frameArena.memory + data->frameArena.offset);
-                        *clickData = (SidebarClickData) { .requestedDocumentIndex = i, .selectedDocumentIndex = &data->selectedDocumentIndex };
+                        SidebarClickData *clickData = (
+                            (SidebarClickData *)(data->frameArena.memory + data->frameArena.offset)
+                        );
+                        *clickData = (SidebarClickData) {
+                            .requestedDocumentIndex = i,
+                            .selectedDocumentIndex = &data->selectedDocumentIndex
+                        };
                         data->frameArena.offset += sizeof(SidebarClickData);
-                        CLAY({ .layout = sidebarButtonLayout, .backgroundColor = (Clay_Color) { 120, 120, 120, Clay_Hovered() ? 120 : 0 }, .cornerRadius = CLAY_CORNER_RADIUS(8) }) {
+                        CLAY({
+                            .layout = sidebarButtonLayout,
+                            .backgroundColor = (Clay_Color) { 120, 120, 120, Clay_Hovered() ? 120 : 0 },
+                            .cornerRadius = CLAY_CORNER_RADIUS(8) 
+                        }) {
                             Clay_OnHover(HandleSidebarInteraction, (intptr_t)clickData);
                             CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
                                 .fontId = FONT_ID_BODY_16,
@@ -234,23 +286,20 @@ Clay_RenderCommandArray CreateLayout(ClayVideoDemo_Data *data) {
                     .sizing = layoutExpand
                 }
             }) {
-                Document selectedDocument = documents.documents[data->selectedDocumentIndex];
+                // TODO(tommaso): Main content must change depending on the sidebar button pressed
+                //                if players button is pressed -> display players name
+                //                if tournament button is pressed -> display tournaments name
                 for (int i = 0; i < data->player_map->bucket_count; i++) {
                     Players *players = data->player_map->players + i;
                     if (players->head) {
                         PlayerNode *player = players->head;
                         while (player) {
-                            Clay_String test_string = {
+                            Clay_String player_string = {
                                 .isStaticallyAllocated = false,
                                 .length = player->player_name->size,
-                                .chars = player->player_name->str,
+                                .chars = (const char *)(player->player_name->str),
                             };
-                            CLAY_TEXT(test_string, CLAY_TEXT_CONFIG({
-                                .fontId = FONT_ID_BODY_16,
-                                .fontSize = 24,
-                                .textColor = COLOR_WHITE
-                            }));
-                            CLAY_TEXT(selectedDocument.contents, CLAY_TEXT_CONFIG({
+                            CLAY_TEXT(player_string, CLAY_TEXT_CONFIG({
                                 .fontId = FONT_ID_BODY_16,
                                 .fontSize = 24,
                                 .textColor = COLOR_WHITE
@@ -259,6 +308,39 @@ Clay_RenderCommandArray CreateLayout(ClayVideoDemo_Data *data) {
                         }
                     }
                 }
+                CLAY({ .id = CLAY_ID("New Player Button"),
+                    .backgroundColor = (Clay_Color) {
+                        120, 120, 120, Clay_Hovered() ? 120 : 0
+                    },
+                    .cornerRadius = CLAY_CORNER_RADIUS(8),
+                    .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() },
+                    .layout = {
+                        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                        .childGap = 16,
+                        .padding = CLAY_PADDING_ALL(16),
+                        .sizing = {
+                            .height = CLAY_SIZING_FIXED(60),
+                            .width = CLAY_SIZING_GROW(0)
+                        },
+                    }
+                }) {
+                    ButtonClickMeData *buttonClickMeData = (
+                        (ButtonClickMeData *)(data->frameArena.memory + data->frameArena.offset)
+                    );
+                    *buttonClickMeData = (ButtonClickMeData) {
+                        .button_index = &(data->button_index)
+                    };
+                    data->frameArena.offset += sizeof(ButtonClickMeData);
+
+                    Clay_OnHover(HandleTextButtonInteraction, (intptr_t)buttonClickMeData);
+
+                    Clay_String button_text = buttonsClickMe.buttonsClickMe[data->button_index].content;
+                    CLAY_TEXT(button_text, CLAY_TEXT_CONFIG({
+                        .fontId = FONT_ID_BODY_16,
+                        .fontSize = 24,
+                        .textColor = COLOR_WHITE
+                    }));
+                };
             }
         }
     }

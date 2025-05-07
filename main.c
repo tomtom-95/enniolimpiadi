@@ -1,7 +1,7 @@
 #define CLAY_IMPLEMENTATION
 #include "clay.h"
 #include "raylib/clay_renderer_raylib.c"
-#include "clay-video-demo.c"
+#include "ui_layout.c"
 
 #include "tm_utils.c"
 #include "registration.c"
@@ -58,19 +58,26 @@ int main(void) {
     player_map_register(&arena, player_map, giulio, machiavelli);
 
     // UI Initialization
-    documents.documents[0] = (Document){
+    documents.documents[0] = (Document) {
         .title = CLAY_STRING("Players"),
-        .contents = CLAY_STRING("TODO: every player must be displayed here, one rectangle for player\n")
     };
-    documents.documents[1] = (Document){
+    documents.documents[1] = (Document) {
         .title = CLAY_STRING("Tournaments"),
-        .contents = CLAY_STRING("TODO: every tournament must be displayed here, one rectangle for tournament\n")
+    };
+
+    buttonsClickMe.buttonsClickMe[0] = (ButtonClickMe) {
+        .content = CLAY_STRING("Click Me!"),
+    };
+
+    buttonsClickMe.buttonsClickMe[1] = (ButtonClickMe) {
+        .content = CLAY_STRING("Unclick Me!"),
     };
 
     ClayVideoDemo_Data data = {
         .frameArena = { .memory = (intptr_t)malloc(1024) },
         .player_map = player_map,
         .arena = &arena,
+        .button_index = 0
     };
 
     while (!WindowShouldClose()) {
