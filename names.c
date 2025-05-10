@@ -11,6 +11,7 @@
 typedef struct Name Name;
 typedef struct NameList NameList;
 
+// always have head as a dummy first element
 struct NameList {
     Name *head;
     Name *first_free_entry;
@@ -24,9 +25,10 @@ struct Name {
 NameList *
 name_list_init(Arena *arena) {
     NameList *ll = arena_push(arena, sizeof(*ll));
-    if (ll) {
-        memset(ll, 0, sizeof(*ll));
-    }
+    memset(ll, 0, sizeof(*ll));
+
+    ll->head = arena_push(arena, sizeof(*(ll->head)));
+    memset(ll->head, 0, sizeof(*(ll->head)));
 
     return ll;
 }
@@ -43,14 +45,14 @@ name_list_push_left(Arena *arena, NameList *ll, String name) {
     }
 
     node->name = name;
-    node->next = ll->head;
-    ll->head = node;
+    node->next = ll->head->next;
+    ll->head->next = node;
 }
 
 void
 name_list_push_right(Arena *arena, NameList *ll, String name) {
     /* walk the linked list and append node to the end */
-    Name **node = &(ll->head);
+    Name **node = &(ll->head->next);
     while (*node) {
         node = &((*node)->next);
     }
@@ -66,38 +68,29 @@ name_list_push_right(Arena *arena, NameList *ll, String name) {
     (*node)->next = NULL;
 }
 
+// TODO: test it
 void
 name_list_pop_right(NameList *ll) {
-    Name *head = ll->head;
-    if (head) {
-        /* walk the linked list and get the address of the second to last node.next pointer */
-        Name **node = &head;
-        while ((*node)->next) {
-            node = &((*node)->next);
-        }
-
-        /* Set last node as the start of the free list */
-        Name *tmp = ll->first_free_entry;
-        ll->first_free_entry = *node;
-        (*node)->next = tmp;
-
-        /* set second to last node.next pointer to NULL */
-        *node = NULL;
+    Name **name = &(ll->head);
+    while ((*name)->next) {
+        name = &((*name)->next);
     }
+
+    (*name)->next = ll->first_free_entry;
+    ll->first_free_entry = *name;
 }
 
 void
 name_list_pop(NameList *ll, String name) {
-    Name **node = &(ll->head);
+    Name **node = &(ll->head->next);
     while (*node) {
         if (string_are_equal((*node)->name, name)) {
-            Name *tmp = ll->first_free_entry;
             Name *node_to_remove = *node;
 
             *node = (*node)->next;
 
+            node_to_remove->next = ll->first_free_entry;
             ll->first_free_entry = node_to_remove;
-            node_to_remove->next = tmp;
 
             return;
         }

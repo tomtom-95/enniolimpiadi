@@ -71,6 +71,7 @@ hash_string(String string) {
     return hash;
 }
 
+// TODO: do I want the trick of head being a dummy value?
 void
 player_map_add(
     Arena *arena,
@@ -116,9 +117,8 @@ player_map_remove(
     PlayerMap *player_map,
     u8 *player_name,
     PlayerFreeList *player_free_list,
-    NameFreeList *name_free_list,
+    NameFreeList *name_free_list
 ) {
-    // TODO: must be finished
     String string_player_name = string_from_cstring(player_name);
     assert(string_player_name.size <= STRING_MAX_LEN);
 
@@ -135,11 +135,12 @@ player_map_remove(
             *tournament_name_node = name_free_list->first_free_entry;
             name_free_list->first_free_entry = (*players)->tournament_names_head;
 
-            PlayerNode *tmp = player_free_list->first_free_entry;
-            PlayerNode *node_to_remove = *players;
+            PlayerNode *player_to_remove = *players;
 
             *players = (*players)->next;
-            player_free_list->first_free_entry = *players;
+
+            player_to_remove->next = player_free_list->first_free_entry;
+            player_free_list->first_free_entry = player_to_remove;
 
             return;
         }
@@ -149,114 +150,114 @@ player_map_remove(
     }
 }
 
-void
-player_map_register(
-    Arena *arena,
-    PlayerMap *player_map,
-    SmallString *player_name,
-    SmallString *tournament_name
-) {
-    u64 bucket_num = hash_string(player_name) % player_map->bucket_count;
-
-    Players *players = player_map->players + bucket_num;
-    PlayerNode **player = &(players->head);
-
-    while (*player) {
-        if (small_string_are_equal((*player)->player_name, player_name)) {
-            TournamentNode **tournament = &((*player)->tournament_head);
-
-            // check if player is already registered to that tournament
-            while (*tournament) {
-                if (small_string_are_equal((*tournament)->tournament_name, tournament_name)) {
-                    log_error(
-                        "Player %s already registered to tournament %s",
-                        player_name,
-                        tournament_name
-                    );
-                    return;
-                }
-                else {
-                    tournament = &((*tournament)->next);
-                }
-            }
-
-            *tournament = player_map->tournament_free_entry;
-            if (*tournament) {
-                player_map->tournament_free_entry = player_map->tournament_free_entry->next;
-            }
-            else {
-                *tournament = arena_push(arena, sizeof(TournamentNode));
-            }
-
-            (*tournament)->tournament_name = tournament_name;
-            (*tournament)->next = NULL;
-
-            return;
-        }
-        else {
-            player = &((*player)->next);
-        }
-    }
-
-    assert(0);
-}
-
-void
-player_map_unregister(
-    PlayerMap *player_map,
-    SmallString *player_name,
-    SmallString *tournament_name
-) {
-    u64 bucket_num = hash_string(player_name) % player_map->bucket_count;
-
-    Players *players = player_map->players + bucket_num;
-    PlayerNode **player = &(players->head);
-
-    while (*player) {
-        if (small_string_are_equal((*player)->player_name, player_name)) {
-            TournamentNode **tournament = &((*player)->tournament_head);
-            while (*tournament) {
-                if (small_string_are_equal((*tournament)->tournament_name, tournament_name)) {
-                    // deregister: remove this element from the linked list and add it to the free list
-                    TournamentNode *tournament_to_remove = *tournament;
-                    TournamentNode *first_free_entry = player_map->tournament_free_entry;
-
-                    *tournament = (*tournament)->next;
-
-                    player_map->tournament_free_entry = tournament_to_remove;
-                    tournament_to_remove->next = first_free_entry;
-
-                    return;
-                }
-                else {
-                    tournament = &((*tournament)->next);
-                }
-            }
-        }
-        else {
-            player = &((*player)->next);
-        }
-    }
-
-    assert(0);
-}
-
-PlayerNode *
-player_map_find(PlayerMap *player_map, SmallString *player_name) {
-    u64 bucket_num = hash_string(player_name) % player_map->bucket_count;
-
-    PlayerNode *player = (player_map->players + bucket_num)->head;
-    while (player) {
-        if (small_string_are_equal(player->player_name, player_name)) {
-            return player;
-        }
-        else {
-            player = player->next;
-        }
-    }
-
-    log_error("No player found with name %s", player_name->str);
-    return NULL;
-}
+// void
+// player_map_register(
+//     Arena *arena,
+//     PlayerMap *player_map,
+//     SmallString *player_name,
+//     SmallString *tournament_name
+// ) {
+//     u64 bucket_num = hash_string(player_name) % player_map->bucket_count;
+// 
+//     Players *players = player_map->players + bucket_num;
+//     PlayerNode **player = &(players->head);
+// 
+//     while (*player) {
+//         if (small_string_are_equal((*player)->player_name, player_name)) {
+//             TournamentNode **tournament = &((*player)->tournament_head);
+// 
+//             // check if player is already registered to that tournament
+//             while (*tournament) {
+//                 if (small_string_are_equal((*tournament)->tournament_name, tournament_name)) {
+//                     log_error(
+//                         "Player %s already registered to tournament %s",
+//                         player_name,
+//                         tournament_name
+//                     );
+//                     return;
+//                 }
+//                 else {
+//                     tournament = &((*tournament)->next);
+//                 }
+//             }
+// 
+//             *tournament = player_map->tournament_free_entry;
+//             if (*tournament) {
+//                 player_map->tournament_free_entry = player_map->tournament_free_entry->next;
+//             }
+//             else {
+//                 *tournament = arena_push(arena, sizeof(TournamentNode));
+//             }
+// 
+//             (*tournament)->tournament_name = tournament_name;
+//             (*tournament)->next = NULL;
+// 
+//             return;
+//         }
+//         else {
+//             player = &((*player)->next);
+//         }
+//     }
+// 
+//     assert(0);
+// }
+// 
+// void
+// player_map_unregister(
+//     PlayerMap *player_map,
+//     SmallString *player_name,
+//     SmallString *tournament_name
+// ) {
+//     u64 bucket_num = hash_string(player_name) % player_map->bucket_count;
+// 
+//     Players *players = player_map->players + bucket_num;
+//     PlayerNode **player = &(players->head);
+// 
+//     while (*player) {
+//         if (small_string_are_equal((*player)->player_name, player_name)) {
+//             TournamentNode **tournament = &((*player)->tournament_head);
+//             while (*tournament) {
+//                 if (small_string_are_equal((*tournament)->tournament_name, tournament_name)) {
+//                     // deregister: remove this element from the linked list and add it to the free list
+//                     TournamentNode *tournament_to_remove = *tournament;
+//                     TournamentNode *first_free_entry = player_map->tournament_free_entry;
+// 
+//                     *tournament = (*tournament)->next;
+// 
+//                     player_map->tournament_free_entry = tournament_to_remove;
+//                     tournament_to_remove->next = first_free_entry;
+// 
+//                     return;
+//                 }
+//                 else {
+//                     tournament = &((*tournament)->next);
+//                 }
+//             }
+//         }
+//         else {
+//             player = &((*player)->next);
+//         }
+//     }
+// 
+//     assert(0);
+// }
+// 
+// PlayerNode *
+// player_map_find(PlayerMap *player_map, SmallString *player_name) {
+//     u64 bucket_num = hash_string(player_name) % player_map->bucket_count;
+// 
+//     PlayerNode *player = (player_map->players + bucket_num)->head;
+//     while (player) {
+//         if (small_string_are_equal(player->player_name, player_name)) {
+//             return player;
+//         }
+//         else {
+//             player = player->next;
+//         }
+//     }
+// 
+//     log_error("No player found with name %s", player_name->str);
+//     return NULL;
+// }
 
 #endif // REGISTRATION_C

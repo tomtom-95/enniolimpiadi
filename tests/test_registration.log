@@ -1,0 +1,3 @@
+2025-05-10 21:59:11 INFO  /Users/tommasopellegrino/Projects/enniolimpiadi/tests/test_registration.c:38:main: tm_hashmap tests started
+2025-05-10 21:59:11 INFO  /Users/tommasopellegrino/Projects/enniolimpiadi/tests/../arena.c:24:arena_alloc: Allocating 1048576 bytes for the arena ...
+2025-05-10 21:59:11 INFO  /Users/tommasopellegrino/Projects/enniolimpiadi/tests/../arena.c:38:arena_alloc: Arena of size 1048576 has been allocated
