@@ -3,12 +3,12 @@
 #include <assert.h>
 
 #include "../log.c"
-#include "../tm_string.c"
+#include "../string.c"
 
 int main(void) {
     log_set_level(LOG_DEBUG);
 
-    FILE *logfile = fopen("tests/logs/test_tmstring.log", "w");
+    FILE *logfile = fopen("../test_tmstring.log", "w");
     if (!logfile) {
         printf("Failed to open file for logging");
         return 1;
@@ -19,29 +19,27 @@ int main(void) {
 
     log_info("String tests started");
 
-    String a = str_lit("ciao");
-    String b = str_lit("ciao");
+    String a = string_from_cstring((u8 *)"ciao");
+    string_print(a);
+
+    String b = string_from_cstring((u8 *)("hello"));
+    printf("%s\n", b.str);
+
     if (string_are_equal(a, b)) {
-        log_info("test succeded!");
+        log_info("Strings are equal");
     }
     else {
-        log_error("test failed");
+        log_info("Strings are not equal");
     }
 
-    a = str_lit("ciao");
-    b = str_lit("hello");
-    if (!string_are_equal(a, b)) {
-        log_info("test succeded!");
-    }
-    else {
-        log_error("test_failed");
-    }
+    Arena arena = arena_alloc(MegaByte(1));
+    String *string = arena_push(&arena, sizeof(*string));
 
-    String str = string_write((u8 *)"Hello");
-    str = string_replace(str, (u8 *)"Hello World!");
-    string_delete(&str);
-    u8 *data = str.str;
-    printf("%c", *data);
+    string_copy(string, &a);
+    string_concat(&a, &b);
+
+    String ciaohello = string_from_cstring((u8 *)"ciaohello");
 
     log_info("String tests finished");
+
 }

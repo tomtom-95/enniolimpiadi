@@ -1,81 +1,111 @@
 #ifndef NAMES_C
 #define NAMES_C
 
-#include <stdint.h>
-#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
-#include "tm_utils.c"
-#include "tm_arena.c"
+#include "utils.c"
+#include "arena.c"
+#include "string.c"
 
-#define SMALL_STRING_MAX_LEN 63
+typedef struct Name Name;
+typedef struct NameList NameList;
 
-typedef struct SmallString SmallString;
-
-struct SmallString {
-    u8 size;
-    u8 str[SMALL_STRING_MAX_LEN];
+struct NameList {
+    Name *head;
+    Name *first_free_entry;
 };
 
-SmallString *
-small_string_from_cstring(Arena *arena, u8 *cstring) {
-    // Copy a cstring into the arena
-    SmallString *string = arena_push(arena, sizeof(*string));
+struct Name {
+    String name;
+    Name *next;
+};
 
-    u64 cstring_len = cstring_length(cstring);
-    assert(cstring_len < SMALL_STRING_MAX_LEN);
+NameList *
+name_list_init(Arena *arena) {
+    NameList *ll = arena_push(arena, sizeof(*ll));
+    if (ll) {
+        ll->head = NULL;
+        ll->first_free_entry = NULL;
+    }
 
-    memcpy(string->str, cstring, cstring_len);
-    string->size = (u8)cstring_len;
-
-    return string;
+    return ll;
 }
 
-SmallString *
-small_string_copy(Arena *arena, SmallString *str) {
-    // Copy a SmallString type into the arena
-    SmallString *res = arena_push(arena, sizeof(*res));
+void
+name_list_push_left(Arena *arena, NameList *ll, String name) {
+    Name *node = ll->first_free_entry;
 
-    assert(str->size < SMALL_STRING_MAX_LEN);
-
-    memcpy(res->str, str->str, str->size);
-    res->size = str->size;
-
-    return res;
-}
-
-SmallString *
-small_string_change(SmallString *string, u8 *cstring) {
-    // Rewrite the string with the new one
-    u64 cstring_len = cstring_length(cstring);
-    assert(cstring_len < SMALL_STRING_MAX_LEN);
-
-    memcpy(string->str, cstring, cstring_len);
-    string->size = (u8)cstring_len;
-
-    return string;
-}
-
-bool
-small_string_are_equal(SmallString *a, SmallString *b) {
-    if (a->size != b->size) {
-        return false;
+    if (node) {
+        ll->first_free_entry = ll->first_free_entry->next;
     }
     else {
-        return memcmp(a->str, b->str, a->size) == 0;
+        node = arena_push(arena, sizeof(*node));
+    }
+
+    node->name = name;
+    node->next = ll->head;
+    ll->head = node;
+}
+
+void
+name_list_push_right(Arena *arena, NameList *ll, String name) {
+    /* walk the linked list and append node to the end */
+    Name **node = &(ll->head);
+    while (*node) {
+        node = &((*node)->next);
+    }
+
+    *node = ll->first_free_entry;
+    if (*node) {
+        ll->first_free_entry = ll->first_free_entry->next;
+    }
+    else {
+        *node = arena_push(arena, sizeof(**node));
+    }
+    (*node)->name = name;
+    (*node)->next = NULL;
+}
+
+void
+name_list_pop_right(NameList *ll) {
+    Name *head = ll->head;
+    if (head) {
+        /* walk the linked list and get the address of the second to last node.next pointer */
+        Name **node = &head;
+        while ((*node)->next) {
+            node = &((*node)->next);
+        }
+
+        /* Set last node as the start of the free list */
+        Name *tmp = ll->first_free_entry;
+        ll->first_free_entry = *node;
+        (*node)->next = tmp;
+
+        /* set second to last node.next pointer to NULL */
+        *node = NULL;
     }
 }
 
 void
-small_string_print(SmallString *string) {
-    printf("%.*s\n", string->size, string->str);
+name_list_pop(NameList *ll, String name) {
+    Name **node = &(ll->head);
+    while (*node) {
+        if (string_are_equal((*node)->name, name)) {
+            Name *tmp = ll->first_free_entry;
+            Name *node_to_remove = *node;
+
+            *node = (*node)->next;
+
+            ll->first_free_entry = *node;
+            node_to_remove->next = tmp;
+
+            return;
+        }
+        else {
+            node = &((*node)->next);
+        }
+    }
 }
 
-// Helper function to get a null-terminated string from SmallString
-const char* smallstring_to_cstr(const struct SmallString* ss) {
-    static char buffer[SMALL_STRING_MAX_LEN + 1];
-    memcpy(buffer, ss->str, ss->size);
-    buffer[ss->size] = '\0';
-    return buffer;
-}
-
-#endif // NAMES_C
+#endif // NAMES

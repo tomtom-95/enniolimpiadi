@@ -1,5 +1,5 @@
-#ifndef TMARENA_C
-#define TMARENA_C
+#ifndef ARENA_C
+#define ARENA_C
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -9,7 +9,7 @@
 
 #include "log.c"
 
-#include "tm_utils.c"
+#include "utils.c"
 
 typedef struct
 {
@@ -76,4 +76,4 @@ arena_clear(Arena *arena)
     arena->pos = 0;
 }
 
-#endif // TMARENA_C
+#endif // ARENA_C

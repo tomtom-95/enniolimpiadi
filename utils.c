@@ -1,5 +1,5 @@
-#ifndef TM_UTILS_C
-#define TM_UTILS_C
+#ifndef UTILS_C
+#define UTILS_C
 
 #include <stdint.h>
 
@@ -20,4 +20,4 @@ typedef int64_t  s64;
 typedef float    f32;
 typedef double   f64;
 
-#endif // TM_UTILS_C
+#endif // UTILS_C

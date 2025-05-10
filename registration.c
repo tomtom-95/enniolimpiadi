@@ -1,15 +1,16 @@
 #ifndef REGISTRATION_C
 #define REGISTRATION_C
 
-#include "tm_utils.c"
-#include "tm_linkedlist.c"
+#include "utils.c"
 #include "names.c"
+#include "string.c"
 
 typedef struct PlayerMap PlayerMap;
 
 typedef struct Players Players;
 typedef struct PlayerNode PlayerNode;
 
+typedef struct Tournaments Tournaments;
 typedef struct TournamentNode TournamentNode;
 
 struct PlayerMap {
@@ -23,14 +24,19 @@ struct Players {
     PlayerNode *first_free_entry;
 };
 
+struct Tournaments {
+    TournamentNode *head;
+    TournamentNode *first_free_entry;
+};
+
 struct PlayerNode {
-    SmallString *player_name;
-    TournamentNode *tournament_head;
+    Name *player_name;
+    Name *tournament_name_head;
     PlayerNode *next;
 };
 
 struct TournamentNode {
-    SmallString *tournament_name;
+    String *tournament_name;
     TournamentNode *next;
 };
 
@@ -51,7 +57,7 @@ player_map_init(Arena *arena, u64 bucket_count) {
 }
 
 u64
-hash_string(SmallString *string) {
+hash_string(String *string) {
     u64 hash = 5381;
 
     for (u8 i = 0; i < string->size; i++) {
@@ -65,7 +71,9 @@ hash_string(SmallString *string) {
 }
 
 void
-player_map_add(Arena *arena, PlayerMap *player_map, SmallString *player_name) {
+player_map_add(Arena *arena, PlayerMap *player_map, u8 *player_name) {
+    // TODO: allocate player_name on the arena, in particular on the free list of Names
+
     u64 bucket_num = hash_string(player_name) % player_map->bucket_count;
 
     Players *players = player_map->players + bucket_num;
@@ -73,7 +81,7 @@ player_map_add(Arena *arena, PlayerMap *player_map, SmallString *player_name) {
 
     // check that player_name is not already present between players
     while (*player) {
-        if (small_string_are_equal((*player)->player_name, player_name)) {
+        if (string_are_equal((*player)->player_name->name, player_name->name)) {
             log_error("%s, is already present", *player_name);
         }
         else {

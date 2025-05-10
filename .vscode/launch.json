@@ -9,6 +9,15 @@
           "args": [],
           "cwd": "${workspaceFolder}/build",
           "preLaunchTask": "CMake: build",
+      },
+      {
+          "name": "Debug Tests",
+          "type": "lldb",  // Changed from "cppdbg" to "lldb"
+          "request": "launch",
+          "program": "${workspaceFolder}/tests/build/${fileBasenameNoExtension}",
+          "args": [],
+          "cwd": "${workspaceFolder}/tests/build",
+          "preLaunchTask": "testbuild",
       }
   ]
 } 
