@@ -8,7 +8,7 @@
 int main(void) {
     log_set_level(LOG_DEBUG);
 
-    FILE *logfile = fopen("../test_tmstring.log", "w");
+    FILE *logfile = fopen("../test_string.log", "w");
     if (!logfile) {
         printf("Failed to open file for logging");
         return 1;

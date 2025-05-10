@@ -6,32 +6,35 @@
 #include "string.c"
 
 typedef struct PlayerMap PlayerMap;
-
-typedef struct Players Players;
+typedef struct PlayerFreeList PlayerFreeList;
 typedef struct PlayerNode PlayerNode;
 
-typedef struct Tournaments Tournaments;
+typedef struct TournamentMap TournamentMap;
+typedef struct TournamentFreeList TournamentFreeList;
 typedef struct TournamentNode TournamentNode;
 
-struct PlayerMap {
-    u64 bucket_count;
-    Players *players;
-    TournamentNode *tournament_free_entry;
-};
+typedef struct NameFreeList NameFreeList;
 
-struct Players {
-    PlayerNode *head;
+struct PlayerFreeList {
     PlayerNode *first_free_entry;
 };
 
-struct Tournaments {
-    TournamentNode *head;
+struct TournamentFreeList {
     TournamentNode *first_free_entry;
 };
 
+struct NameFreeList {
+    Name *first_free_entry;
+};
+
+struct PlayerMap {
+    u64 bucket_count;
+    PlayerNode **players;
+};
+
 struct PlayerNode {
-    Name *player_name;
-    Name *tournament_name_head;
+    String player_name;
+    Name *tournament_names_head;
     PlayerNode *next;
 };
 
@@ -44,26 +47,24 @@ struct TournamentNode {
 PlayerMap *
 player_map_init(Arena *arena, u64 bucket_count) {
     PlayerMap *player_map = arena_push(arena, sizeof(*player_map));
-
     u64 players_array_size = sizeof(*(player_map->players))*bucket_count;
 
     player_map->players = arena_push(arena, players_array_size);
-
     memset(player_map->players, 0, players_array_size);
+
     player_map->bucket_count = bucket_count;
-    player_map->tournament_free_entry = NULL;
 
     return player_map;
 }
 
 u64
-hash_string(String *string) {
+hash_string(String string) {
     u64 hash = 5381;
 
-    for (u8 i = 0; i < string->size; i++) {
+    for (u8 i = 0; i < string.size; i++) {
         hash = (
             // hash * 33 + c
-            ((hash << 5) + hash) + (u64)((string->str)[i])
+            ((hash << 5) + hash) + (u64)((string.str)[i])
         );
     }
     
@@ -71,71 +72,79 @@ hash_string(String *string) {
 }
 
 void
-player_map_add(Arena *arena, PlayerMap *player_map, u8 *player_name) {
-    // TODO: allocate player_name on the arena, in particular on the free list of Names
+player_map_add(
+    Arena *arena,
+    PlayerMap *player_map,
+    u8 *player_name,
+    PlayerFreeList *player_free_list
+) {
+    String string_player_name = string_from_cstring(player_name);
+    assert(string_player_name.size <= STRING_MAX_LEN);
 
-    u64 bucket_num = hash_string(player_name) % player_map->bucket_count;
+    u64 bucket_num = hash_string(string_player_name) % player_map->bucket_count;
 
-    Players *players = player_map->players + bucket_num;
-    PlayerNode **player = &(players->head);
+    PlayerNode **players = player_map->players + bucket_num;
 
     // check that player_name is not already present between players
-    while (*player) {
-        if (string_are_equal((*player)->player_name->name, player_name->name)) {
+    while (*players) {
+        if (string_are_equal((*players)->player_name, string_player_name)) {
             log_error("%s, is already present", *player_name);
+            return;
         }
         else {
-            player = &((*player)->next);
+            players = &((*players)->next);
         }
     }
 
-    PlayerNode *node = players->first_free_entry;
+    PlayerNode *node = player_free_list->first_free_entry;
     if (node) {
-        players->first_free_entry = players->first_free_entry->next;
+        player_free_list->first_free_entry = (
+            player_free_list->first_free_entry->next
+        );
     }
     else {
         node = arena_push(arena, sizeof(*node));
     }
 
-    // put the new player at the start of players list
-    node->player_name = player_name;
-    node->tournament_head = NULL; 
-    node->next = players->head;
-
-    players->head = node;
+    node->player_name = string_player_name;
+    node->tournament_names_head = NULL; 
+    *players = node;
 }
 
 void
-player_map_remove(PlayerMap *player_map, SmallString *player_name) {
-    u64 bucket_num = hash_string(player_name) % player_map->bucket_count;
+player_map_remove(
+    PlayerMap *player_map,
+    u8 *player_name,
+    PlayerFreeList *player_free_list,
+    NameFreeList *name_free_list,
+) {
+    // TODO: must be finished
+    String string_player_name = string_from_cstring(player_name);
+    assert(string_player_name.size <= STRING_MAX_LEN);
 
-    Players *players = player_map->players + bucket_num;
-    PlayerNode **player = &(players->head);
+    u64 bucket_num = hash_string(string_player_name) % player_map->bucket_count;
 
-    while (*player) {
-        if (small_string_are_equal((*player)->player_name, player_name)) {
-            // append player tournaments to the end of the tournaments free list
-            TournamentNode **tournament_free_entry = (
-                &(player_map->tournament_free_entry)
-            );
-            while (*tournament_free_entry) {
-                tournament_free_entry = &((*tournament_free_entry)->next);
+    PlayerNode **players = player_map->players + bucket_num;
+
+    while (*players) {
+        if (string_are_equal((*players)->player_name, string_player_name)) {
+            Name **tournament_name_node = &((*players)->tournament_names_head);
+            while (*tournament_name_node) {
+                tournament_name_node = &((*tournament_name_node)->next);
             }
-            *tournament_free_entry = (*player)->tournament_head;
+            *tournament_name_node = name_free_list->first_free_entry;
+            name_free_list->first_free_entry = (*players)->tournament_names_head;
 
-            // remove player from players list
-            PlayerNode *player_free_entry = players->first_free_entry;
-            PlayerNode *player_to_remove = *player;
+            PlayerNode *tmp = player_free_list->first_free_entry;
+            PlayerNode *node_to_remove = *players;
 
-            *player = (*player)->next;
-
-            players->first_free_entry = player_to_remove;
-            player_to_remove->next = player_free_entry;
+            *players = (*players)->next;
+            player_free_list->first_free_entry = *players;
 
             return;
         }
         else {
-            player = &((*player)->next);
+            players = &((*players)->next);
         }
     }
 }

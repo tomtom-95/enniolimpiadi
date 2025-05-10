@@ -25,8 +25,7 @@ NameList *
 name_list_init(Arena *arena) {
     NameList *ll = arena_push(arena, sizeof(*ll));
     if (ll) {
-        ll->head = NULL;
-        ll->first_free_entry = NULL;
+        memset(ll, 0, sizeof(*ll));
     }
 
     return ll;
@@ -97,7 +96,7 @@ name_list_pop(NameList *ll, String name) {
 
             *node = (*node)->next;
 
-            ll->first_free_entry = *node;
+            ll->first_free_entry = node_to_remove;
             node_to_remove->next = tmp;
 
             return;

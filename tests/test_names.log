@@ -1,0 +1,3 @@
+2025-05-10 19:35:41 INFO  /Users/tommasopellegrino/Projects/enniolimpiadi/tests/test_names.c:21:main: String tests started
+2025-05-10 19:35:41 INFO  /Users/tommasopellegrino/Projects/enniolimpiadi/tests/../arena.c:24:arena_alloc: Allocating 1048576 bytes for the arena ...
+2025-05-10 19:35:41 INFO  /Users/tommasopellegrino/Projects/enniolimpiadi/tests/../arena.c:38:arena_alloc: Arena of size 1048576 has been allocated
