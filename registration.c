@@ -15,6 +15,8 @@ typedef struct TournamentNode TournamentNode;
 
 typedef struct NameFreeList NameFreeList;
 
+typedef struct TournamentNamesArray TournamentNamesArray;
+
 struct PlayerFreeList {
     PlayerNode *first_free_entry;
 };
@@ -41,6 +43,11 @@ struct PlayerNode {
 struct TournamentNode {
     String *tournament_name;
     TournamentNode *next;
+};
+
+struct TournamentNamesArray {
+    String *names;
+    u64 count;
 };
 
 
@@ -254,6 +261,44 @@ player_find(PlayerMap *player_map, String player_name) {
         }
     }
     assert(0);
+}
+
+TournamentNamesArray
+list_tournaments(Arena *arena, PlayerMap *player_map) {
+    TournamentNamesArray name_array = {0};
+    name_array.names = arena_push(arena, 100*sizeof(String)); // instead of guessing 100 I shold keep the info on how many tournament and players are registered
+
+    for (u64 i = 0; i < player_map->bucket_count; i++) {
+        PlayerNode **players = player_map->players + i;
+
+        while (*players) {
+            Name *tournament = (*players)->tournament_names_head;
+            while (tournament) {
+                u64 array_len = name_array.count;
+                if (array_len == 0) {
+                    name_array.names[0] = tournament->name;
+                    name_array.count++;
+                }
+                else {
+                    bool inside = false;
+                    for (u64 j = 0; j < array_len; j++) {
+                        if (string_are_equal(tournament->name, name_array.names[j])) {
+                            inside = true;
+                            break;
+                        }
+                    }
+                    if (!inside) {
+                        name_array.names[name_array.count] = tournament->name;
+                        name_array.count++;
+                    }
+                }
+                tournament = tournament->next;
+            }
+            players = &((*players)->next);
+        }
+    }
+
+    return name_array;
 }
 
 

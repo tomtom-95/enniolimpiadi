@@ -300,6 +300,23 @@ Clay_RenderCommandArray CreateLayout(ClayVideoDemo_Data *data) {
                                 }
                             }
                         }
+                        else {
+                            TournamentNamesArray tournament_names_array = (
+                                list_tournaments(data->arena_frame, data->player_map)
+                            );
+                            for (u64 i = 0; i < tournament_names_array.count; i++) {
+                                Clay_String tournament_string = {
+                                    .isStaticallyAllocated = false,
+                                    .length = tournament_names_array.names[i].size,
+                                    .chars = (const char *)(tournament_names_array.names[i].str),
+                                };
+                                CLAY_TEXT(tournament_string, CLAY_TEXT_CONFIG({
+                                    .fontId = FONT_ID_BODY_16,
+                                    .fontSize = 24,
+                                    .textColor = COLOR_WHITE
+                                }));
+                            }
+                        }
                         CLAY({ .id = CLAY_ID("NewStuffButton"),
                             .backgroundColor = (Clay_Color) {
                                 120, 120, 120, Clay_Hovered() ? 120 : 0
