@@ -8,6 +8,7 @@
             "args": [
                 "-fcolor-diagnostics",
                 "-fansi-escape-codes",
+                "-fsanitize=address",
                 "-std=c99",
                 "-Wall",
                 "-Werror",

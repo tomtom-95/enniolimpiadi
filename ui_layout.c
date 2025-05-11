@@ -1,5 +1,6 @@
 #include "clay.h"
 #include "registration.c"
+#include "arena.c"
 
 #include <stdlib.h>
 
@@ -62,17 +63,11 @@ ButtonClickMeArray buttonsClickMe = {
 };
 
 typedef struct {
-    intptr_t offset;
-    intptr_t memory;
-} ClayVideoDemo_Arena;
-
-typedef struct {
     int32_t selectedDocumentIndex;
     float yOffset;
-    ClayVideoDemo_Arena frameArena;
+    Arena *arena_frame;
+    Arena *arena_permanent;
     PlayerMap *player_map;
-    Arena *arena;
-    int32_t button_index;
 } ClayVideoDemo_Data;
 
 typedef struct {
@@ -110,20 +105,20 @@ void HandleSidebarInteraction(
 }
 
 // Handler function for the button interaction
-void HandleTextButtonInteraction(
-    Clay_ElementId elementId,
-    Clay_PointerData pointerData,
-    intptr_t userData
-) {
-    ButtonClickMeData *data = (ButtonClickMeData*)userData;
-    if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        *(data->button_index) = (*(data->button_index) + 1) % 2;
-    } 
-}
+// void HandleTextButtonInteraction(
+//     Clay_ElementId elementId,
+//     Clay_PointerData pointerData,
+//     intptr_t userData
+// ) {
+//     ButtonClickMeData *data = (ButtonClickMeData*)userData;
+//     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+//         *(data->button_index) = (*(data->button_index) + 1) % 2;
+//     } 
+// }
 
 
 Clay_RenderCommandArray CreateLayout(ClayVideoDemo_Data *data) {
-    data->frameArena.offset = 0;
+    data->arena_frame->pos = 0;
 
     Clay_BeginLayout();
 
@@ -253,13 +248,12 @@ Clay_RenderCommandArray CreateLayout(ClayVideoDemo_Data *data) {
                         }
                     } else {
                         SidebarClickData *clickData = (
-                            (SidebarClickData *)(data->frameArena.memory + data->frameArena.offset)
+                            arena_push(data->arena_frame, sizeof(*clickData))
                         );
                         *clickData = (SidebarClickData) {
                             .requestedDocumentIndex = i,
                             .selectedDocumentIndex = &data->selectedDocumentIndex
                         };
-                        data->frameArena.offset += sizeof(SidebarClickData);
                         CLAY({
                             .layout = sidebarButtonLayout,
                             .backgroundColor = (Clay_Color) { 120, 120, 120, Clay_Hovered() ? 120 : 0 },
@@ -276,71 +270,63 @@ Clay_RenderCommandArray CreateLayout(ClayVideoDemo_Data *data) {
                 }
             }
 
-            CLAY({ .id = CLAY_ID("MainContent"),
-                .backgroundColor = contentBackgroundColor,
-                .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() },
-                .layout = {
-                    .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                    .childGap = 16,
-                    .padding = CLAY_PADDING_ALL(16),
-                    .sizing = layoutExpand
-                }
-            }) {
-                // TODO(tommaso): Main content must change depending on the sidebar button pressed
-                //                if players button is pressed -> display players name
-                //                if tournament button is pressed -> display tournaments name
-                for (int i = 0; i < data->player_map->bucket_count; i++) {
-                    Players *players = data->player_map->players + i;
-                    if (players->head) {
-                        PlayerNode *player = players->head;
-                        while (player) {
-                            Clay_String player_string = {
-                                .isStaticallyAllocated = false,
-                                .length = player->player_name->size,
-                                .chars = (const char *)(player->player_name->str),
-                            };
-                            CLAY_TEXT(player_string, CLAY_TEXT_CONFIG({
+            for (int i = 0; i < documents.length; i++) {
+                if (i == data->selectedDocumentIndex) {
+                    CLAY({ .id = CLAY_ID("MainContent"),
+                        .backgroundColor = contentBackgroundColor,
+                        .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() },
+                        .layout = {
+                            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                            .childGap = 16,
+                            .padding = CLAY_PADDING_ALL(16),
+                            .sizing = layoutExpand
+                        }
+                    }) {
+                        if (i == 0) {
+                            for (int j = 0; j < data->player_map->bucket_count; j++) {
+                                PlayerNode **players = data->player_map->players + j;
+                                while (*players) {
+                                    Clay_String player_string = {
+                                        .isStaticallyAllocated = false,
+                                        .length = (*players)->player_name.size,
+                                        .chars = (const char *)((*players)->player_name.str),
+                                    };
+                                    CLAY_TEXT(player_string, CLAY_TEXT_CONFIG({
+                                        .fontId = FONT_ID_BODY_16,
+                                        .fontSize = 24,
+                                        .textColor = COLOR_WHITE
+                                    }));
+                                    players = &((*players)->next);
+                                }
+                            }
+                        }
+                        CLAY({ .id = CLAY_ID("NewStuffButton"),
+                            .backgroundColor = (Clay_Color) {
+                                120, 120, 120, Clay_Hovered() ? 120 : 0
+                            },
+                            .cornerRadius = CLAY_CORNER_RADIUS(8),
+                            .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() },
+                            .layout = {
+                                .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                                .childGap = 16,
+                                .padding = CLAY_PADDING_ALL(16),
+                                .sizing = {
+                                    .height = CLAY_SIZING_FIXED(60),
+                                    .width = CLAY_SIZING_GROW(0)
+                                },
+                            }
+                        }) {
+                            Clay_String button_text = (
+                                buttonsClickMe.buttonsClickMe[data->selectedDocumentIndex].content
+                            );
+                            CLAY_TEXT(button_text, CLAY_TEXT_CONFIG({
                                 .fontId = FONT_ID_BODY_16,
                                 .fontSize = 24,
                                 .textColor = COLOR_WHITE
                             }));
-                            player = player->next;
-                        }
+                        };
                     }
                 }
-                CLAY({ .id = CLAY_ID("New Player Button"),
-                    .backgroundColor = (Clay_Color) {
-                        120, 120, 120, Clay_Hovered() ? 120 : 0
-                    },
-                    .cornerRadius = CLAY_CORNER_RADIUS(8),
-                    .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() },
-                    .layout = {
-                        .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                        .childGap = 16,
-                        .padding = CLAY_PADDING_ALL(16),
-                        .sizing = {
-                            .height = CLAY_SIZING_FIXED(60),
-                            .width = CLAY_SIZING_GROW(0)
-                        },
-                    }
-                }) {
-                    ButtonClickMeData *buttonClickMeData = (
-                        (ButtonClickMeData *)(data->frameArena.memory + data->frameArena.offset)
-                    );
-                    *buttonClickMeData = (ButtonClickMeData) {
-                        .button_index = &(data->button_index)
-                    };
-                    data->frameArena.offset += sizeof(ButtonClickMeData);
-
-                    Clay_OnHover(HandleTextButtonInteraction, (intptr_t)buttonClickMeData);
-
-                    Clay_String button_text = buttonsClickMe.buttonsClickMe[data->button_index].content;
-                    CLAY_TEXT(button_text, CLAY_TEXT_CONFIG({
-                        .fontId = FONT_ID_BODY_16,
-                        .fontSize = 24,
-                        .textColor = COLOR_WHITE
-                    }));
-                };
             }
         }
     }

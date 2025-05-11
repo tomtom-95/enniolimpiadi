@@ -8,7 +8,6 @@
 #include <inttypes.h>
 
 #include "log.c"
-
 #include "utils.c"
 
 typedef struct
@@ -26,17 +25,11 @@ arena_alloc(u64 size) {
     Arena arena = {0};
 
     u8 *data = malloc(size);
+    assert(data);
 
-    if (!data) {
-        log_error("Arena allocation of size %" PRIu64 " failed. ", size);
-    }
-    else {
-        arena.pos  = 0;
-        arena.data = data;
-        arena.size = size;
-        
-        log_info("Arena of size %" PRIu64 " has been allocated", size);
-    }
+    arena.pos  = 0;
+    arena.data = data;
+    arena.size = size;
 
     return arena;
 }

@@ -15,16 +15,38 @@ registration_test(void) {
         log_error("test failed");
     }
 
-    PlayerMap *player_map = player_map_init(&arena, 16);
+    PlayerMap *players = player_map_init(&arena, 16);
     PlayerFreeList player_free_list = {.first_free_entry = NULL};
     NameFreeList name_free_list = {.first_free_entry = NULL};
 
-    player_map_add(&arena, player_map, (u8 *)"Gianni", &player_free_list);
-    player_map_remove(player_map, (u8 *)"Gianni", &player_free_list, &name_free_list);
+    String gianni = string_from_cstring((u8 *)"Gianni");
+    String giulio = string_from_cstring((u8 *)"Giulio");
+
+    String ping_pong = string_from_cstring((u8 *)"Ping Pong");
+
+    player_create(
+        &arena,
+        players,
+        gianni,
+        &player_free_list
+    );
+    player_create(
+        &arena,
+        players,
+        giulio,
+        &player_free_list
+    );
+    player_enroll(
+        &arena,
+        players,
+        gianni,
+        ping_pong,
+        &name_free_list
+    );
 }
 
 int main(void) {
-    log_set_level(LOG_DEBUG);
+    log_set_level(TMLOG_DEBUG);
 
     FILE *logfile = fopen("../test_registration.log", "w");
     if (!logfile) {
@@ -33,7 +55,7 @@ int main(void) {
     }
 
     // Log all levels to file
-    log_add_fp(logfile, LOG_TRACE);
+    log_add_fp(logfile, TMLOG_TRACE);
 
     log_info("tm_hashmap tests started");
     registration_test();

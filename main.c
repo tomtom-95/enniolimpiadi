@@ -3,7 +3,7 @@
 #include "raylib/clay_renderer_raylib.c"
 #include "ui_layout.c"
 
-#include "tm_utils.c"
+#include "utils.c"
 #include "registration.c"
 #include "names.c"
 
@@ -13,6 +13,17 @@ void HandleClayErrors(Clay_ErrorData errorData) {
 }
 
 int main(void) {
+    log_set_level(TMLOG_DEBUG);
+
+    FILE *logfile = fopen("../logs/main.log", "w");
+    if (!logfile) {
+        printf("Failed to open file for logging");
+        return 1;
+    }
+
+    // Log all levels to file
+    log_add_fp(logfile, TMLOG_TRACE);
+
     Clay_Raylib_Initialize(
         1024, 768,
         "Enniolimpiadi",
@@ -35,27 +46,26 @@ int main(void) {
     Clay_SetMeasureTextFunction(Raylib_MeasureText, fonts);
 
     // My stuff to test if I can get what I want on the UI
-    Arena arena = arena_alloc(MegaByte(1));
-    if (!arena.data) {
-        log_error("test failed");
-    }
+    Arena arena_permanent = arena_alloc(MegaByte(1));
+    Arena arena_frame = arena_alloc(MegaByte(1));
 
-    SmallString *gianni = small_string_from_cstring(&arena, (u8 *)"Gianni");
-    SmallString *giulio = small_string_from_cstring(&arena, (u8 *)"Giulio");
-    SmallString *ping_pong = small_string_from_cstring(&arena, (u8 *)"Ping Pong");
-    SmallString *machiavelli = small_string_from_cstring(&arena, (u8 *)"Machiavelli");
+    String gianni = string_from_cstring((u8 *)"Gianni");
+    String giulio = string_from_cstring((u8 *)"Giulio");
+    String ping_pong = string_from_cstring((u8 *)"Ping Pong");
+    String machiavelli = string_from_cstring((u8 *)"Machiavelli");
 
-    PlayerMap *player_map = player_map_init(&arena, 16);
-    player_map_add(&arena, player_map, gianni);
-    player_map_register(&arena, player_map, gianni, ping_pong);
+    PlayerFreeList player_free_list = {.first_free_entry = NULL};
+    NameFreeList name_free_list = {.first_free_entry = NULL};
 
-    player_map_add(&arena, player_map, giulio);
-    player_map_register(&arena, player_map, giulio, ping_pong);
+    PlayerMap *player_map = player_map_init(&arena_permanent, 16);
+    player_create(&arena_permanent, player_map, gianni, &player_free_list);
+    player_enroll(&arena_permanent, player_map, gianni, ping_pong, &name_free_list);
+    player_enroll(&arena_permanent, player_map, gianni, machiavelli, &name_free_list);
 
-    player_map_remove(player_map, giulio);
+    player_create(&arena_permanent, player_map, giulio, &player_free_list);
+    player_enroll(&arena_permanent, player_map, giulio, ping_pong, &name_free_list);
 
-    player_map_add(&arena, player_map, giulio);
-    player_map_register(&arena, player_map, giulio, machiavelli);
+    // player_destroy(player_map, giulio, &player_free_list, &name_free_list);
 
     // UI Initialization
     documents.documents[0] = (Document) {
@@ -66,18 +76,17 @@ int main(void) {
     };
 
     buttonsClickMe.buttonsClickMe[0] = (ButtonClickMe) {
-        .content = CLAY_STRING("Click Me!"),
+        .content = CLAY_STRING("Add Player"),
     };
 
     buttonsClickMe.buttonsClickMe[1] = (ButtonClickMe) {
-        .content = CLAY_STRING("Unclick Me!"),
+        .content = CLAY_STRING("Add Tournament"),
     };
 
     ClayVideoDemo_Data data = {
-        .frameArena = { .memory = (intptr_t)malloc(1024) },
+        .arena_frame = &arena_frame,
+        .arena_permanent = &arena_permanent,
         .player_map = player_map,
-        .arena = &arena,
-        .button_index = 0
     };
 
     while (!WindowShouldClose()) {

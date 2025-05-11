@@ -31,7 +31,10 @@ int main(void) {
     name_list_push_right(&arena, name_list, string1);
     name_list_push_right(&arena, name_list, string2);
 
-    name_list_pop(name_list, string1);
+    name_list_pop_right(name_list);
+    name_list_pop_right(name_list);
+    name_list_pop_right(name_list);
+    name_list_pop_right(name_list);
 
     log_info("String tests finished");
 }
