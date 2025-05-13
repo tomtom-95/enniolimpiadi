@@ -1,13 +1,15 @@
+#ifndef UI_LAYOUT_C
+#define UI_LAYOUT_C
+
 #include "clay.h"
 #include "registration.c"
 #include "arena.c"
+#include "ui_base.c"
 
 #include <stdlib.h>
 
-const int FONT_ID_BODY_16 = 0;
-Clay_Color COLOR_WHITE = { 255, 255, 255, 255};
-
-void RenderHeaderButton(Clay_String text) {
+void
+RenderHeaderButton(Clay_String text) {
     CLAY({
         .layout = { .padding = { 16, 16, 8, 8 }},
         .backgroundColor = { 140, 140, 140, 255 },
@@ -31,93 +33,31 @@ void RenderDropdownMenuItem(Clay_String text) {
     }
 }
 
-typedef struct {
-    Clay_String title;
-} Document;
-
-typedef struct {
-    Clay_String content;
-} ButtonClickMe;
-
-typedef struct {
-    Document *documents;
-    uint32_t length;
-} DocumentArray;
-
-typedef struct {
-    ButtonClickMe *buttonsClickMe;
-    uint32_t length;
-} ButtonClickMeArray;
-
-Document documentsRaw[2];
-ButtonClickMe buttonsClickMeRaw[2];
-
-DocumentArray documents = {
-    .length = 2,
-    .documents = documentsRaw
-};
-
-ButtonClickMeArray buttonsClickMe = {
-    .length = 2,
-    .buttonsClickMe = buttonsClickMeRaw
-};
-
-typedef struct {
-    int32_t selectedDocumentIndex;
-    float yOffset;
-    Arena *arena_frame;
-    Arena *arena_permanent;
-    PlayerMap *player_map;
-} ClayVideoDemo_Data;
-
-typedef struct {
-    int32_t requestedDocumentIndex;
-    int32_t* selectedDocumentIndex;
-} SidebarClickData;
-
-typedef struct {
-    int32_t* button_index;
-} ButtonClickMeData;
-
-// Define a structure to hold the text display data
-typedef struct {
-    const char *normalText;
-    const char *pressedText;
-    bool isPressed;
-} TextButtonData;
-
 void HandleSidebarInteraction(
     Clay_ElementId elementId,
     Clay_PointerData pointerData,
     intptr_t userData
 ) {
-    SidebarClickData *clickData = (SidebarClickData*)userData;
-    // If this button was clicked
+    Tab clickedTab = (Tab)userData;
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        if (
-            clickData->requestedDocumentIndex >= 0 &&
-            clickData->requestedDocumentIndex < documents.length
-        ) {
-            // Select the corresponding document
-            *clickData->selectedDocumentIndex = clickData->requestedDocumentIndex;
-        }
+        open_tab = clickedTab;
     }
 }
 
-// Handler function for the button interaction
-// void HandleTextButtonInteraction(
-//     Clay_ElementId elementId,
-//     Clay_PointerData pointerData,
-//     intptr_t userData
-// ) {
-//     ButtonClickMeData *data = (ButtonClickMeData*)userData;
-//     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-//         *(data->button_index) = (*(data->button_index) + 1) % 2;
-//     } 
-// }
+void
+HandleTextButtonInteraction(
+    Clay_ElementId elementId,
+    Clay_PointerData pointerData,
+    intptr_t userData
+) {
+    Window clickData = (Window)userData;
+    if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        open_window = clickData; 
+    } 
+}
 
-
-Clay_RenderCommandArray CreateLayout(ClayVideoDemo_Data *data) {
+Clay_RenderCommandArray 
+RenderMainWindow(ClayVideoDemo_Data *data) {
     data->arena_frame->pos = 0;
 
     Clay_BeginLayout();
@@ -227,126 +167,138 @@ Clay_RenderCommandArray CreateLayout(ClayVideoDemo_Data *data) {
                     }
                 }
             }) {
-                for (int i = 0; i < documents.length; i++) {
-                    Document document = documents.documents[i];
-                    Clay_LayoutConfig sidebarButtonLayout = {
-                        .sizing = { .width = CLAY_SIZING_GROW(0) },
-                        .padding = CLAY_PADDING_ALL(16)
-                    };
+                Clay_LayoutConfig sidebarButtonLayout = {
+                    .sizing = { .width = CLAY_SIZING_GROW(0) },
+                    .padding = CLAY_PADDING_ALL(16)
+                };
 
-                    if (i == data->selectedDocumentIndex) {
-                        CLAY({
-                            .layout = sidebarButtonLayout,
-                            .backgroundColor = {120, 120, 120, 255 },
-                            .cornerRadius = CLAY_CORNER_RADIUS(8)
-                        }) {
-                            CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
-                                .fontId = FONT_ID_BODY_16,
-                                .fontSize = 20,
-                                .textColor = { 255, 255, 255, 255 }
-                            }));
-                        }
-                    } else {
-                        SidebarClickData *clickData = (
-                            arena_push(data->arena_frame, sizeof(*clickData))
-                        );
-                        *clickData = (SidebarClickData) {
-                            .requestedDocumentIndex = i,
-                            .selectedDocumentIndex = &data->selectedDocumentIndex
-                        };
-                        CLAY({
-                            .layout = sidebarButtonLayout,
-                            .backgroundColor = (Clay_Color) { 120, 120, 120, Clay_Hovered() ? 120 : 0 },
-                            .cornerRadius = CLAY_CORNER_RADIUS(8) 
-                        }) {
-                            Clay_OnHover(HandleSidebarInteraction, (intptr_t)clickData);
-                            CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
-                                .fontId = FONT_ID_BODY_16,
-                                .fontSize = 20,
-                                .textColor = { 255, 255, 255, 255 }
-                            }));
-                        }
-                    }
+                Clay_String player_string = CLAY_STRING("Players");
+                Clay_String tournament_string = CLAY_STRING("Tournaments");
+
+                CLAY({
+                    .id = CLAY_ID("PlayersTab"),
+                    .layout = sidebarButtonLayout,
+                    .backgroundColor = (Clay_Color) { 120, 120, 120, Clay_Hovered() ? 120 : 0 },
+                    .cornerRadius = CLAY_CORNER_RADIUS(8) 
+                }) {
+                    Clay_OnHover(HandleSidebarInteraction, (intptr_t)PLAYERS_TAB);
+                    CLAY_TEXT(player_string, CLAY_TEXT_CONFIG({
+                        .fontId = FONT_ID_BODY_16,
+                        .fontSize = 20,
+                        .textColor = { 255, 255, 255, 255 }
+                    }));
+                }
+
+                CLAY({
+                    .id = CLAY_ID("TournamentsTab"),
+                    .layout = sidebarButtonLayout,
+                    .backgroundColor = (Clay_Color) { 120, 120, 120, Clay_Hovered() ? 120 : 0 },
+                    .cornerRadius = CLAY_CORNER_RADIUS(8) 
+                }) {
+                    Clay_OnHover(HandleSidebarInteraction, (intptr_t)TOURNAMENTS_TAB);
+                    CLAY_TEXT(tournament_string, CLAY_TEXT_CONFIG({
+                        .fontId = FONT_ID_BODY_16,
+                        .fontSize = 20,
+                        .textColor = { 255, 255, 255, 255 }
+                    }));
                 }
             }
 
-            for (int i = 0; i < documents.length; i++) {
-                if (i == data->selectedDocumentIndex) {
-                    CLAY({ .id = CLAY_ID("MainContent"),
-                        .backgroundColor = contentBackgroundColor,
+            CLAY({ .id = CLAY_ID("MainContent"),
+                .backgroundColor = contentBackgroundColor,
+                .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() },
+                .layout = {
+                    .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                    .childGap = 16,
+                    .padding = CLAY_PADDING_ALL(16),
+                    .sizing = layoutExpand
+                }
+            }) {
+                if (open_tab == PLAYERS_TAB) {
+                    for (int j = 0; j < data->player_map->bucket_count; j++) {
+                        PlayerNode **players = data->player_map->players + j;
+                        while (*players) {
+                            Clay_String player_string = {
+                                .isStaticallyAllocated = false,
+                                .length = (*players)->player_name.size,
+                                .chars = (const char *)((*players)->player_name.str),
+                            };
+                            CLAY_TEXT(player_string, CLAY_TEXT_CONFIG({
+                                .fontId = FONT_ID_BODY_16,
+                                .fontSize = 24,
+                                .textColor = COLOR_WHITE
+                            }));
+                            players = &((*players)->next);
+                        }
+                    }
+                    CLAY({ .id = CLAY_ID("New Player Button"),
+                        .backgroundColor = (Clay_Color) {
+                            120, 120, 120, Clay_Hovered() ? 120 : 0
+                        },
+                        .cornerRadius = CLAY_CORNER_RADIUS(8),
                         .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() },
                         .layout = {
                             .layoutDirection = CLAY_TOP_TO_BOTTOM,
                             .childGap = 16,
                             .padding = CLAY_PADDING_ALL(16),
-                            .sizing = layoutExpand
+                            .sizing = {
+                                .height = CLAY_SIZING_FIXED(60),
+                                .width = CLAY_SIZING_GROW(0)
+                            },
                         }
                     }) {
-                        if (i == 0) {
-                            for (int j = 0; j < data->player_map->bucket_count; j++) {
-                                PlayerNode **players = data->player_map->players + j;
-                                while (*players) {
-                                    Clay_String player_string = {
-                                        .isStaticallyAllocated = false,
-                                        .length = (*players)->player_name.size,
-                                        .chars = (const char *)((*players)->player_name.str),
-                                    };
-                                    CLAY_TEXT(player_string, CLAY_TEXT_CONFIG({
-                                        .fontId = FONT_ID_BODY_16,
-                                        .fontSize = 24,
-                                        .textColor = COLOR_WHITE
-                                    }));
-                                    players = &((*players)->next);
-                                }
-                            }
-                        }
-                        else {
-                            TournamentNamesArray tournament_names_array = (
-                                list_tournaments(data->arena_frame, data->player_map)
-                            );
-                            for (u64 i = 0; i < tournament_names_array.count; i++) {
-                                Clay_String tournament_string = {
-                                    .isStaticallyAllocated = false,
-                                    .length = tournament_names_array.names[i].size,
-                                    .chars = (const char *)(tournament_names_array.names[i].str),
-                                };
-                                CLAY_TEXT(tournament_string, CLAY_TEXT_CONFIG({
-                                    .fontId = FONT_ID_BODY_16,
-                                    .fontSize = 24,
-                                    .textColor = COLOR_WHITE
-                                }));
-                            }
-                        }
-                        CLAY({ .id = CLAY_ID("NewStuffButton"),
-                            .backgroundColor = (Clay_Color) {
-                                120, 120, 120, Clay_Hovered() ? 120 : 0
-                            },
-                            .cornerRadius = CLAY_CORNER_RADIUS(8),
-                            .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() },
-                            .layout = {
-                                .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                                .childGap = 16,
-                                .padding = CLAY_PADDING_ALL(16),
-                                .sizing = {
-                                    .height = CLAY_SIZING_FIXED(60),
-                                    .width = CLAY_SIZING_GROW(0)
-                                },
-                            }
-                        }) {
-                            Clay_String button_text = (
-                                buttonsClickMe.buttonsClickMe[data->selectedDocumentIndex].content
-                            );
-                            CLAY_TEXT(button_text, CLAY_TEXT_CONFIG({
-                                .fontId = FONT_ID_BODY_16,
-                                .fontSize = 24,
-                                .textColor = COLOR_WHITE
-                            }));
+                        Clay_OnHover(HandleTextButtonInteraction, (intptr_t)WINDOW_NEW_PLAYER);
+                        CLAY_TEXT(CLAY_STRING("New Player"), CLAY_TEXT_CONFIG({
+                            .fontId = FONT_ID_BODY_16,
+                            .fontSize = 24,
+                            .textColor = COLOR_WHITE
+                        }));
+                    };
+                }
+                else if (open_tab == TOURNAMENTS_TAB) {
+                    TournamentNamesArray tournament_names_array = (
+                        list_tournaments(data->arena_frame, data->player_map)
+                    );
+                    for (u64 i = 0; i < tournament_names_array.count; i++) {
+                        Clay_String tournament_string = {
+                            .isStaticallyAllocated = false,
+                            .length = tournament_names_array.names[i].size,
+                            .chars = (const char *)(tournament_names_array.names[i].str),
                         };
+                        CLAY_TEXT(tournament_string, CLAY_TEXT_CONFIG({
+                            .fontId = FONT_ID_BODY_16,
+                            .fontSize = 24,
+                            .textColor = COLOR_WHITE
+                        }));
                     }
+                    CLAY({ .id = CLAY_ID("New Tournament Button"),
+                        .backgroundColor = (Clay_Color) {
+                            120, 120, 120, Clay_Hovered() ? 120 : 0
+                        },
+                        .cornerRadius = CLAY_CORNER_RADIUS(8),
+                        .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() },
+                        .layout = {
+                            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                            .childGap = 16,
+                            .padding = CLAY_PADDING_ALL(16),
+                            .sizing = {
+                                .height = CLAY_SIZING_FIXED(60),
+                                .width = CLAY_SIZING_GROW(0)
+                            },
+                        }
+                    }) {
+                        Clay_OnHover(HandleTextButtonInteraction, (intptr_t)WINDOW_NEW_TOURNAMENT);
+                        CLAY_TEXT(CLAY_STRING("New Tournament"), CLAY_TEXT_CONFIG({
+                            .fontId = FONT_ID_BODY_16,
+                            .fontSize = 24,
+                            .textColor = COLOR_WHITE
+                        }));
+                    };
                 }
             }
         }
     }
+
 
     Clay_RenderCommandArray renderCommands = Clay_EndLayout();
     for (int32_t i = 0; i < renderCommands.length; i++) {
@@ -354,3 +306,5 @@ Clay_RenderCommandArray CreateLayout(ClayVideoDemo_Data *data) {
     }
     return renderCommands;
 }
+
+#endif // UI_LAYOUT_C

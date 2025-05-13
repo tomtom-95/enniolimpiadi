@@ -2,6 +2,7 @@
 #include "clay.h"
 #include "raylib/clay_renderer_raylib.c"
 #include "ui_layout.c"
+#include "ui_registration.c"
 
 #include "utils.c"
 #include "registration.c"
@@ -10,6 +11,19 @@
 // This function is new since the video was published
 void HandleClayErrors(Clay_ErrorData errorData) {
     printf("%s", errorData.errorText.chars);
+}
+
+Clay_RenderCommandArray 
+Wrapper(ClayVideoDemo_Data *data) {
+    Clay_RenderCommandArray commands;
+    if (open_window == WINDOW_NEW_PLAYER) {
+        commands = RenderRegistrationForm(data);
+    }
+    else {
+        commands = RenderMainWindow(data);
+    }
+
+    return commands;
 }
 
 int main(void) {
@@ -108,7 +122,8 @@ int main(void) {
             GetFrameTime()
         );
 
-        Clay_RenderCommandArray renderCommands = CreateLayout(&data);
+        // Clay_RenderCommandArray renderCommands = RenderRegistrationForm(&data);
+        Clay_RenderCommandArray renderCommands = Wrapper(&data);
 
         BeginDrawing();
         ClearBackground(BLACK);
