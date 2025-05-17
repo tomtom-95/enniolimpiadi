@@ -3,9 +3,43 @@
 
 #include "clay.h"
 #include "ui_base.c"
+#include "raylib/raylib.h"
+
+void
+WriteToString(
+    Clay_ElementId elementId,
+    Clay_PointerData pointerData,
+    intptr_t data
+) {
+    ClayVideoDemo_Data *userData = (ClayVideoDemo_Data *)data;
+
+    int MAX_INPUT_CHAR = 31;
+
+    SetMouseCursor(MOUSE_CURSOR_IBEAM);
+    int key = GetCharPressed();
+    while (key > 0) {
+        // NOTE: Only allow keys in range [32..125]
+        if ((key >= 32) && (key <= 125) && (userData->letterCount < MAX_INPUT_CHAR))
+        {
+            (userData->name)[userData->letterCount] = (char)key;
+            (userData->name)[userData->letterCount+1] = '\0'; // Add null terminator at the end of the string.
+            (userData->letterCount)++;
+        }
+
+        key = GetCharPressed();  // Check next character in the queue
+    }
+
+    if (IsKeyPressed(KEY_BACKSPACE)) {
+        (userData->letterCount)--;
+        if (userData->letterCount < 0) {
+            userData->letterCount = 0;
+        }
+        (userData->name)[userData->letterCount] = '\0';
+    }
+}
 
 Clay_RenderCommandArray
-RenderRegistrationForm(ClayVideoDemo_Data *data) {
+LayoutRegistrationForm(ClayVideoDemo_Data *data) {
     data->arena_frame->pos = 0;
 
     Clay_BeginLayout();
@@ -16,7 +50,6 @@ RenderRegistrationForm(ClayVideoDemo_Data *data) {
     };
 
     Clay_Color backgroundColor = {43, 41, 51, 255};
-    Clay_Color contentBackgroundColor = {90, 90, 90, 255};
     Clay_Color inputBackgroundColor = {70, 70, 70, 255};
     Clay_Color buttonColor = {120, 90, 210, 255};
     Clay_Color buttonHoverColor = {140, 110, 230, 255};
@@ -64,7 +97,7 @@ RenderRegistrationForm(ClayVideoDemo_Data *data) {
                 .childGap = 8
             }
         }) {
-            CLAY_TEXT(CLAY_STRING("Username"), CLAY_TEXT_CONFIG({
+            CLAY_TEXT(CLAY_STRING("Name"), CLAY_TEXT_CONFIG({
                 .fontId = FONT_ID_BODY_16,
                 .fontSize = 16,
                 .textColor = textColor
@@ -76,177 +109,23 @@ RenderRegistrationForm(ClayVideoDemo_Data *data) {
                 .cornerRadius = CLAY_CORNER_RADIUS(6),
                 .layout = {
                     .sizing = {
-                        .width = CLAY_SIZING_FIXED(200),
-                        .height = CLAY_SIZING_GROW(0)
-                    },
-                    .padding = CLAY_PADDING_ALL(12)
-                }
-            }) {
-                CLAY_TEXT(CLAY_STRING("Enter your username"), CLAY_TEXT_CONFIG({
-                    .fontId = FONT_ID_BODY_16,
-                    .fontSize = 16,
-                    .textColor = placeholderColor
-                }));
-            }
-        }
-
-        // Email field
-        CLAY({
-            .id = CLAY_ID("EmailContainer"),
-            .layout = {
-                .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                .sizing = {
-                    .width = CLAY_SIZING_GROW(0)
-                },
-                .childGap = 8
-            }
-        }) {
-            CLAY_TEXT(CLAY_STRING("Email Address"), CLAY_TEXT_CONFIG({
-                .fontId = FONT_ID_BODY_16,
-                .fontSize = 16,
-                .textColor = textColor
-            }));
-
-            CLAY({
-                .id = CLAY_ID("EmailInput"),
-                .backgroundColor = inputBackgroundColor,
-                .cornerRadius = CLAY_CORNER_RADIUS(6),
-                .layout = {
-                    .sizing = {
-                        .width = CLAY_SIZING_FIXED(200),
-                        .height = CLAY_SIZING_GROW(0)
-                    },
-                    .padding = CLAY_PADDING_ALL(12)
-                }
-            }) {
-                CLAY_TEXT(CLAY_STRING("Enter your email"), CLAY_TEXT_CONFIG({
-                    .fontId = FONT_ID_BODY_16,
-                    .fontSize = 16,
-                    .textColor = placeholderColor
-                }));
-            }
-        }
-
-        // Password field
-        CLAY({
-            .id = CLAY_ID("PasswordContainer"),
-            .layout = {
-                .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                .sizing = {
-                    .width = CLAY_SIZING_GROW(0)
-                },
-                .childGap = 8
-            }
-        }) {
-            CLAY_TEXT(CLAY_STRING("Password"), CLAY_TEXT_CONFIG({
-                .fontId = FONT_ID_BODY_16,
-                .fontSize = 16,
-                .textColor = textColor
-            }));
-
-            CLAY({
-                .id = CLAY_ID("PasswordInput"),
-                .backgroundColor = inputBackgroundColor,
-                .cornerRadius = CLAY_CORNER_RADIUS(6),
-                .layout = {
-                    .sizing = {
-                        .width = CLAY_SIZING_FIXED(200),
-                        .height = CLAY_SIZING_GROW(0)
-                    },
-                    .padding = CLAY_PADDING_ALL(12)
-                }
-            }) {
-                CLAY_TEXT(CLAY_STRING("••••••••"), CLAY_TEXT_CONFIG({
-                    .fontId = FONT_ID_BODY_16,
-                    .fontSize = 16,
-                    .textColor = placeholderColor
-                }));
-            }
-        }
-
-        // Confirm Password field
-        CLAY({
-            .id = CLAY_ID("ConfirmPasswordContainer"),
-            .layout = {
-                .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                .sizing = {
-                    .width = CLAY_SIZING_GROW(0)
-                },
-                .childGap = 8
-            }
-        }) {
-            CLAY_TEXT(CLAY_STRING("Confirm Password"), CLAY_TEXT_CONFIG({
-                .fontId = FONT_ID_BODY_16,
-                .fontSize = 16,
-                .textColor = textColor
-            }));
-
-            CLAY({
-                .id = CLAY_ID("ConfirmPasswordInput"),
-                .backgroundColor = inputBackgroundColor,
-                .cornerRadius = CLAY_CORNER_RADIUS(6),
-                .layout = {
-                    .sizing = {
                         .width = CLAY_SIZING_GROW(0),
-                        .height = CLAY_SIZING_FIXED(48)
+                        .height = CLAY_SIZING_GROW(0)
                     },
                     .padding = CLAY_PADDING_ALL(12)
                 }
             }) {
-                CLAY_TEXT(CLAY_STRING("••••••••"), CLAY_TEXT_CONFIG({
+                Clay_OnHover(WriteToString, (intptr_t)data);
+                Clay_String clay_string = {
+                    .isStaticallyAllocated = true,
+                    .length = data->letterCount,
+                    .chars = data->name
+                };
+                CLAY_TEXT(clay_string, CLAY_TEXT_CONFIG({
                     .fontId = FONT_ID_BODY_16,
                     .fontSize = 16,
                     .textColor = placeholderColor
                 }));
-            }
-        }
-
-        // Terms and Conditions checkbox
-        CLAY({
-            .id = CLAY_ID("TermsContainer"),
-            .layout = {
-                .sizing = {
-                    .width = CLAY_SIZING_GROW(0)
-                },
-                .childGap = 12
-            }
-        }) {
-            CLAY({
-                .id = CLAY_ID("CheckboxContainer"),
-                .layout = {
-                    .childGap = 16,
-                    .childAlignment = {
-                        .y = CLAY_ALIGN_Y_CENTER
-                    }
-                }
-            }) {
-                // Checkbox
-                CLAY({
-                    .id = CLAY_ID("Checkbox"),
-                    .backgroundColor = inputBackgroundColor,
-                    .cornerRadius = CLAY_CORNER_RADIUS(4),
-                    .layout = {
-                        .sizing = {
-                            .width = CLAY_SIZING_FIXED(24),
-                            .height = CLAY_SIZING_FIXED(24)
-                        }
-                    }
-                }) {}
-
-                // Terms text
-                CLAY({
-                    .layout = {
-                        .sizing = {
-                            .width = CLAY_SIZING_GROW(0)
-                        }
-                    }
-                }) {
-                    CLAY_TEXT(CLAY_STRING("I agree to the Terms and Privacy Policy"), CLAY_TEXT_CONFIG({
-                        .fontId = FONT_ID_BODY_16,
-                        .fontSize = 14,
-                        .textColor = textColor
-                    }));
-                }
             }
         }
 
@@ -267,52 +146,11 @@ RenderRegistrationForm(ClayVideoDemo_Data *data) {
                 }
             }
         }) {
-            CLAY_TEXT(CLAY_STRING("Create Account"), CLAY_TEXT_CONFIG({
+            CLAY_TEXT(CLAY_STRING("Add player"), CLAY_TEXT_CONFIG({
                 .fontId = FONT_ID_BODY_16,
                 .fontSize = 18,
                 .textColor = textColor,
             }));
-        }
-
-        // Already have an account section
-        CLAY({
-            .id = CLAY_ID("LoginLinkContainer"),
-            .layout = {
-                .sizing = {
-                    .width = CLAY_SIZING_GROW(0)
-                },
-                .childAlignment = {
-                    .x = CLAY_ALIGN_X_CENTER
-                },
-                .padding = {8, 8, 0, 0}
-            }
-        }) {
-            CLAY({
-                .layout = {
-                    .childGap = 8
-                }
-            }) {
-                CLAY_TEXT(CLAY_STRING("Already have an account?"), CLAY_TEXT_CONFIG({
-                    .fontId = FONT_ID_BODY_16,
-                    .fontSize = 14,
-                    .textColor = textColor
-                }));
-
-                CLAY({
-                    .id = CLAY_ID("LoginLink"),
-                    .backgroundColor = Clay_Hovered() ? (Clay_Color){120, 120, 120, 30} : (Clay_Color){0, 0, 0, 0},
-                    .cornerRadius = CLAY_CORNER_RADIUS(4),
-                    .layout = {
-                        .padding = {4, 4, 4, 4}
-                    }
-                }) {
-                    CLAY_TEXT(CLAY_STRING("Sign In"), CLAY_TEXT_CONFIG({
-                        .fontId = FONT_ID_BODY_16,
-                        .fontSize = 14,
-                        .textColor = (Clay_Color){140, 170, 255, 255}
-                    }));
-                }
-            }
         }
     }
 

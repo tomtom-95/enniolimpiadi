@@ -8,56 +8,8 @@
 
 #include <stdlib.h>
 
-void
-RenderHeaderButton(Clay_String text) {
-    CLAY({
-        .layout = { .padding = { 16, 16, 8, 8 }},
-        .backgroundColor = { 140, 140, 140, 255 },
-        .cornerRadius = CLAY_CORNER_RADIUS(5)
-    }) {
-        CLAY_TEXT(text, CLAY_TEXT_CONFIG({
-            .fontId = FONT_ID_BODY_16,
-            .fontSize = 16,
-            .textColor = { 255, 255, 255, 255 }
-        }));
-    }
-}
-
-void RenderDropdownMenuItem(Clay_String text) {
-    CLAY({.layout = { .padding = CLAY_PADDING_ALL(16)}}) {
-        CLAY_TEXT(text, CLAY_TEXT_CONFIG({
-            .fontId = FONT_ID_BODY_16,
-            .fontSize = 16,
-            .textColor = { 255, 255, 255, 255 }
-        }));
-    }
-}
-
-void HandleSidebarInteraction(
-    Clay_ElementId elementId,
-    Clay_PointerData pointerData,
-    intptr_t userData
-) {
-    Tab clickedTab = (Tab)userData;
-    if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        open_tab = clickedTab;
-    }
-}
-
-void
-HandleTextButtonInteraction(
-    Clay_ElementId elementId,
-    Clay_PointerData pointerData,
-    intptr_t userData
-) {
-    Window clickData = (Window)userData;
-    if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        open_window = clickData; 
-    } 
-}
-
 Clay_RenderCommandArray 
-RenderMainWindow(ClayVideoDemo_Data *data) {
+LayoutMainWindow(ClayVideoDemo_Data *data) {
     data->arena_frame->pos = 0;
 
     Clay_BeginLayout();

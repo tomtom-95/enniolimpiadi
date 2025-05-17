@@ -3,6 +3,7 @@
 
 #include "clay.h"
 #include "arena.c"
+#include "registration.c"
 
 typedef struct {
     Clay_String title;
@@ -51,6 +52,12 @@ typedef struct {
     Arena *arena_frame;
     Arena *arena_permanent;
     PlayerMap *player_map;
+    String *test_string;
+    bool textbox_pressed;
+    int lastkeypressed;
+    int letterCount;
+    char name[32];
+    // TODO: put in this struct all the other stuff related on what has been pressed
 } ClayVideoDemo_Data;
 
 typedef struct {
@@ -76,5 +83,56 @@ Clay_Color COLOR_WHITE = { 255, 255, 255, 255};
 
 Tab open_tab;
 Window open_window;
+
+
+void
+RenderHeaderButton(Clay_String text) {
+    CLAY({
+        .layout = { .padding = { 16, 16, 8, 8 }},
+        .backgroundColor = { 140, 140, 140, 255 },
+        .cornerRadius = CLAY_CORNER_RADIUS(5)
+    }) {
+        CLAY_TEXT(text, CLAY_TEXT_CONFIG({
+            .fontId = FONT_ID_BODY_16,
+            .fontSize = 16,
+            .textColor = { 255, 255, 255, 255 }
+        }));
+    }
+}
+
+void
+RenderDropdownMenuItem(Clay_String text) {
+    CLAY({.layout = { .padding = CLAY_PADDING_ALL(16)}}) {
+        CLAY_TEXT(text, CLAY_TEXT_CONFIG({
+            .fontId = FONT_ID_BODY_16,
+            .fontSize = 16,
+            .textColor = { 255, 255, 255, 255 }
+        }));
+    }
+}
+
+void
+HandleSidebarInteraction(
+    Clay_ElementId elementId,
+    Clay_PointerData pointerData,
+    intptr_t userData
+) {
+    Tab clickedTab = (Tab)userData;
+    if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        open_tab = clickedTab;
+    }
+}
+
+void
+HandleTextButtonInteraction(
+    Clay_ElementId elementId,
+    Clay_PointerData pointerData,
+    intptr_t userData
+) {
+    Window clickData = (Window)userData;
+    if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        open_window = clickData; 
+    } 
+}
 
 #endif // UI_BASE_C

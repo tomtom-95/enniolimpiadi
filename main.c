@@ -1,7 +1,7 @@
 #define CLAY_IMPLEMENTATION
 #include "clay.h"
 #include "raylib/clay_renderer_raylib.c"
-#include "ui_layout.c"
+#include "ui_main_window.c"
 #include "ui_registration.c"
 
 #include "utils.c"
@@ -14,13 +14,13 @@ void HandleClayErrors(Clay_ErrorData errorData) {
 }
 
 Clay_RenderCommandArray 
-Wrapper(ClayVideoDemo_Data *data) {
+GetLayout(ClayVideoDemo_Data *data) {
     Clay_RenderCommandArray commands;
     if (open_window == WINDOW_NEW_PLAYER) {
-        commands = RenderRegistrationForm(data);
+        commands = LayoutRegistrationForm(data);
     }
     else {
-        commands = RenderMainWindow(data);
+        commands = LayoutMainWindow(data);
     }
 
     return commands;
@@ -97,10 +97,16 @@ int main(void) {
         .content = CLAY_STRING("Add Tournament"),
     };
 
+    String *test_string = arena_push(&arena_permanent, sizeof(String));
     ClayVideoDemo_Data data = {
         .arena_frame = &arena_frame,
         .arena_permanent = &arena_permanent,
         .player_map = player_map,
+        .test_string = test_string,    
+        .textbox_pressed = false,
+        .lastkeypressed = -1,
+        .letterCount = 0,
+        .name = "\0"
     };
 
     while (!WindowShouldClose()) {
@@ -123,7 +129,7 @@ int main(void) {
         );
 
         // Clay_RenderCommandArray renderCommands = RenderRegistrationForm(&data);
-        Clay_RenderCommandArray renderCommands = Wrapper(&data);
+        Clay_RenderCommandArray renderCommands = GetLayout(&data);
 
         BeginDrawing();
         ClearBackground(BLACK);
