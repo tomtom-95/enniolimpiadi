@@ -47,6 +47,11 @@ typedef enum {
     WINDOW_NEW_TOURNAMENT
 } Window;
 
+typedef enum {
+    BACKSPACE_NOT_PRESSED = 0,
+    BACKSPACE_PRESSED,
+} BackspaceKeyState;
+
 typedef struct {
     float yOffset;
     Arena *arena_frame;
@@ -57,6 +62,9 @@ typedef struct {
     int lastkeypressed;
     int letterCount;
     char name[32];
+    BackspaceKeyState backspace_state;
+    int backspace_count;
+    u64 frame_counter;
     // TODO: put in this struct all the other stuff related on what has been pressed
 } ClayVideoDemo_Data;
 

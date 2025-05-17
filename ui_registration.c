@@ -1,9 +1,12 @@
 #ifndef UI_REGISTRATION_C
 #define UI_REGISTRATION_C
 
+#include <unistd.h>
+
 #include "clay.h"
 #include "ui_base.c"
 #include "raylib/raylib.h"
+
 
 void
 WriteToString(
@@ -13,9 +16,49 @@ WriteToString(
 ) {
     ClayVideoDemo_Data *userData = (ClayVideoDemo_Data *)data;
 
+    userData->frame_counter++;
+
     int MAX_INPUT_CHAR = 31;
 
     SetMouseCursor(MOUSE_CURSOR_IBEAM);
+
+    // Handle backspace
+    if (IsKeyPressed(KEY_BACKSPACE) || IsKeyDown(KEY_BACKSPACE)) {
+        if (userData->backspace_state == BACKSPACE_NOT_PRESSED) {
+            (userData->letterCount)--;
+            if (userData->letterCount < 0) {
+                userData->letterCount = 0;
+            }
+            (userData->name)[userData->letterCount] = '\0';
+
+            userData->backspace_state = BACKSPACE_PRESSED; 
+        }
+        else {
+            userData->backspace_count++;
+        }
+
+        // TODO(tommaso): overflow?
+        if (userData->backspace_count > 50) {
+            // Add a small delay to control backspace speed
+            static float backspaceTimer = 0.0f;
+            backspaceTimer += GetFrameTime();
+        
+            if ((IsKeyPressed(KEY_BACKSPACE)) || 
+                (IsKeyDown(KEY_BACKSPACE) && backspaceTimer >= 0.02f)) {
+                backspaceTimer = 0.0f;
+                (userData->letterCount)--;
+                if (userData->letterCount < 0) {
+                    userData->letterCount = 0;
+                }
+                (userData->name)[userData->letterCount] = '\0';
+            }
+        }
+    }
+    else {
+        userData->backspace_state = BACKSPACE_NOT_PRESSED;
+        userData->backspace_count = 0;
+    }
+
     int key = GetCharPressed();
     while (key > 0) {
         // NOTE: Only allow keys in range [32..125]
@@ -25,16 +68,7 @@ WriteToString(
             (userData->name)[userData->letterCount+1] = '\0'; // Add null terminator at the end of the string.
             (userData->letterCount)++;
         }
-
         key = GetCharPressed();  // Check next character in the queue
-    }
-
-    if (IsKeyPressed(KEY_BACKSPACE)) {
-        (userData->letterCount)--;
-        if (userData->letterCount < 0) {
-            userData->letterCount = 0;
-        }
-        (userData->name)[userData->letterCount] = '\0';
     }
 }
 
@@ -110,17 +144,34 @@ LayoutRegistrationForm(ClayVideoDemo_Data *data) {
                 .layout = {
                     .sizing = {
                         .width = CLAY_SIZING_GROW(0),
-                        .height = CLAY_SIZING_GROW(0)
+                        .height = CLAY_SIZING_GROW(40)
                     },
                     .padding = CLAY_PADDING_ALL(12)
                 }
             }) {
+                if (!Clay_Hovered()) {
+                    data->frame_counter = 0;
+                }
                 Clay_OnHover(WriteToString, (intptr_t)data);
-                Clay_String clay_string = {
-                    .isStaticallyAllocated = true,
-                    .length = data->letterCount,
-                    .chars = data->name
-                };
+                Clay_String clay_string;
+                if (((data->frame_counter/60)%2) == 1) {
+                    char *chars = arena_push(data->arena_frame, 64); 
+                    memcpy(chars, data->name, data->letterCount);
+                    chars[data->letterCount] = '_';
+                    chars[data->letterCount+1] = '\0';
+                    clay_string = (Clay_String) {
+                        .isStaticallyAllocated = true,
+                        .length = data->letterCount+1,
+                        .chars = chars
+                    };
+                }
+                else {
+                    clay_string = (Clay_String) {
+                        .isStaticallyAllocated = true,
+                        .length = data->letterCount,
+                        .chars = data->name
+                    };
+                }
                 CLAY_TEXT(clay_string, CLAY_TEXT_CONFIG({
                     .fontId = FONT_ID_BODY_16,
                     .fontSize = 16,

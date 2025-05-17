@@ -200,7 +200,7 @@ LayoutMainWindow(ClayVideoDemo_Data *data) {
                         }
                     }) {
                         Clay_OnHover(HandleTextButtonInteraction, (intptr_t)WINDOW_NEW_PLAYER);
-                        CLAY_TEXT(CLAY_STRING("New Player"), CLAY_TEXT_CONFIG({
+                        CLAY_TEXT(CLAY_STRING("New Awesome Player"), CLAY_TEXT_CONFIG({
                             .fontId = FONT_ID_BODY_16,
                             .fontSize = 24,
                             .textColor = COLOR_WHITE

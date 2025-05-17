@@ -106,7 +106,9 @@ int main(void) {
         .textbox_pressed = false,
         .lastkeypressed = -1,
         .letterCount = 0,
-        .name = "\0"
+        .name = "\0",
+        .backspace_count = 0,
+        .frame_counter = 0
     };
 
     while (!WindowShouldClose()) {
