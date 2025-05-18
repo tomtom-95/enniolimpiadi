@@ -1,29 +1,77 @@
 #define CLAY_IMPLEMENTATION
+
 #include "clay.h"
 #include "raylib/clay_renderer_raylib.c"
-#include "ui_main_window.c"
-#include "ui_registration.c"
+
+#include "ui_utils.h"
+#include "ui_window.c"
+#include "ui_header.c"
+#include "ui_interaction.c"
 
 #include "utils.c"
 #include "registration.c"
 #include "names.c"
 
-// This function is new since the video was published
 void HandleClayErrors(Clay_ErrorData errorData) {
     printf("%s", errorData.errorText.chars);
 }
 
 Clay_RenderCommandArray 
-GetLayout(ClayVideoDemo_Data *data) {
-    Clay_RenderCommandArray commands;
-    if (open_window == WINDOW_NEW_PLAYER) {
-        commands = LayoutRegistrationForm(data);
-    }
-    else {
-        commands = LayoutMainWindow(data);
-    }
+GetLayout(LayoutData *data) {
+    data->arena_frame->pos = 0;
 
-    return commands;
+    Clay_BeginLayout();
+    Clay_Sizing layoutExpand = {
+        .width = CLAY_SIZING_GROW(0),
+        .height = CLAY_SIZING_GROW(0)
+    };
+    CLAY({ .id = CLAY_ID("MainWindowContainer"),
+        .backgroundColor = background_color,
+        .layout = {
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+            .sizing = layoutExpand,
+            .padding = CLAY_PADDING_ALL(16),
+            .childGap = 16
+        }
+    }) {
+        LayoutHeaderBar(data);
+        CLAY({
+            .id = CLAY_ID("MainContent"),
+            .backgroundColor = background_color_window,
+            .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() },
+            .layout = {
+                .sizing = layoutExpand,
+                .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                .childGap = 16,
+                .padding = CLAY_PADDING_ALL(16),
+            },
+            .cornerRadius = CLAY_CORNER_RADIUS(8)
+        }) {
+            switch (data->tab) {
+                case TAB_PLAYERS:
+                {
+                    LayoutPlayersWindow(data);
+                } break;
+                case TAB_TOURNAMENTS:
+                {
+                    LayoutTournamentsWindow(data);
+                } break;
+                case TAB_NEW_PLAYER:
+                {
+                    LayoutAddPlayerWindow(data);
+                } break;
+                case TAB_NEW_TOURNAMENT:
+                {
+
+                } break;
+            }
+        }
+    }
+    Clay_RenderCommandArray renderCommands = Clay_EndLayout();
+    for (int32_t i = 0; i < renderCommands.length; i++) {
+        Clay_RenderCommandArray_Get(&renderCommands, i)->boundingBox.y += data->yOffset;
+    }
+    return renderCommands;
 }
 
 int main(void) {
@@ -98,17 +146,13 @@ int main(void) {
     };
 
     String *test_string = arena_push(&arena_permanent, sizeof(String));
-    ClayVideoDemo_Data data = {
+    LayoutData data = {
         .arena_frame = &arena_frame,
         .arena_permanent = &arena_permanent,
         .player_map = player_map,
+        .player_free_list = player_free_list,
         .test_string = test_string,    
-        .textbox_pressed = false,
-        .lastkeypressed = -1,
-        .letterCount = 0,
-        .name = "\0",
-        .backspace_count = 0,
-        .frame_counter = 0
+        .text_box_data = {0}
     };
 
     while (!WindowShouldClose()) {
@@ -130,7 +174,6 @@ int main(void) {
             GetFrameTime()
         );
 
-        // Clay_RenderCommandArray renderCommands = RenderRegistrationForm(&data);
         Clay_RenderCommandArray renderCommands = GetLayout(&data);
 
         BeginDrawing();
