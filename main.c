@@ -1,6 +1,6 @@
 #define CLAY_IMPLEMENTATION
-
 #include "clay.h"
+
 #include "raylib/clay_renderer_raylib.c"
 
 #include "ui_utils.h"
@@ -12,6 +12,9 @@
 #include "registration.c"
 #include "names.c"
 
+// #define STB_IMAGE_IMPLEMENTATION
+// #include "stb_image.h"
+
 void HandleClayErrors(Clay_ErrorData errorData) {
     printf("%s", errorData.errorText.chars);
 }
@@ -21,10 +24,6 @@ GetLayout(LayoutData *data) {
     data->arena_frame->pos = 0;
 
     Clay_BeginLayout();
-    Clay_Sizing layoutExpand = {
-        .width = CLAY_SIZING_GROW(0),
-        .height = CLAY_SIZING_GROW(0)
-    };
     CLAY({ .id = CLAY_ID("MainWindowContainer"),
         .backgroundColor = background_color,
         .layout = {
@@ -62,7 +61,7 @@ GetLayout(LayoutData *data) {
                 } break;
                 case TAB_NEW_TOURNAMENT:
                 {
-
+                    LayoutAddTournamentWindow(data);
                 } break;
             }
         }
@@ -127,32 +126,14 @@ int main(void) {
     player_create(&arena_permanent, player_map, giulio, &player_free_list);
     player_enroll(&arena_permanent, player_map, giulio, ping_pong, &name_free_list);
 
-    // player_destroy(player_map, giulio, &player_free_list, &name_free_list);
-
-    // UI Initialization
-    documents.documents[0] = (Document) {
-        .title = CLAY_STRING("Players"),
-    };
-    documents.documents[1] = (Document) {
-        .title = CLAY_STRING("Tournaments"),
-    };
-
-    buttonsClickMe.buttonsClickMe[0] = (ButtonClickMe) {
-        .content = CLAY_STRING("Add Player"),
-    };
-
-    buttonsClickMe.buttonsClickMe[1] = (ButtonClickMe) {
-        .content = CLAY_STRING("Add Tournament"),
-    };
-
-    String *test_string = arena_push(&arena_permanent, sizeof(String));
+    Texture2D profilePicture = LoadTexture("../resources/Ennio.jpg");
     LayoutData data = {
         .arena_frame = &arena_frame,
         .arena_permanent = &arena_permanent,
         .player_map = player_map,
         .player_free_list = player_free_list,
-        .test_string = test_string,    
-        .text_box_data = {0}
+        .text_box_data = {0},
+        .profilePicture = profilePicture
     };
 
     while (!WindowShouldClose()) {

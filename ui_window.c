@@ -7,6 +7,7 @@
 #include "registration.c"
 
 #include "clay.h"
+#include "raylib/raylib.h"
 #include "ui_interaction.c"
 
 void
@@ -131,6 +132,20 @@ LayoutAddPlayerWindow(LayoutData *data) {
             .textColor = text_color,
         }));
     }
+}
+
+void
+LayoutAddTournamentWindow(LayoutData *data) {
+    CLAY({
+        .id = CLAY_ID("ProfilePicture"),
+        .layout = {
+            .sizing = layoutExpand
+        },
+        .image = {
+            .imageData = &(data->profilePicture),
+            .sourceDimensions = {640, 640}
+        }
+    }) {}
 }
 
 #endif

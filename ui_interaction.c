@@ -1,6 +1,8 @@
 #ifndef UI_INTERACTION_C
 #define UI_INTERACTION_C
 
+#include "raylib/raylib.h"
+
 #include "arena.c"
 #include "registration.c"
 
