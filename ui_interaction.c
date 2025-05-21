@@ -39,9 +39,9 @@ HandleNewPlayerButtonInteraction(
     Clay_PointerData pointerData,
     intptr_t data
 ) {
-    LayoutData *userData = (LayoutData *)data;
+    LayoutData *user_data = (LayoutData *)data;
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        userData->tab = TAB_NEW_PLAYER;
+        user_data->tab = TAB_NEW_PLAYER;
     } 
 }
 
@@ -51,9 +51,21 @@ HandleNewTournamentButtonInteraction(
     Clay_PointerData pointerData,
     intptr_t data
 ) {
-    LayoutData *userData = (LayoutData *)data;
+    LayoutData *user_data = (LayoutData *)data;
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        userData->tab = TAB_NEW_TOURNAMENT;
+        user_data->tab = TAB_NEW_TOURNAMENT;
+    } 
+}
+
+void
+HandleCustomElementButtonInteraction(
+    Clay_ElementId elementId,
+    Clay_PointerData pointerData,
+    intptr_t data
+) {
+    LayoutData *user_data = (LayoutData *)data;
+    if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        user_data->tab = TAB_CUSTOM;
     } 
 }
 
@@ -63,51 +75,62 @@ HandleTextBoxInteraction(
     Clay_PointerData pointerData,
     intptr_t data
 ) {
-    TextBoxData *text_box_data = (TextBoxData *)data;
+    LayoutData *user_data = (LayoutData *)data;
+    TextBoxData *text_box_data = &(user_data->text_box_data);
 
-    text_box_data->frame_counter++;
+    if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        user_data->last_clicked = elementId;
+    }
 
-    int MAX_INPUT_CHAR = 126;
+    if ((user_data->last_clicked).id == elementId.id) {
+        text_box_data->frame_counter++;
 
-    if (IsKeyPressed(KEY_BACKSPACE) || IsKeyDown(KEY_BACKSPACE)) {
-        if (text_box_data->backspace_key_state == BACKSPACE_NOT_PRESSED) {
-            if (--(text_box_data->letter_count) < 0) {
-                text_box_data->letter_count = 0;
-            }
-            (text_box_data->name)[text_box_data->letter_count] = '\0';
-            text_box_data->backspace_key_state = BACKSPACE_FIRST; 
-        }
-        else if (text_box_data->backspace_key_state == BACKSPACE_FIRST) {
-            text_box_data->frame_timer += GetFrameTime();
-            if (text_box_data->frame_timer > 0.35f) {
-                text_box_data->frame_timer = 0;
-                text_box_data->backspace_key_state = BACKSPACE_SECOND;
-            } 
-        }
-        else {
-            text_box_data->frame_timer += GetFrameTime();
-            if (text_box_data->frame_timer > 0.03f) {
-                text_box_data->frame_timer = 0;
+        int MAX_INPUT_CHAR = 126;
+
+        if (IsKeyPressed(KEY_BACKSPACE) || IsKeyDown(KEY_BACKSPACE)) {
+            if (text_box_data->backspace_key_state == BACKSPACE_NOT_PRESSED) {
                 if (--(text_box_data->letter_count) < 0) {
                     text_box_data->letter_count = 0;
                 }
                 (text_box_data->name)[text_box_data->letter_count] = '\0';
-            } 
+                text_box_data->backspace_key_state = BACKSPACE_FIRST; 
+            }
+            else if (text_box_data->backspace_key_state == BACKSPACE_FIRST) {
+                text_box_data->frame_timer += GetFrameTime();
+                if (text_box_data->frame_timer > 0.35f) {
+                    text_box_data->frame_timer = 0;
+                    text_box_data->backspace_key_state = BACKSPACE_SECOND;
+                } 
+            }
+            else {
+                text_box_data->frame_timer += GetFrameTime();
+                if (text_box_data->frame_timer > 0.03f) {
+                    text_box_data->frame_timer = 0;
+                    if (--(text_box_data->letter_count) < 0) {
+                        text_box_data->letter_count = 0;
+                    }
+                    (text_box_data->name)[text_box_data->letter_count] = '\0';
+                } 
+            }
         }
-    }
-    else {
-        text_box_data->backspace_key_state = BACKSPACE_NOT_PRESSED;
-    }
+        else {
+            text_box_data->backspace_key_state = BACKSPACE_NOT_PRESSED;
+        }
 
-    int key = GetCharPressed();
-    while (key > 0) {
-        // NOTE: Only allow keys in range [32..125]
-        if ((key >= 32) && (key <= 125) && (text_box_data->letter_count < MAX_INPUT_CHAR))
-        {
-            (text_box_data->name)[text_box_data->letter_count] = (u8)key;
-            (text_box_data->name)[++(text_box_data->letter_count)] = '\0';
+        int key = GetCharPressed();
+        while (key > 0) {
+            // NOTE: Only allow keys in range [32..125]
+            if ((key >= 32) && (key <= 125) && (text_box_data->letter_count < MAX_INPUT_CHAR))
+            {
+                (text_box_data->name)[text_box_data->letter_count] = (u8)key;
+                (text_box_data->name)[++(text_box_data->letter_count)] = '\0';
+            }
+            key = GetCharPressed();  // Check next character in the queue
         }
-        key = GetCharPressed();  // Check next character in the queue
+    } // if((user_data->last_clicked).id == elementId.id)
+    else {
+        // TODO: should show what the user was typing (text_box_data->name) without blinking cursor
+        ;
     }
 }
 
@@ -133,6 +156,18 @@ HandleAddPlayerButtonInteraction(
             // TODO: print a message: cannot register player with no name
             ;
         }
+    }
+}
+
+void
+HandleMainWindowInteraction(
+    Clay_ElementId element_id,
+    Clay_PointerData pointer_data,
+    intptr_t data
+) {
+    LayoutData *user_data = (LayoutData *)data;
+    if (pointer_data.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        user_data->last_clicked = element_id;
     }
 }
 

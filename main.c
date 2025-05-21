@@ -12,9 +12,6 @@
 #include "registration.c"
 #include "names.c"
 
-// #define STB_IMAGE_IMPLEMENTATION
-// #include "stb_image.h"
-
 void HandleClayErrors(Clay_ErrorData errorData) {
     printf("%s", errorData.errorText.chars);
 }
@@ -24,7 +21,7 @@ GetLayout(LayoutData *data) {
     data->arena_frame->pos = 0;
 
     Clay_BeginLayout();
-    CLAY({ .id = CLAY_ID("MainWindowContainer"),
+    CLAY({ .id = CLAY_ID("MainWindow"),
         .backgroundColor = background_color,
         .layout = {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
@@ -33,10 +30,11 @@ GetLayout(LayoutData *data) {
             .childGap = 16
         }
     }) {
+        Clay_OnHover(HandleMainWindowInteraction, (intptr_t)data);
         LayoutHeaderBar(data);
         CLAY({
             .id = CLAY_ID("MainContent"),
-            .backgroundColor = background_color_window,
+            // .backgroundColor = background_color_window,
             .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() },
             .layout = {
                 .sizing = layoutExpand,
@@ -63,6 +61,10 @@ GetLayout(LayoutData *data) {
                 {
                     LayoutAddTournamentWindow(data);
                 } break;
+                case TAB_CUSTOM:
+                {
+                    LayoutCustomElement(data);
+                }
             }
         }
     }
@@ -127,13 +129,15 @@ int main(void) {
     player_enroll(&arena_permanent, player_map, giulio, ping_pong, &name_free_list);
 
     Texture2D profilePicture = LoadTexture("../resources/Ennio.jpg");
+    Model my_model = LoadModel("../resources/bridge.obj");
     LayoutData data = {
         .arena_frame = &arena_frame,
         .arena_permanent = &arena_permanent,
         .player_map = player_map,
         .player_free_list = player_free_list,
         .text_box_data = {0},
-        .profilePicture = profilePicture
+        .profilePicture = profilePicture,
+        .my_model = my_model
     };
 
     while (!WindowShouldClose()) {

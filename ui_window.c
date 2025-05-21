@@ -63,10 +63,12 @@ LayoutAddPlayerWindow(LayoutData *data) {
     }) {
         CLAY({
             .id = CLAY_ID("UsernameInput"),
-            .backgroundColor = (
-                Clay_Hovered() ? background_color_on_hover : background_color
-            ),
+            .backgroundColor = background_color,
             .cornerRadius = CLAY_CORNER_RADIUS(6),
+            .border = {
+                .width = {.left = 1, .right = 1, .top = 1, .bottom = 1},
+                .color = Clay_Hovered() ? background_color_on_hover : background_color
+            },
             .layout = {
                 .sizing = {
                     .width = CLAY_SIZING_GROW(0),
@@ -75,24 +77,28 @@ LayoutAddPlayerWindow(LayoutData *data) {
                 .padding = CLAY_PADDING_ALL(12)
             }
         }) {
-            Clay_OnHover(HandleTextBoxInteraction, (intptr_t)(&(data->text_box_data)));
+            // Should I just render a textbox with raylib here?
+            Clay_OnHover(HandleTextBoxInteraction, (intptr_t)data);
             String *tmp_str = arena_push(data->arena_frame, sizeof(String));
             if ((data->text_box_data).letter_count == 0) {
                 String player_name = string_from_cstring((u8 *)"Enter a player name");
                 memcpy(tmp_str, &player_name, sizeof(String));
             }
             else {
+                memcpy(
+                    tmp_str->str,
+                    (data->text_box_data).name,
+                    (data->text_box_data).letter_count+1
+                );
+                tmp_str->size = (data->text_box_data).letter_count;
                 if (Clay_Hovered()) {
-                    memcpy(
-                        tmp_str->str,
-                        (data->text_box_data).name,
-                        (data->text_box_data).letter_count+1
-                    );
-                    tmp_str->size = (data->text_box_data).letter_count;
                     if ((((data->text_box_data).frame_counter/60)%2) == 1) {
                         tmp_str->str[tmp_str->size] = '|';
                         tmp_str->str[++(tmp_str->size)] = '\0';
                     }
+                }
+                else {
+                    tmp_str->str[tmp_str->size] = '\0'; // do I really need this?
                 }
             }
             Clay_String textbox_string = {
@@ -145,6 +151,29 @@ LayoutAddTournamentWindow(LayoutData *data) {
             .imageData = &(data->profilePicture),
             .sourceDimensions = {640, 640}
         }
+    }) {}
+}
+
+void
+LayoutCustomElement(LayoutData *data) {
+    CustomLayoutElement *modelData = arena_push(data->arena_frame, sizeof(CustomLayoutElement));
+    *modelData = (CustomLayoutElement) { 
+        .type = CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL,
+        .customData.model = {
+            .model = data->my_model,
+            .scale = 1.0f,
+            .position = {0, 0, 0},
+            .rotation = MatrixIdentity()
+        }
+    };
+    CLAY({
+        .id = CLAY_ID("Bridge"),
+        .layout = {
+            .sizing = layoutExpand
+        },
+        .custom = {
+            .customData = modelData
+        },
     }) {}
 }
 

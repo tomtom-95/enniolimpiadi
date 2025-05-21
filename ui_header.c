@@ -78,6 +78,20 @@ LayoutHeaderBar(LayoutData *data) {
                 .textColor = { 255, 255, 255, 255 }
             }));
         }
+        CLAY({ .id = CLAY_ID("CustomElementButton"),
+            .layout = { .padding = { 16, 16, 8, 8 }},
+            .backgroundColor = (
+                Clay_Hovered() ? header_button_background_color_on_hover: header_button_background_color
+            ),
+            .cornerRadius = CLAY_CORNER_RADIUS(5)
+        }) {
+            Clay_OnHover(HandleCustomElementButtonInteraction, (intptr_t)data);
+            CLAY_TEXT(CLAY_STRING("Custom Element"), CLAY_TEXT_CONFIG({
+                .fontId = FONT_ID_BODY_16,
+                .fontSize = 16,
+                .textColor = { 255, 255, 255, 255 }
+            }));
+        }
     }
 }
 

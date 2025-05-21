@@ -4,20 +4,16 @@
 #include "arena.c"
 #include "registration.c"
 
+#include "raylib/raylib.h"
 #include "clay.h"
 
 typedef enum {
     TAB_PLAYERS = 0,
     TAB_TOURNAMENTS,
     TAB_NEW_PLAYER,
-    TAB_NEW_TOURNAMENT
+    TAB_NEW_TOURNAMENT,
+    TAB_CUSTOM
 } Tab;
-
-typedef enum {
-    MAIN_WINDOW = 0,
-    WINDOW_NEW_PLAYER,
-    WINDOW_NEW_TOURNAMENT
-} Window;
 
 typedef struct {
     double frame_timer;
@@ -41,6 +37,8 @@ typedef struct {
     Tab tab;
     TextBoxData text_box_data;
     Texture2D profilePicture;
+    Clay_ElementId last_clicked;
+    Model my_model;
 } LayoutData;
 
 const int FONT_ID_BODY_16 = 0;
@@ -66,5 +64,26 @@ Clay_Sizing layoutExpand = {
     .width = CLAY_SIZING_GROW(0),
     .height = CLAY_SIZING_GROW(0)
 };
+
+typedef enum
+{
+    CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL
+} CustomLayoutElementType;
+
+typedef struct
+{
+    Model model;
+    float scale;
+    Vector3 position;
+    Matrix rotation;
+} CustomLayoutElement_3DModel;
+
+typedef struct
+{
+    CustomLayoutElementType type;
+    union {
+        CustomLayoutElement_3DModel model;
+    } customData;
+} CustomLayoutElement;
 
 #endif

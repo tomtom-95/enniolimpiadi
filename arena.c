@@ -50,6 +50,8 @@ arena_push(Arena *arena, u64 size)
     void *result = arena->data + arena->pos;
     arena->pos += size;
 
+    memset(result, 0, size);
+
     return result;
 }
 
