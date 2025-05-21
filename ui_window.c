@@ -161,9 +161,10 @@ LayoutCustomElement(LayoutData *data) {
         .type = CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL,
         .customData.model = {
             .model = data->my_model,
+            .texture = data->my_texture,
             .scale = 1.0f,
-            .position = {0, 0, 0},
-            .rotation = MatrixIdentity()
+            // .position = {0, 0, 0},
+            // .rotation = MatrixIdentity()
         }
     };
     CLAY({

@@ -87,6 +87,12 @@ int main(void) {
     // Log all levels to file
     log_add_fp(logfile, TMLOG_TRACE);
 
+    camera.position = (Vector3){ 50.0f, 50.0f, 50.0f }; // Camera position
+    camera.target = (Vector3){ 0.0f, 10.0f, 0.0f };     // Camera looking at point
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+    camera.fovy = 45.0f;                                // Camera field-of-view Y
+    camera.projection = CAMERA_PERSPECTIVE;                   // Camera mode type
+
     Clay_Raylib_Initialize(
         1024, 768,
         "Enniolimpiadi",
@@ -129,7 +135,10 @@ int main(void) {
     player_enroll(&arena_permanent, player_map, giulio, ping_pong, &name_free_list);
 
     Texture2D profilePicture = LoadTexture("../resources/Ennio.jpg");
-    Model my_model = LoadModel("../resources/bridge.obj");
+
+    Model my_model = LoadModel("../resources/castle.obj");
+    Texture2D my_texture = LoadTexture("../resources/castle_diffuse.png");
+
     LayoutData data = {
         .arena_frame = &arena_frame,
         .arena_permanent = &arena_permanent,
@@ -137,7 +146,8 @@ int main(void) {
         .player_free_list = player_free_list,
         .text_box_data = {0},
         .profilePicture = profilePicture,
-        .my_model = my_model
+        .my_model = my_model,
+        .my_texture = my_texture
     };
 
     while (!WindowShouldClose()) {

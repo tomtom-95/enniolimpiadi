@@ -39,6 +39,7 @@ typedef struct {
     Texture2D profilePicture;
     Clay_ElementId last_clicked;
     Model my_model;
+    Texture2D my_texture;
 } LayoutData;
 
 const int FONT_ID_BODY_16 = 0;
@@ -73,9 +74,10 @@ typedef enum
 typedef struct
 {
     Model model;
+    Texture2D texture;
     float scale;
-    Vector3 position;
-    Matrix rotation;
+    // Vector3 position;
+    // Matrix rotation;
 } CustomLayoutElement_3DModel;
 
 typedef struct

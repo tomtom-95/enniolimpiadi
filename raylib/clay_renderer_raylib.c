@@ -11,7 +11,10 @@
 #define CLAY_RECTANGLE_TO_RAYLIB_RECTANGLE(rectangle) (Rectangle) { .x = rectangle.x, .y = rectangle.y, .width = rectangle.width, .height = rectangle.height }
 #define CLAY_COLOR_TO_RAYLIB_COLOR(color) (Color) { .r = (unsigned char)roundf(color.r), .g = (unsigned char)roundf(color.g), .b = (unsigned char)roundf(color.b), .a = (unsigned char)roundf(color.a) }
 
-Camera Raylib_camera;
+// Camera Raylib_camera;
+// Define the camera to look into our 3d world
+Camera camera = { 0 };
+
 
 
 // Get a ray trace from the screen position (i.e mouse) within a specific section of the screen
@@ -221,31 +224,49 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
                 if (!customElement) continue;
                 switch (customElement->type) {
                     case CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL: {
-                        // Clay_BoundingBox rootBox = renderCommands.internalArray[0].boundingBox;
-                        // float scaleValue = CLAY__MIN(CLAY__MIN(1, 768 / rootBox.height) * CLAY__MAX(1, rootBox.width / 1024), 1.5f);
-                        // Ray positionRay = GetScreenToWorldPointWithZDistance(
-                        //     (Vector2) {
-                        //         renderCommand->boundingBox.x + renderCommand->boundingBox.width / 2,
-                        //         renderCommand->boundingBox.y + (renderCommand->boundingBox.height / 2) + 20
-                        //     },
-                        //     Raylib_camera,
-                        //     (int)roundf(rootBox.width),
-                        //     (int)roundf(rootBox.height), 140
-                        // );
+                        Clay_BoundingBox rootBox = renderCommands.internalArray[0].boundingBox;
+                        float scaleValue = CLAY__MIN(
+                            CLAY__MIN(1, 768 / rootBox.height) * CLAY__MAX(1, rootBox.width / 1024), 1.5f
+                        );
+
+                        // Model model = LoadModel("../resources/castle.obj");                 // Load model
+                        Model model = customElement->customData.model.model;
+                        model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = (
+                            customElement->customData.model.texture
+                        );
+                        Vector3 position = { 0.0f, 0.0f, 0.0f };                    // Set model position
+                        BoundingBox bounds = GetMeshBoundingBox(model.meshes[0]);   // Set model bounds
+
+                        // DisableCursor(); // Limit cursor to relative movement inside the window
+
+                        // NOTE: bounds are calculated from the original size of the model,
+                        // if model is scaled on drawing, bounds must be also scaled
+
+                        // bool selected = false;          // Selected object flag
+                        UpdateCamera(&camera, CAMERA_FIRST_PERSON);
+
+                        FilePathList droppedFiles = LoadDroppedFiles();
+
+                        // if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+                        // {
+                        //     // Check collision between ray and box
+                        //     if (
+                        //         GetRayCollisionBox(GetScreenToWorldRay(GetMousePosition(), camera), bounds).hit
+                        //     ) selected = !selected;
+                        //     else selected = false;
+                        // }
                         int centerX = boundingBox.x + boundingBox.width / 2;
                         int centerY = boundingBox.y + boundingBox.height / 2;
-                        DrawCircle(centerX, centerY, 50, MAROON);
-                        // BeginMode3D(Raylib_camera);
-                            // DrawGrid(20, 10.0f);         // Draw a grid
-                            // DrawModel(
-                            //     customElement->customData.model.model,
-                            //     positionRay.position,
-                            //     1.0f,
-                            //     // customElement->customData.model.scale * scaleValue,
-                            //     WHITE
-                            // ); // Draw 3d model with texture
-                            // Draw a reference circle
-                        // EndMode3D();
+                        BeginMode3D(camera);
+                        DrawModel(
+                            model,
+                            position,
+                            customElement->customData.model.scale * scaleValue,
+                            WHITE
+                        );        // Draw 3d model with texture
+                        DrawGrid(20, 10.0f);         // Draw a grid
+                        EndMode3D();
+                        DrawFPS(10, 10);
                         break;
                     }
                     default: break;
