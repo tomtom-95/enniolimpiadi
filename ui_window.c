@@ -104,7 +104,7 @@ LayoutAddPlayerWindow(LayoutData *data) {
             Clay_String textbox_string = {
                 .isStaticallyAllocated = true,
                 .length = tmp_str->size,
-                .chars = tmp_str->str
+                .chars = (const char *)tmp_str->str
             };
             CLAY_TEXT(textbox_string, CLAY_TEXT_CONFIG({
                 .fontId = FONT_ID_BODY_16,
@@ -156,26 +156,37 @@ LayoutAddTournamentWindow(LayoutData *data) {
 
 void
 LayoutCustomElement(LayoutData *data) {
-    CustomLayoutElement *modelData = arena_push(data->arena_frame, sizeof(CustomLayoutElement));
+    CustomLayoutElement *modelData = (
+        arena_push(data->arena_frame, sizeof(CustomLayoutElement))
+    );
     *modelData = (CustomLayoutElement) { 
         .type = CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL,
         .customData.model = {
             .model = data->my_model,
             .texture = data->my_texture,
-            .scale = 1.0f,
-            // .position = {0, 0, 0},
-            // .rotation = MatrixIdentity()
+            .scale = 0.5f,
         }
     };
-    CLAY({
-        .id = CLAY_ID("Bridge"),
+
+    CLAY({ .id = CLAY_ID("CustomElementWindow"),
+        .backgroundColor = background_color,
         .layout = {
-            .sizing = layoutExpand
-        },
-        .custom = {
-            .customData = modelData
-        },
-    }) {}
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+            .sizing = layoutExpand,
+            .padding = CLAY_PADDING_ALL(16),
+            .childGap = 16
+        }
+    }) {
+        CLAY({
+            .id = CLAY_ID("Bridge"),
+            .layout = {
+                .sizing = layoutExpand
+            },
+            .custom = {
+                .customData = modelData
+            },
+        }) {}
+    }
 }
 
 #endif

@@ -34,7 +34,7 @@ GetLayout(LayoutData *data) {
         LayoutHeaderBar(data);
         CLAY({
             .id = CLAY_ID("MainContent"),
-            // .backgroundColor = background_color_window,
+            .backgroundColor = background_color_window,
             .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() },
             .layout = {
                 .sizing = layoutExpand,
@@ -75,6 +75,20 @@ GetLayout(LayoutData *data) {
     return renderCommands;
 }
 
+void
+CameraInit() {
+    // Camera position
+    camera.position = (Vector3){ 50.0f, 50.0f, 50.0f };
+    // Camera looking at point
+    camera.target = (Vector3){ 0.0f, 10.0f, 0.0f };
+    // Camera up vector (rotation towards target)
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
+    // Camera field-of-view Y
+    camera.fovy = 45.0f;
+    // Camera mode type
+    camera.projection = CAMERA_PERSPECTIVE;
+}
+
 int main(void) {
     log_set_level(TMLOG_DEBUG);
 
@@ -87,17 +101,13 @@ int main(void) {
     // Log all levels to file
     log_add_fp(logfile, TMLOG_TRACE);
 
-    camera.position = (Vector3){ 50.0f, 50.0f, 50.0f }; // Camera position
-    camera.target = (Vector3){ 0.0f, 10.0f, 0.0f };     // Camera looking at point
-    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
-    camera.fovy = 45.0f;                                // Camera field-of-view Y
-    camera.projection = CAMERA_PERSPECTIVE;                   // Camera mode type
-
     Clay_Raylib_Initialize(
         1024, 768,
         "Enniolimpiadi",
         FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT
     );
+
+    CameraInit();
 
     uint64_t clayRequiredMemory = Clay_MinMemorySize();
     Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(

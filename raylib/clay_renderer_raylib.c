@@ -8,18 +8,31 @@
 #include "clay.h"
 #include "ui_utils.h"
 
-#define CLAY_RECTANGLE_TO_RAYLIB_RECTANGLE(rectangle) (Rectangle) { .x = rectangle.x, .y = rectangle.y, .width = rectangle.width, .height = rectangle.height }
-#define CLAY_COLOR_TO_RAYLIB_COLOR(color) (Color) { .r = (unsigned char)roundf(color.r), .g = (unsigned char)roundf(color.g), .b = (unsigned char)roundf(color.b), .a = (unsigned char)roundf(color.a) }
+#define CLAY_RECTANGLE_TO_RAYLIB_RECTANGLE(rectangle) \
+    (Rectangle) {                                     \
+        .x = rectangle.x,                             \
+        .y = rectangle.y,                             \
+        .width = rectangle.width,                     \
+        .height = rectangle.height                    \
+    }
 
-// Camera Raylib_camera;
-// Define the camera to look into our 3d world
-Camera camera = { 0 };
-
-
+#define CLAY_COLOR_TO_RAYLIB_COLOR(color)    \
+    (Color) {                                \
+        .r = (unsigned char)roundf(color.r), \
+        .g = (unsigned char)roundf(color.g), \
+        .b = (unsigned char)roundf(color.b), \
+        .a = (unsigned char)roundf(color.a)  \
+    }
 
 // Get a ray trace from the screen position (i.e mouse) within a specific section of the screen
-Ray GetScreenToWorldPointWithZDistance(Vector2 position, Camera camera, int screenWidth, int screenHeight, float zDistance)
-{
+Ray
+GetScreenToWorldPointWithZDistance(
+    Vector2 position,
+    Camera camera,
+    int screenWidth,
+    int screenHeight,
+    float zDistance
+) {
     Ray ray = { 0 };
 
     // Calculate normalized device coordinates
@@ -36,13 +49,16 @@ Ray GetScreenToWorldPointWithZDistance(Vector2 position, Camera camera, int scre
 
     Matrix matProj = MatrixIdentity();
 
-    if (camera.projection == CAMERA_PERSPECTIVE)
-    {
+    if (camera.projection == CAMERA_PERSPECTIVE) {
         // Calculate projection matrix from perspective
-        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)screenWidth/(double)screenHeight), 0.01f, zDistance);
+        matProj = MatrixPerspective(
+            camera.fovy*DEG2RAD,
+            ((double)screenWidth/(double)screenHeight),
+            0.01f,
+            zDistance
+        );
     }
-    else if (camera.projection == CAMERA_ORTHOGRAPHIC)
-    {
+    else if (camera.projection == CAMERA_ORTHOGRAPHIC) {
         double aspect = (double)screenWidth/(double)screenHeight;
         double top = camera.fovy/2.0;
         double right = top*aspect;
@@ -52,8 +68,12 @@ Ray GetScreenToWorldPointWithZDistance(Vector2 position, Camera camera, int scre
     }
 
     // Unproject far/near points
-    Vector3 nearPoint = Vector3Unproject((Vector3){ deviceCoords.x, deviceCoords.y, 0.0f }, matProj, matView);
-    Vector3 farPoint = Vector3Unproject((Vector3){ deviceCoords.x, deviceCoords.y, 1.0f }, matProj, matView);
+    Vector3 nearPoint = Vector3Unproject(
+        (Vector3){ deviceCoords.x, deviceCoords.y, 0.0f }, matProj, matView
+    );
+    Vector3 farPoint = Vector3Unproject(
+        (Vector3){ deviceCoords.x, deviceCoords.y, 1.0f }, matProj, matView
+    );
 
     // Calculate normalized direction vector
     Vector3 direction = Vector3Normalize(Vector3Subtract(farPoint, nearPoint));
@@ -66,8 +86,12 @@ Ray GetScreenToWorldPointWithZDistance(Vector2 position, Camera camera, int scre
     return ray;
 }
 
-
-static inline Clay_Dimensions Raylib_MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, void *userData) {
+static inline Clay_Dimensions
+Raylib_MeasureText(
+    Clay_StringSlice text,
+    Clay_TextElementConfig *config,
+    void *userData
+) {
     // Measure string size for Font
     Clay_Dimensions textSize = { 0 };
 
@@ -85,8 +109,7 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_StringSlice text, Clay_Tex
 
     float scaleFactor = config->fontSize/(float)fontToUse.baseSize;
 
-    for (int i = 0; i < text.length; ++i)
-    {
+    for (int i = 0; i < text.length; ++i) {
         if (text.chars[i] == '\n') {
             maxTextWidth = fmax(maxTextWidth, lineTextWidth);
             lineTextWidth = 0;
@@ -105,10 +128,15 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_StringSlice text, Clay_Tex
     return textSize;
 }
 
-void Clay_Raylib_Initialize(int width, int height, const char *title, unsigned int flags) {
+void Clay_Raylib_Initialize(
+    int width,
+    int height,
+    const char *title,
+    unsigned int flags
+) {
     SetConfigFlags(flags);
     InitWindow(width, height, title);
-//    EnableEventWaiting();
+    EnableEventWaiting();
 }
 
 // A MALLOC'd buffer, that we keep modifying inorder to save from so many Malloc and Free Calls.
@@ -119,21 +147,22 @@ static int temp_render_buffer_len = 0;
 // Call after closing the window to clean up the render buffer
 void Clay_Raylib_Close()
 {
-    if(temp_render_buffer) free(temp_render_buffer);
+    if(temp_render_buffer) {
+        free(temp_render_buffer);
+    }
     temp_render_buffer_len = 0;
 
     CloseWindow();
 }
 
 
-void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
-{
-    for (int j = 0; j < renderCommands.length; j++)
-    {
-        Clay_RenderCommand *renderCommand = Clay_RenderCommandArray_Get(&renderCommands, j);
+void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts) {
+    for (int j = 0; j < renderCommands.length; j++) {
+        Clay_RenderCommand *renderCommand = (
+            Clay_RenderCommandArray_Get(&renderCommands, j)
+        );
         Clay_BoundingBox boundingBox = renderCommand->boundingBox;
-        switch (renderCommand->commandType)
-        {
+        switch (renderCommand->commandType) {
             case CLAY_RENDER_COMMAND_TYPE_TEXT: {
                 Clay_TextRenderData *textData = &renderCommand->renderData.text;
                 Font fontToUse = fonts[textData->fontId];
@@ -142,15 +171,29 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
     
                 if(strlen > temp_render_buffer_len) {
                     // Grow the temp buffer if we need a larger string
-                    if(temp_render_buffer) free(temp_render_buffer);
+                    if(temp_render_buffer) {
+                        free(temp_render_buffer);
+                    }
                     temp_render_buffer = (char *) malloc(strlen);
                     temp_render_buffer_len = strlen;
                 }
     
-                // Raylib uses standard C strings so isn't compatible with cheap slices, we need to clone the string to append null terminator
-                memcpy(temp_render_buffer, textData->stringContents.chars, textData->stringContents.length);
+                // Raylib uses standard C strings so isn't compatible with cheap slices, 
+                // we need to clone the string to append null terminator
+                memcpy(
+                    temp_render_buffer,
+                    textData->stringContents.chars,
+                    textData->stringContents.length
+                );
                 temp_render_buffer[textData->stringContents.length] = '\0';
-                DrawTextEx(fontToUse, temp_render_buffer, (Vector2){boundingBox.x, boundingBox.y}, (float)textData->fontSize, (float)textData->letterSpacing, CLAY_COLOR_TO_RAYLIB_COLOR(textData->textColor));
+                DrawTextEx(
+                    fontToUse,
+                    temp_render_buffer,
+                    (Vector2){boundingBox.x, boundingBox.y},
+                    (float)textData->fontSize,
+                    (float)textData->letterSpacing,
+                    CLAY_COLOR_TO_RAYLIB_COLOR(textData->textColor)
+                );
     
                 break;
             }
@@ -179,10 +222,31 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
             case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
                 Clay_RectangleRenderData *config = &renderCommand->renderData.rectangle;
                 if (config->cornerRadius.topLeft > 0) {
-                    float radius = (config->cornerRadius.topLeft * 2) / (float)((boundingBox.width > boundingBox.height) ? boundingBox.height : boundingBox.width);
-                    DrawRectangleRounded((Rectangle) { boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height }, radius, 8, CLAY_COLOR_TO_RAYLIB_COLOR(config->backgroundColor));
-                } else {
-                    DrawRectangle(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height, CLAY_COLOR_TO_RAYLIB_COLOR(config->backgroundColor));
+                    float radius;
+                    if (boundingBox.width > boundingBox.height) {
+                        radius = (config->cornerRadius.topLeft * 2) / (float)boundingBox.height;
+                    }
+                    else {
+                        radius = (config->cornerRadius.topLeft * 2) / (float)boundingBox.width;
+                    }
+                    DrawRectangleRounded(
+                        (Rectangle) {
+                            boundingBox.x,
+                            boundingBox.y,
+                            boundingBox.width,
+                            boundingBox.height
+                        },
+                        radius, 8, CLAY_COLOR_TO_RAYLIB_COLOR(config->backgroundColor)
+                    );
+                }
+                else {
+                    DrawRectangle(
+                        boundingBox.x,
+                        boundingBox.y,
+                        boundingBox.width,
+                        boundingBox.height,
+                        CLAY_COLOR_TO_RAYLIB_COLOR(config->backgroundColor)
+                    );
                 }
                 break;
             }
@@ -221,53 +285,36 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
             case CLAY_RENDER_COMMAND_TYPE_CUSTOM: {
                 Clay_CustomRenderData *config = &renderCommand->renderData.custom;
                 CustomLayoutElement *customElement = (CustomLayoutElement *)config->customData;
-                if (!customElement) continue;
+                if (!customElement) {
+                    continue;
+                }
                 switch (customElement->type) {
                     case CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL: {
                         Clay_BoundingBox rootBox = renderCommands.internalArray[0].boundingBox;
                         float scaleValue = CLAY__MIN(
                             CLAY__MIN(1, 768 / rootBox.height) * CLAY__MAX(1, rootBox.width / 1024), 1.5f
                         );
-
-                        // Model model = LoadModel("../resources/castle.obj");                 // Load model
                         Model model = customElement->customData.model.model;
                         model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = (
                             customElement->customData.model.texture
                         );
-                        Vector3 position = { 0.0f, 0.0f, 0.0f };                    // Set model position
-                        BoundingBox bounds = GetMeshBoundingBox(model.meshes[0]);   // Set model bounds
+                        Vector3 position = { 0.0f, 0.0f, 0.0f };
 
-                        // DisableCursor(); // Limit cursor to relative movement inside the window
-
-                        // NOTE: bounds are calculated from the original size of the model,
-                        // if model is scaled on drawing, bounds must be also scaled
-
-                        // bool selected = false;          // Selected object flag
                         UpdateCamera(&camera, CAMERA_FIRST_PERSON);
 
-                        FilePathList droppedFiles = LoadDroppedFiles();
-
-                        // if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-                        // {
-                        //     // Check collision between ray and box
-                        //     if (
-                        //         GetRayCollisionBox(GetScreenToWorldRay(GetMousePosition(), camera), bounds).hit
-                        //     ) selected = !selected;
-                        //     else selected = false;
-                        // }
-                        int centerX = boundingBox.x + boundingBox.width / 2;
-                        int centerY = boundingBox.y + boundingBox.height / 2;
                         BeginMode3D(camera);
                         DrawModel(
                             model,
                             position,
                             customElement->customData.model.scale * scaleValue,
                             WHITE
-                        );        // Draw 3d model with texture
-                        DrawGrid(20, 10.0f);         // Draw a grid
+                        );
+                        DrawGrid(20, 10.0f);
                         EndMode3D();
-                        DrawFPS(10, 10);
                         break;
+                    }
+                    case CUSTOM_LAYOUT_ELEMENT_CIRCLE: {
+                        // TODO: render a simple circle
                     }
                     default: break;
                 }

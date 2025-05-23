@@ -66,9 +66,14 @@ Clay_Sizing layoutExpand = {
     .height = CLAY_SIZING_GROW(0)
 };
 
+// Camera Raylib_camera;
+// Define the camera to look into our 3d world
+Camera camera = { 0 };
+
 typedef enum
 {
-    CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL
+    CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL,
+    CUSTOM_LAYOUT_ELEMENT_CIRCLE
 } CustomLayoutElementType;
 
 typedef struct
@@ -76,8 +81,6 @@ typedef struct
     Model model;
     Texture2D texture;
     float scale;
-    // Vector3 position;
-    // Matrix rotation;
 } CustomLayoutElement_3DModel;
 
 typedef struct
