@@ -29,6 +29,13 @@ typedef struct {
 } TextBoxData;
 
 typedef struct {
+    enum AddPlayerButtonState {
+        ADD_PLAYER_BUTTON_NOT_PRESSED = 0,
+        ADD_PLAYER_BUTTON_PRESSED,
+    } add_player_button_state;
+} AddPlayerButtonData;
+
+typedef struct {
     float yOffset;
     Arena *arena_frame;
     Arena *arena_permanent;
@@ -40,12 +47,14 @@ typedef struct {
     Clay_ElementId last_clicked;
     Model my_model;
     Texture2D my_texture;
+    AddPlayerButtonData add_player_button_data;
 } LayoutData;
 
 const int FONT_ID_BODY_16 = 0;
 
 Clay_Color text_color = {255, 255, 255, 255};
 
+// Blueish
 Clay_Color background_color = {33, 31, 41, 255};
 Clay_Color background_color_on_hover = {63, 61, 71, 255};
 
@@ -58,8 +67,8 @@ Clay_Color header_button_background_color = {140, 140, 140, 255};
 Clay_Color header_button_background_color_on_hover = {160, 160, 160, 255};
 
 // Violet
-Clay_Color add_player_button_color = {120, 90, 210, 255};
-Clay_Color add_player_button_color_on_hover = {140, 110, 230, 255};
+Clay_Color violet = {120, 90, 210, 255};
+Clay_Color violet_light = {140, 110, 230, 255};
 
 Clay_Sizing layoutExpand = {
     .width = CLAY_SIZING_GROW(0),
@@ -68,7 +77,7 @@ Clay_Sizing layoutExpand = {
 
 // Camera Raylib_camera;
 // Define the camera to look into our 3d world
-Camera camera = { 0 };
+Camera camera = {.fovy = 30};
 
 typedef enum
 {

@@ -157,6 +157,13 @@ HandleAddPlayerButtonInteraction(
             ;
         }
     }
+
+    if (pointer_data.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        user_data->add_player_button_data.add_player_button_state = ADD_PLAYER_BUTTON_PRESSED;
+    }
+    if (pointer_data.state == CLAY_POINTER_DATA_RELEASED_THIS_FRAME) {
+        user_data->add_player_button_data.add_player_button_state = ADD_PLAYER_BUTTON_NOT_PRESSED;
+    }
 }
 
 void

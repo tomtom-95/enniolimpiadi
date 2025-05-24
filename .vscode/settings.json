@@ -8,6 +8,7 @@
         "-DCMAKE_BUILD_TYPE=Debug"
     ],
     "files.associations": {
-        "__locale": "c"
+        "__locale": "c",
+        "stdbool.h": "c"
     }
 }

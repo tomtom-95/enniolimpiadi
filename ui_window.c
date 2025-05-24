@@ -113,10 +113,17 @@ LayoutAddPlayerWindow(LayoutData *data) {
             }));
         }
     }
+    Clay_Color current_add_player_button_color;
+    if (data->add_player_button_data.add_player_button_state == ADD_PLAYER_BUTTON_NOT_PRESSED) {
+        current_add_player_button_color = violet_light;
+    }
+    else {
+        current_add_player_button_color = violet;
+    }
     CLAY({
         .id = CLAY_ID("AddPlayerButton"),
         .backgroundColor = (
-            Clay_Hovered() ? add_player_button_color_on_hover : add_player_button_color
+            Clay_Hovered() ? current_add_player_button_color : violet
         ),
         .cornerRadius = CLAY_CORNER_RADIUS(8),
         .layout = {
@@ -133,6 +140,32 @@ LayoutAddPlayerWindow(LayoutData *data) {
     }) {
         Clay_OnHover(HandleAddPlayerButtonInteraction, (intptr_t)data);
         CLAY_TEXT(CLAY_STRING("Add Player"), CLAY_TEXT_CONFIG({
+            .fontId = FONT_ID_BODY_16,
+            .fontSize = 18,
+            .textColor = text_color,
+        }));
+    }
+    CLAY({
+        .id = CLAY_ID("AddPlayerFeedback"),
+        .backgroundColor = background_color,
+        .layout = {
+            .sizing = {
+                .width = CLAY_SIZING_GROW(0),
+                .height = CLAY_SIZING_FIXED(56)
+            },
+            .padding = CLAY_PADDING_ALL(16),
+            .childAlignment = {
+                .x = CLAY_ALIGN_X_CENTER,
+                .y = CLAY_ALIGN_Y_CENTER
+            }
+        }
+    }) {
+        Clay_String feedback_string = {
+            .isStaticallyAllocated = true,
+            .length = data->text_box_data.letter_count,
+            .chars = (const char *)data->text_box_data.name
+        };
+        CLAY_TEXT(feedback_string, CLAY_TEXT_CONFIG({
             .fontId = FONT_ID_BODY_16,
             .fontSize = 18,
             .textColor = text_color,
@@ -164,14 +197,13 @@ LayoutCustomElement(LayoutData *data) {
         .customData.model = {
             .model = data->my_model,
             .texture = data->my_texture,
-            .scale = 0.5f,
+            .scale = 0.3f,
         }
     };
-
     CLAY({ .id = CLAY_ID("CustomElementWindow"),
-        .backgroundColor = background_color,
+        .backgroundColor = violet,
         .layout = {
-            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+            .layoutDirection = CLAY_LEFT_TO_RIGHT,
             .sizing = layoutExpand,
             .padding = CLAY_PADDING_ALL(16),
             .childGap = 16
@@ -179,6 +211,17 @@ LayoutCustomElement(LayoutData *data) {
     }) {
         CLAY({
             .id = CLAY_ID("Bridge"),
+            .backgroundColor = header_button_background_color,
+            .layout = {
+                .sizing = layoutExpand
+            },
+            .custom = {
+                .customData = modelData
+            },
+        }) {}
+        CLAY({
+            .id = CLAY_ID("Bridge2"),
+            .backgroundColor = violet,
             .layout = {
                 .sizing = layoutExpand
             },

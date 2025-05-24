@@ -136,7 +136,7 @@ void Clay_Raylib_Initialize(
 ) {
     SetConfigFlags(flags);
     InitWindow(width, height, title);
-    EnableEventWaiting();
+    // EnableEventWaiting();
 }
 
 // A MALLOC'd buffer, that we keep modifying inorder to save from so many Malloc and Free Calls.
@@ -212,7 +212,12 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts) {
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_SCISSOR_START: {
-                BeginScissorMode((int)roundf(boundingBox.x), (int)roundf(boundingBox.y), (int)roundf(boundingBox.width), (int)roundf(boundingBox.height));
+                BeginScissorMode(
+                    (int)roundf(boundingBox.x),
+                    (int)roundf(boundingBox.y),
+                    (int)roundf(boundingBox.width),
+                    (int)roundf(boundingBox.height)
+                );
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_SCISSOR_END: {
@@ -229,14 +234,17 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts) {
                     else {
                         radius = (config->cornerRadius.topLeft * 2) / (float)boundingBox.width;
                     }
+                    Rectangle raylib_rectangle = {
+                        .x = boundingBox.x,
+                        .y = boundingBox.y,
+                        .width = boundingBox.width,
+                        .height = boundingBox.height,
+                    };
                     DrawRectangleRounded(
-                        (Rectangle) {
-                            boundingBox.x,
-                            boundingBox.y,
-                            boundingBox.width,
-                            boundingBox.height
-                        },
-                        radius, 8, CLAY_COLOR_TO_RAYLIB_COLOR(config->backgroundColor)
+                        raylib_rectangle,
+                        radius,
+                        8,
+                        CLAY_COLOR_TO_RAYLIB_COLOR(config->backgroundColor)
                     );
                 }
                 else {
@@ -294,13 +302,54 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts) {
                         float scaleValue = CLAY__MIN(
                             CLAY__MIN(1, 768 / rootBox.height) * CLAY__MAX(1, rootBox.width / 1024), 1.5f
                         );
+                        scaleValue = 0.8f;
                         Model model = customElement->customData.model.model;
                         model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = (
                             customElement->customData.model.texture
                         );
-                        Vector3 position = { 0.0f, 0.0f, 0.0f };
 
-                        UpdateCamera(&camera, CAMERA_FIRST_PERSON);
+                        // Calculate position based on the bounding box of this specific element
+                        // Convert 2D screen coordinates to 3D world positions
+                        float normalizedX = (boundingBox.x + boundingBox.width * 0.1f) / rootBox.width;
+                        float normalizedY = (boundingBox.y + boundingBox.height * 0.1f) / rootBox.height;
+    
+                        // Map normalized coordinates to 3D world space
+                        // Spread models along X axis based on their UI position
+                        Vector3 position = { 
+                            (normalizedX - 0.5f) * 80.0f,  // Spread along X axis
+                            0.0f,                          // Keep same Y level
+                            0.0f                           // Keep same Z level
+                        };
+                        // Vector3 position = {
+                        //     .x = boundingBox.x,
+                        //     .y = boundingBox.y,
+                        //     .z = 0.0f
+                        // };
+                        // Vector3 position = {
+                        //     .x = 200.0f,
+                        //     .y = 0.0f,
+                        //     .z = 0.0f
+                        // };
+
+                        // Create a camera for this specific viewport area
+                        Camera localCamera = camera;
+    
+                        UpdateCamera(&localCamera, CAMERA_FIRST_PERSON);
+
+                        DrawCircle(
+                            boundingBox.x,
+                            boundingBox.y,
+                            30,
+                            BLACK
+                        );
+
+                        DrawRectangle(
+                            boundingBox.x,
+                            boundingBox.y,
+                            boundingBox.width,
+                            boundingBox.height,
+                            CLAY_COLOR_TO_RAYLIB_COLOR(config->backgroundColor)
+                        );
 
                         BeginMode3D(camera);
                         DrawModel(

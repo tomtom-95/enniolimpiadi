@@ -84,7 +84,7 @@ CameraInit() {
     // Camera up vector (rotation towards target)
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
     // Camera field-of-view Y
-    camera.fovy = 45.0f;
+    camera.fovy = 30.0f;
     // Camera mode type
     camera.projection = CAMERA_PERSPECTIVE;
 }
@@ -102,9 +102,13 @@ int main(void) {
     log_add_fp(logfile, TMLOG_TRACE);
 
     Clay_Raylib_Initialize(
-        1024, 768,
+        1024,
+        768,
         "Enniolimpiadi",
-        FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT
+        FLAG_WINDOW_RESIZABLE |
+        FLAG_WINDOW_HIGHDPI |
+        FLAG_MSAA_4X_HINT |
+        FLAG_VSYNC_HINT
     );
 
     CameraInit();
@@ -160,8 +164,8 @@ int main(void) {
         .my_texture = my_texture
     };
 
+    SetTargetFPS(60);
     while (!WindowShouldClose()) {
-        // Run once per frame
         Clay_SetLayoutDimensions((Clay_Dimensions) {
             .width = GetScreenWidth(),
             .height = GetScreenHeight()
