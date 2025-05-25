@@ -20,6 +20,7 @@ typedef struct Player Player;
 struct Player {
     NameChunkList name;
     TournamentNameList tournaments;
+    Player *next;
 };
 
 typedef struct Players Players;
@@ -31,35 +32,42 @@ struct Players {
 typedef struct PlayerMap PlayerMap;
 struct PlayerMap {
     u64 bucket_count;
-    Player **players;
+    Player *players;
 };
-
 
 PlayerMap *
 player_map_init(Arena *arena, u64 bucket_count) {
     PlayerMap *player_map = arena_push(arena, sizeof(PlayerMap));
-    u64 players_array_size = sizeof(Player)*bucket_count;
-
-    player_map->players = arena_push(arena, players_array_size);
-    memset(player_map->players, 0, players_array_size);
-
+    player_map->players = arena_push(arena, sizeof(Player)*bucket_count);
     player_map->bucket_count = bucket_count;
-
     return player_map;
 }
 
 u64
-hash_name(NameChunkList name) {
+hash_string(String str) {
     u64 hash = 5381;
-
-
-
-    for (u8 i = 0; i < string.size; i++) {
+    for (u64 i = 0; i < str.len; ++i) {
         hash = (
             // hash * 33 + c
-            ((hash << 5) + hash) + (u64)((string.str)[i])
+            ((hash << 5) + hash) + (u64)((str.str)[i])
         );
     }
+    return hash;
+}
+
+u64
+hash_name(Arena *arena, NameChunkList name) {
+    u64 hash = 5381;
+
+    Temp temp = temp_begin(arena);
+    String str = name_cat(arena, name);
+    for (u64 i = 0; i < str.len; ++i) {
+        hash = (
+            // hash * 33 + c
+            ((hash << 5) + hash) + (u64)((str.str)[i])
+        );
+    }
+    temp_end(temp);
     
     return hash;
 }
@@ -67,42 +75,35 @@ hash_name(NameChunkList name) {
 void
 player_create(
     Arena *arena,
+    Names *names,
+    Players *players,
     PlayerMap *player_map,
-    String player_name,
-    PlayerFreeList *player_free_list
+    String player_name
 ) {
-    assert(player_name.size <= STRING_MAX_LEN);
-
     u64 bucket_num = hash_string(player_name) % player_map->bucket_count;
-
-    PlayerNode **players = player_map->players + bucket_num;
-
-    // check that player_name is not already present between players
-    while (*players) {
-        if (string_are_equal((*players)->player_name, player_name)) {
+    Player *bucket_head = player_map->players + bucket_num;
+    Player **player = &bucket_head;
+    NameChunkList name = name_save(names, player_name);
+    while (*player) {
+        if (name_cmp((*player)->name, name)) {
             log_error("%s, is already present", player_name);
+            name_delete(names, name);
             return;
         }
         else {
-            players = &((*players)->next);
+            player = &((*player)->next);
         }
     }
-
-    PlayerNode *node = player_free_list->first_free_entry;
-    if (node) {
-        player_free_list->first_free_entry = (
-            player_free_list->first_free_entry->next
-        );
+    // Add player
+    *player = players->first_free;
+    if (*player) {
+        players->first_free = players->first_free->next;
     }
     else {
-        node = arena_push(arena, sizeof(*node));
+        *player = arena_push(arena, sizeof(Player)); 
     }
-
-    node->player_name = player_name;
-    node->next = NULL;
-    node->tournament_names_head = NULL; 
-
-    *players = node;
+    (*player)->name = name;
+    // TODO: add some tournaments
 }
 
 void

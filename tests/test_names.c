@@ -18,6 +18,10 @@ int main(void) {
         "HellooooooooooooooooooooooooooooooooooooooooooooooooooooCiaoHelloAgain"
     );
     NameChunkList name1 = name_save(&names, str1);
+
+    Temp temp = temp_begin(&arena);
     String res = name_cat(&arena, name1);
-    printf("%s", res.str);
+    printf("Here's the string: %.*s\n", (s32)res.len, res.str);
+    string_print(res);
+    temp_end(temp);
 }

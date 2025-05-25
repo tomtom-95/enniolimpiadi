@@ -11,18 +11,22 @@
 #include "log.c"
 #include "utils.c"
 
-typedef struct
-{
+typedef struct Arena Arena;
+struct Arena {
     u8 *data;
     u64 pos;
     u64 size;
-} Arena;
+};
+
+typedef struct Temp Temp;
+struct Temp {
+    Arena *arena;
+    u64 pos;
+};
 
 // TODO: proper align on push and pop
 Arena
 arena_alloc(u64 size) {
-    log_info("Allocating %" PRIu64 " bytes for the arena ...", size);
-
     Arena arena = {0};
 
     u8 *data = malloc(size);
@@ -41,35 +45,35 @@ arena_dealloc(Arena *arena) {
     arena->data = NULL;
 }
 
-
 void *
-arena_push(Arena *arena, u64 size)
-{
+arena_push(Arena *arena, u64 size) {
     // TODO: this must become a proper handling
     assert(arena->pos + size <= arena->size);
-
     void *result = arena->data + arena->pos;
     arena->pos += size;
-
     memset(result, 0, size);
-
     return result;
 }
 
-
 void
-arena_pop(Arena *arena, u64 size)
-{
+arena_pop(Arena *arena, u64 size) {
     assert(arena->pos > arena->size);
-
     arena->pos -= arena->size;
 }
 
+void
+arena_clear(Arena *arena) {
+    arena->pos = 0;
+}
+
+Temp
+temp_begin(Arena *arena) {
+    return (Temp){.arena = arena, .pos = arena->pos};
+}
 
 void
-arena_clear(Arena *arena)
-{
-    arena->pos = 0;
+temp_end(Temp temp) {
+    temp.arena->pos = temp.pos;
 }
 
 #endif // ARENA_C

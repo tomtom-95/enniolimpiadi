@@ -74,4 +74,25 @@ name_cat(Arena *arena, NameChunkList name) {
     return str;
 }
 
+bool
+name_cmp(NameChunkList name1, NameChunkList name2) {
+    if (name1.len != name2.len) {
+        return false;
+    }
+
+    u64 needed_chunks = (name1.len + NAME_CHUNK_PAYLOAD_SIZE - 1) / NAME_CHUNK_PAYLOAD_SIZE;
+    NameChunk *chunk1 = name1.head;
+    NameChunk *chunk2 = name2.head;
+    for (u64 i = 0; i < needed_chunks; ++i) {
+        if (memcmp(chunk1, chunk2, NAME_CHUNK_PAYLOAD_SIZE)) {
+            return false;
+        }
+        else {
+            chunk1 = chunk1->next;
+            chunk2 = chunk2->next;
+        }
+    }
+    return true;
+}
+
 #endif // NAMES_V2
