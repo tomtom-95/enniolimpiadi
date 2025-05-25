@@ -5,56 +5,40 @@
 #include "names.c"
 #include "string.c"
 
+typedef struct TournamentName TournamentName;
+struct TournamentName {
+    NameChunkList name;
+    TournamentName *next;
+};
+
+typedef struct TournamentNameList TournamentNameList;
+struct TournamentNameList {
+    TournamentName *head;
+};
+
+typedef struct Player Player;
+struct Player {
+    NameChunkList name;
+    TournamentNameList tournaments;
+};
+
+typedef struct Players Players;
+struct Players {
+    Arena *arena;
+    Player *first_free;
+};
+
 typedef struct PlayerMap PlayerMap;
-typedef struct PlayerFreeList PlayerFreeList;
-typedef struct PlayerNode PlayerNode;
-
-typedef struct TournamentMap TournamentMap;
-typedef struct TournamentFreeList TournamentFreeList;
-typedef struct TournamentNode TournamentNode;
-
-typedef struct NameFreeList NameFreeList;
-
-typedef struct TournamentNamesArray TournamentNamesArray;
-
-struct PlayerFreeList {
-    PlayerNode *first_free_entry;
-};
-
-struct TournamentFreeList {
-    TournamentNode *first_free_entry;
-};
-
-struct NameFreeList {
-    Name *first_free_entry;
-};
-
 struct PlayerMap {
     u64 bucket_count;
-    PlayerNode **players;
-};
-
-struct PlayerNode {
-    String player_name;
-    Name *tournament_names_head;
-    PlayerNode *next;
-};
-
-struct TournamentNode {
-    String *tournament_name;
-    TournamentNode *next;
-};
-
-struct TournamentNamesArray {
-    String *names;
-    u64 count;
+    Player **players;
 };
 
 
 PlayerMap *
 player_map_init(Arena *arena, u64 bucket_count) {
-    PlayerMap *player_map = arena_push(arena, sizeof(*player_map));
-    u64 players_array_size = sizeof(*(player_map->players))*bucket_count;
+    PlayerMap *player_map = arena_push(arena, sizeof(PlayerMap));
+    u64 players_array_size = sizeof(Player)*bucket_count;
 
     player_map->players = arena_push(arena, players_array_size);
     memset(player_map->players, 0, players_array_size);
@@ -65,8 +49,10 @@ player_map_init(Arena *arena, u64 bucket_count) {
 }
 
 u64
-hash_string(String string) {
+hash_name(NameChunkList name) {
     u64 hash = 5381;
+
+
 
     for (u8 i = 0; i < string.size; i++) {
         hash = (

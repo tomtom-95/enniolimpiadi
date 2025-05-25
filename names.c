@@ -1,104 +1,77 @@
-#ifndef NAMES_C
-#define NAMES_C
-
-#include <stdlib.h>
-#include <stdio.h>
+#ifndef NAMES_V2
+#define NAMES_V2
 
 #include "utils.c"
 #include "arena.c"
 #include "string.c"
 
-typedef struct Name Name;
-typedef struct NameList NameList;
+#define NAME_CHUNK_PAYLOAD_SIZE 56
 
-/*
-    head is a dummy element to simplify function logic.
-    It is guaranteed to be always present
-*/ 
-struct NameList {
-    Name *head;
-    Name *first_free_entry;
+typedef struct NameChunk NameChunk;
+struct NameChunk {
+    u8 str[NAME_CHUNK_PAYLOAD_SIZE];
+    NameChunk *next;
 };
 
-struct Name {
-    String name;
-    Name *next;
+typedef struct NameChunkList NameChunkList;
+struct NameChunkList {
+    NameChunk *head;
+    u64 len;
 };
 
-NameList *
-name_list_init(Arena *arena) {
-    NameList *ll = arena_push(arena, sizeof(*ll));
-    ll->head = arena_push(arena, sizeof(*(ll->head)));
-    memset(ll->head, 0, sizeof(*(ll->head)));
-    ll->first_free_entry = NULL;
-    return ll;
-}
+typedef struct Names Names;
+struct Names {
+    Arena *arena; 
+    NameChunk *first_free;
+};
 
-void
-name_list_push_left(Arena *arena, NameList *ll, String name) {
-    Name *node = ll->first_free_entry;
+NameChunkList
+name_save(Names *names, String str) {
+    u64 bytes_left = str.len;
+    u64 needed_chunks = (str.len + NAME_CHUNK_PAYLOAD_SIZE - 1) / NAME_CHUNK_PAYLOAD_SIZE;
 
-    if (node) {
-        ll->first_free_entry = ll->first_free_entry->next;
-    }
-    else {
-        node = arena_push(arena, sizeof(*node));
-    }
-
-    node->name = name;
-    node->next = ll->head->next;
-    ll->head->next = node;
-}
-
-void
-name_list_push_right(Arena *arena, NameList *ll, String name) {
-    Name **node = &(ll->head->next);
-    while (*node) {
-        node = &((*node)->next);
-    }
-
-    *node = ll->first_free_entry;
-    if (*node) {
-        ll->first_free_entry = ll->first_free_entry->next;
-    }
-    else {
-        *node = arena_push(arena, sizeof(**node));
-    }
-    (*node)->name = name;
-    (*node)->next = NULL;
-}
-
-void
-name_list_pop_right(NameList *ll) {
-    Name **name = &(ll->head);
-    while ((*name)->next) {
-        name = &((*name)->next);
-    }
-
-    Name *name_to_remove = *name;
-
-    *name = NULL;
-    name_to_remove->next = ll->first_free_entry;
-    ll->first_free_entry = name_to_remove;
-}
-
-void
-name_list_pop(NameList *ll, String name) {
-    Name **node = &(ll->head->next);
-    while (*node) {
-        if (string_are_equal((*node)->name, name)) {
-            Name *node_to_remove = *node;
-
-            *node = (*node)->next;
-            node_to_remove->next = ll->first_free_entry;
-            ll->first_free_entry = node_to_remove;
-
-            return;
+    NameChunkList name = {.head = NULL, .len = bytes_left};
+    NameChunk **chunk = &(name.head);
+    for (u64 i = 0; i < needed_chunks; ++i) {
+        *chunk = names->first_free;
+        if (*chunk) {
+            names->first_free = names->first_free->next;
         }
         else {
-            node = &((*node)->next);
+            *chunk = (NameChunk *)arena_push(names->arena, sizeof(NameChunk)); 
         }
+        u64 bytes_to_copy = getmin((u64)NAME_CHUNK_PAYLOAD_SIZE, bytes_left);
+        memcpy((*chunk)->str, str.str + i * NAME_CHUNK_PAYLOAD_SIZE, bytes_to_copy);
+        bytes_left -= bytes_to_copy;
+        chunk = &((*chunk)->next);
     }
+    *chunk = NULL;
+    return name;
 }
 
-#endif // NAMES
+void
+name_delete(Names *names, NameChunkList name) {
+    NameChunk **chunk = &(name.head);
+    while (*chunk) {
+        chunk = &((*chunk)->next);
+    }
+    *chunk = names->first_free;
+    names->first_free = name.head;
+}
+
+String
+name_cat(Arena *arena, NameChunkList name) {
+    u64 bytes_left = name.len;
+    u64 needed_chunks = (bytes_left + NAME_CHUNK_PAYLOAD_SIZE - 1) / NAME_CHUNK_PAYLOAD_SIZE;
+    String str = {.str = arena_push(arena, bytes_left), .len = bytes_left};
+    NameChunk *chunk = name.head;
+    for (u64 i = 0; i < needed_chunks; ++i) {
+        u64 bytes_to_copy = getmin((u64)NAME_CHUNK_PAYLOAD_SIZE, bytes_left);
+        memcpy(str.str + i * NAME_CHUNK_PAYLOAD_SIZE, chunk->str, bytes_to_copy);
+        bytes_left -= bytes_to_copy;
+        chunk = chunk->next;
+    }
+    return str;
+}
+
+#endif // NAMES_V2

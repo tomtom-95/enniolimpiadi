@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include <inttypes.h>
+#include <string.h>
 
 #include "log.c"
 #include "utils.c"
