@@ -10,18 +10,14 @@ int main(void) {
     log_set_level(TMLOG_DEBUG);
 
     Arena arena = arena_alloc(KiloByte(1));
-    Names names = {
-        .arena = &arena,
-        .first_free = NULL
-    };
-    String str1 = string_from_cstring_lit(
-        "HellooooooooooooooooooooooooooooooooooooooooooooooooooooCiaoHelloAgain"
-    );
-    NameChunkList name1 = name_save(&names, str1);
+    NameChunkState name_chunk_state = {.arena = &arena, .first_free = NULL};
+    NameState name_state = {.arena = &arena, .first_free = NULL};
 
-    Temp temp = temp_begin(&arena);
-    String res = name_cat(&arena, name1);
-    printf("Here's the string: %.*s\n", (s32)res.len, res.str);
-    string_print(res);
-    temp_end(temp);
+    String str1 = string_from_cstring_lit("Hello");
+    String str2 = string_from_cstring_lit("Ciao");
+
+    NameList namelist = {0};
+    namelist_append_right(&name_state, &name_chunk_state, &namelist, str1);
+    namelist_append_right(&name_state, &name_chunk_state, &namelist, str2);
+    namelist_pop(&name_state, &name_chunk_state, &namelist);
 }

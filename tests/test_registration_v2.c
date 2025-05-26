@@ -20,4 +20,5 @@ int main(void) {
     player_create(&names, &players, player_map, string_from_cstring_lit("Riccardo"));
     player_create(&names, &players, player_map, string_from_cstring_lit("Giulio"));
     player_create(&names, &players, player_map, string_from_cstring_lit("Mario"));
+    player_delete(&names, &players, player_map, string_from_cstring_lit("Giulio"));
 }

@@ -13,8 +13,9 @@ struct TournamentName {
 
 typedef struct TournamentNameList TournamentNameList;
 struct TournamentNameList {
-    TournamentName *head;
+    NameChunkList *head;
 };
+
 
 typedef struct Player Player;
 struct Player {
@@ -101,7 +102,99 @@ player_create(
         *player = arena_push(players->arena, sizeof(Player)); 
     }
     (*player)->name = name;
-    // TODO: add some tournaments
+}
+
+Player *
+player_find(
+    Arena *arena,
+    PlayerMap player_map,
+    NameChunkList player_name
+) {
+    Temp temp = temp_begin(arena);
+    String str = name_cat(arena, player_name);
+    u64 bucket_num = hash_string(str) % player_map.bucket_count;
+    temp_end(temp);
+
+    Player *player = player_map.players[bucket_num];
+    while (player) {
+        if (name_cmp(player_name, player->name)) {
+            return player;
+        }
+        else {
+            player = player->next;
+        }
+    }
+    return NULL;
+}
+
+void
+player_rename(
+    Names *names,
+    Players *players,
+    Player *player,
+    String newname
+) {
+    name_delete(names, player->name);
+    NameChunkList res = name_save(names, newname);
+    player->name = res;
+}
+
+void
+player_delete(
+    Names *names,
+    Players *players,
+    PlayerMap *player_map,
+    String name
+) {
+    NameChunkList player_name = name_save(names, name);
+    u64 bucket_num = hash_string(name) % player_map->bucket_count;
+
+    Player **player = &(player_map->players[bucket_num]);
+    while (*player) {
+        if (name_cmp((*player)->name, player_name)) {
+            Player *tmp = *player;
+            *player = (*player)->next;
+
+            tmp->next = players->first_free;
+            players->first_free = tmp;
+            name_delete(names, (*player)->name);
+            // TODO: dealloc tournaments list
+            break;
+        }
+        else {
+            player = &((*player)->next);
+        }
+    }
+
+    name_delete(names, player_name);
+}
+
+void
+player_enroll(
+    Names *names,
+    PlayerMap *player_map,
+    String _player_name,
+    String _tournament_name
+) {
+    NameChunkList player_name = name_save(names, _player_name);
+    u64 bucket_num = hash_string(_player_name) % player_map->bucket_count;
+
+    Player **player = &(player_map->players[bucket_num]);
+    while (*player) {
+        if (name_cmp((*player)->name, player_name)) {
+            TournamentNameList tournaments = (*player)->tournaments;
+            TournamentName **tournament_name = &(tournaments.head);
+            while (*tournament_name) {
+                tournament_name = &((*tournament_name)->next);
+            }
+
+        }
+        else {
+            player = &((*player)->next);
+        }
+    } 
+
+    name_delete(names, player_name);
 }
 
 #endif // REGISTRATION_V2_C

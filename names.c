@@ -13,24 +13,36 @@ struct NameChunk {
     NameChunk *next;
 };
 
-typedef struct NameChunkList NameChunkList;
-struct NameChunkList {
+typedef struct Name Name;
+struct Name {
     NameChunk *head;
     u64 len;
+    Name *next;
 };
 
-typedef struct Names Names;
-struct Names {
+typedef struct NameChunkState NameChunkState;
+struct NameChunkState {
     Arena *arena; 
     NameChunk *first_free;
 };
 
-NameChunkList
-name_save(Names *names, String str) {
+typedef struct NameList NameList;
+struct NameList {
+    Name *head;
+};
+
+typedef struct NameState NameState;
+struct NameState {
+    Arena *arena;
+    Name *first_free;
+};
+
+Name
+name_save(NameChunkState *names, String str) {
     u64 bytes_left = str.len;
     u64 needed_chunks = (str.len + NAME_CHUNK_PAYLOAD_SIZE - 1) / NAME_CHUNK_PAYLOAD_SIZE;
 
-    NameChunkList name = {.head = NULL, .len = bytes_left};
+    Name name = {.head = NULL, .len = bytes_left, .next = NULL};
     NameChunk **chunk = &(name.head);
     for (u64 i = 0; i < needed_chunks; ++i) {
         *chunk = names->first_free;
@@ -50,7 +62,7 @@ name_save(Names *names, String str) {
 }
 
 void
-name_delete(Names *names, NameChunkList name) {
+name_delete(NameChunkState *names, Name name) {
     NameChunk **chunk = &(name.head);
     while (*chunk) {
         chunk = &((*chunk)->next);
@@ -60,7 +72,7 @@ name_delete(Names *names, NameChunkList name) {
 }
 
 String
-name_cat(Arena *arena, NameChunkList name) {
+name_cat(Arena *arena, Name name) {
     u64 bytes_left = name.len;
     u64 needed_chunks = (bytes_left + NAME_CHUNK_PAYLOAD_SIZE - 1) / NAME_CHUNK_PAYLOAD_SIZE;
     String str = {.str = arena_push(arena, bytes_left), .len = bytes_left};
@@ -75,7 +87,7 @@ name_cat(Arena *arena, NameChunkList name) {
 }
 
 bool
-name_cmp(NameChunkList name1, NameChunkList name2) {
+name_cmp(Name name1, Name name2) {
     if (name1.len != name2.len) {
         return false;
     }
@@ -93,6 +105,50 @@ name_cmp(NameChunkList name1, NameChunkList name2) {
         }
     }
     return true;
+}
+
+void
+namelist_append_right(
+    NameState *name_state,
+    NameChunkState *name_chunk_state,
+    NameList *namelist,
+    String string
+) {
+    Name name = name_save(name_chunk_state, string);
+
+    Name **node = &(namelist->head);
+    while (*node) {
+        node = &((*node)->next);
+    }
+    *node = name_state->first_free;
+    if (*node) {
+        name_state->first_free = name_state->first_free->next;
+    }
+    else {
+        *node = arena_push(name_state->arena, sizeof(Name));
+    }
+    (*node)->head = name.head;
+    (*node)->len = name.len;
+    (*node)->next = NULL;
+}
+
+void
+namelist_pop(
+    NameState *name_state,
+    NameChunkState *name_chunk_state,
+    NameList *namelist
+) {
+    Name **node = &(namelist->head);
+    if (*node) {
+        while ((*node)->next) {
+            node = &((*node)->next);
+        }
+        Name *tmp = *node;
+        *node = NULL;
+        name_delete(name_chunk_state, *tmp);
+        tmp->next = name_state->first_free;
+        name_state->first_free = tmp;
+    }
 }
 
 #endif // NAMES_V2
