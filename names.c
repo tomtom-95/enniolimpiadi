@@ -38,19 +38,19 @@ struct NameState {
 };
 
 Name
-name_save(NameChunkState *names, String str) {
+name_save(NameChunkState *name_chunk_state, String str) {
     u64 bytes_left = str.len;
     u64 needed_chunks = (str.len + NAME_CHUNK_PAYLOAD_SIZE - 1) / NAME_CHUNK_PAYLOAD_SIZE;
 
     Name name = {.head = NULL, .len = bytes_left, .next = NULL};
     NameChunk **chunk = &(name.head);
     for (u64 i = 0; i < needed_chunks; ++i) {
-        *chunk = names->first_free;
+        *chunk = name_chunk_state->first_free;
         if (*chunk) {
-            names->first_free = names->first_free->next;
+            name_chunk_state->first_free = name_chunk_state->first_free->next;
         }
         else {
-            *chunk = (NameChunk *)arena_push(names->arena, sizeof(NameChunk)); 
+            *chunk = (NameChunk *)arena_push(name_chunk_state->arena, sizeof(NameChunk)); 
         }
         u64 bytes_to_copy = getmin((u64)NAME_CHUNK_PAYLOAD_SIZE, bytes_left);
         memcpy((*chunk)->str, str.str + i * NAME_CHUNK_PAYLOAD_SIZE, bytes_to_copy);
@@ -62,28 +62,13 @@ name_save(NameChunkState *names, String str) {
 }
 
 void
-name_delete(NameChunkState *names, Name name) {
+name_delete(NameChunkState *name_chunk_state, Name name) {
     NameChunk **chunk = &(name.head);
     while (*chunk) {
         chunk = &((*chunk)->next);
     }
-    *chunk = names->first_free;
-    names->first_free = name.head;
-}
-
-String
-name_cat(Arena *arena, Name name) {
-    u64 bytes_left = name.len;
-    u64 needed_chunks = (bytes_left + NAME_CHUNK_PAYLOAD_SIZE - 1) / NAME_CHUNK_PAYLOAD_SIZE;
-    String str = {.str = arena_push(arena, bytes_left), .len = bytes_left};
-    NameChunk *chunk = name.head;
-    for (u64 i = 0; i < needed_chunks; ++i) {
-        u64 bytes_to_copy = getmin((u64)NAME_CHUNK_PAYLOAD_SIZE, bytes_left);
-        memcpy(str.str + i * NAME_CHUNK_PAYLOAD_SIZE, chunk->str, bytes_to_copy);
-        bytes_left -= bytes_to_copy;
-        chunk = chunk->next;
-    }
-    return str;
+    *chunk = name_chunk_state->first_free;
+    name_chunk_state->first_free = name.head;
 }
 
 bool
@@ -133,7 +118,7 @@ namelist_append_right(
 }
 
 void
-namelist_pop(
+namelist_pop_right(
     NameState *name_state,
     NameChunkState *name_chunk_state,
     NameList *namelist
@@ -143,12 +128,36 @@ namelist_pop(
         while ((*node)->next) {
             node = &((*node)->next);
         }
-        Name *tmp = *node;
+        Name *to_remove = *node;
         *node = NULL;
-        name_delete(name_chunk_state, *tmp);
-        tmp->next = name_state->first_free;
-        name_state->first_free = tmp;
+        name_delete(name_chunk_state, *to_remove);
+        to_remove->next = name_state->first_free;
+        name_state->first_free = to_remove;
     }
+}
+
+void
+namelist_pop(
+    NameState *name_state,
+    NameChunkState *name_chunk_state,
+    NameList *namelist,
+    String str
+) {
+    Name name = name_save(name_chunk_state, str);
+    Name **node = &(namelist->head);
+    while (*node) {
+        if (name_cmp(**node, name)) {
+            Name *to_remove = *node;
+            *node = (*node)->next;
+            name_delete(name_chunk_state, *to_remove);
+            to_remove->next = name_state->first_free;
+            name_state->first_free = to_remove;
+        }
+        else {
+            node = &((*node)->next);
+        }
+    }
+    name_delete(name_chunk_state, name);
 }
 
 #endif // NAMES_V2
