@@ -4,60 +4,33 @@
 
 #include "../log.c"
 
+#include "../string.c"
 #include "../utils.c"
-#include "../registration.c"
 #include "../names.c"
-
-void
-registration_test(void) {
-    Arena arena = arena_alloc(MegaByte(1));
-    if (!arena.data) {
-        log_error("test failed");
-    }
-
-    PlayerMap *players = player_map_init(&arena, 16);
-    PlayerFreeList player_free_list = {.first_free_entry = NULL};
-    NameFreeList name_free_list = {.first_free_entry = NULL};
-
-    String gianni = string_from_cstring((u8 *)"Gianni");
-    String giulio = string_from_cstring((u8 *)"Giulio");
-
-    String ping_pong = string_from_cstring((u8 *)"Ping Pong");
-
-    player_create(
-        &arena,
-        players,
-        gianni,
-        &player_free_list
-    );
-    player_create(
-        &arena,
-        players,
-        giulio,
-        &player_free_list
-    );
-    player_enroll(
-        &arena,
-        players,
-        gianni,
-        ping_pong,
-        &name_free_list
-    );
-}
+#include "../registration.c"
 
 int main(void) {
     log_set_level(TMLOG_DEBUG);
 
-    FILE *logfile = fopen("../test_registration.log", "w");
-    if (!logfile) {
-        printf("Failed to open file for logging");
-        return 1;
-    }
+    Arena arena = arena_alloc(KiloByte(1));
+    NameState name_state = {.arena = &arena, .first_free = NULL};
+    NameChunkState name_chunk_state = {.arena = &arena, .first_free = NULL};
+    PlayerState player_state = {.arena = &arena, .first_free = NULL};
 
-    // Log all levels to file
-    log_add_fp(logfile, TMLOG_TRACE);
+    String giulio = string_from_cstring_lit("Giulio");
+    String riccardo = string_from_cstring_lit("Riccardo");
+    String mario = string_from_cstring_lit("Mario");
+    String newriccardo = string_from_cstring_lit("New Riccardo");
 
-    log_info("tm_hashmap tests started");
-    registration_test();
-    log_info("tm_hashmap tests ended");
+    String ping_pong = string_from_cstring_lit("Ping Pong");
+    String machiavelli = string_from_cstring_lit("Machiavelli");
+
+    PlayerMap *player_map = player_map_init(&arena, 1);
+    player_create(&name_chunk_state, &player_state, player_map, riccardo);
+    player_create(&name_chunk_state, &player_state, player_map, giulio);
+    player_create(&name_chunk_state, &player_state, player_map, mario);
+    player_enroll(&name_state, &name_chunk_state, player_map, riccardo, ping_pong);
+    player_enroll(&name_state, &name_chunk_state, player_map, riccardo, machiavelli);
+    player_withdraw(&name_state, &name_chunk_state, player_map, riccardo, ping_pong);
+    player_rename(player_map, &name_chunk_state, riccardo, newriccardo);
 }

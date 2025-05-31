@@ -21,5 +21,5 @@ int main(void) {
     NameList namelist = {0};
     namelist_append_right(&name_state, &name_chunk_state, &namelist, str1);
     namelist_append_right(&name_state, &name_chunk_state, &namelist, str2);
-    namelist_pop(&name_state, &name_chunk_state, &namelist, str1);
+    namelist_delete(&name_state, &name_chunk_state, &namelist);
 }

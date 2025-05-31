@@ -62,13 +62,14 @@ name_save(NameChunkState *name_chunk_state, String str) {
 }
 
 void
-name_delete(NameChunkState *name_chunk_state, Name name) {
-    NameChunk **chunk = &(name.head);
+name_delete(NameChunkState *name_chunk_state, Name *name) {
+    NameChunk **chunk = &(name->head);
     while (*chunk) {
         chunk = &((*chunk)->next);
     }
     *chunk = name_chunk_state->first_free;
-    name_chunk_state->first_free = name.head;
+    name_chunk_state->first_free = name->head;
+    name->head = NULL; // not necessary: but useful?
 }
 
 bool
@@ -130,7 +131,7 @@ namelist_pop_right(
         }
         Name *to_remove = *node;
         *node = NULL;
-        name_delete(name_chunk_state, *to_remove);
+        name_delete(name_chunk_state, to_remove);
         to_remove->next = name_state->first_free;
         name_state->first_free = to_remove;
     }
@@ -149,7 +150,7 @@ namelist_pop(
         if (name_cmp(**node, name)) {
             Name *to_remove = *node;
             *node = (*node)->next;
-            name_delete(name_chunk_state, *to_remove);
+            name_delete(name_chunk_state, to_remove);
             to_remove->next = name_state->first_free;
             name_state->first_free = to_remove;
         }
@@ -157,7 +158,24 @@ namelist_pop(
             node = &((*node)->next);
         }
     }
-    name_delete(name_chunk_state, name);
+    name_delete(name_chunk_state, &name);
+}
+
+void
+namelist_delete(
+    NameState *name_state,
+    NameChunkState *name_chunk_state,
+    NameList *namelist
+) {
+    Name *node = namelist->head;
+    while (node) {
+        Name *to_remove = node;
+        node = node->next;
+        name_delete(name_chunk_state, to_remove);
+        to_remove->next = name_state->first_free;
+        name_state->first_free = to_remove;
+    }
+    namelist->head = NULL; // not necessary, but useful?
 }
 
 #endif // NAMES_V2

@@ -1,5 +1,0 @@
-2025-05-10 12:35:42 INFO  /Users/tommasopellegrino/Projects/enniolimpiadi/tests/test_tmstring.c:20:main: String tests started
-2025-05-10 12:35:42 INFO  /Users/tommasopellegrino/Projects/enniolimpiadi/tests/test_tmstring.c:32:main: Strings are not equal
-2025-05-10 12:35:42 INFO  /Users/tommasopellegrino/Projects/enniolimpiadi/tests/../tm_arena.c:24:arena_alloc: Allocating 1048576 bytes for the arena ...
-2025-05-10 12:35:42 INFO  /Users/tommasopellegrino/Projects/enniolimpiadi/tests/../tm_arena.c:38:arena_alloc: Arena of size 1048576 has been allocated
-2025-05-10 12:35:44 INFO  /Users/tommasopellegrino/Projects/enniolimpiadi/tests/test_tmstring.c:41:main: String tests finished
