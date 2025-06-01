@@ -196,5 +196,33 @@ player_rename(
     player->player_name = newname;
 }
 
+StringList
+list_tournaments(
+    Arena *arena,
+    PlayerMap *player_map
+) {
+    StringList string_list = {0};
+    StringNode **node = &(string_list.head);
+    for (u64 bucket = 0; bucket < player_map->bucket_count; ++bucket) {
+        Player **player = player_map->players + bucket;
+        while (*player) {
+            Name *tournament = ((*player)->tournament_names).head;
+            while (tournament) {
+                String str = name_to_string(arena, *tournament);
+                if (!string_list_find(&string_list, str)) {
+                    // string_list_push(arena, &string_list, str);
+                    *node = arena_push(arena, sizeof(StringNode));
+                    (*node)->str = str;
+                    ++(string_list.len);
+                    node = &((*node)->next);
+                }
+                tournament = tournament->next;
+            }
+            player = &((*player)->next);
+        }
+    }
+    return string_list;
+}
+
 
 #endif // REGISTRATION_V2_C

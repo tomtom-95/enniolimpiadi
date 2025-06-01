@@ -18,9 +18,8 @@ typedef enum {
 typedef struct {
     double frame_timer;
     u64 frame_counter;
-    s32 letter_count;
-    u8 name[128];
-    
+    String str;
+    u32 max_str_len;
     enum BackspaceKeyState {
         BACKSPACE_NOT_PRESSED = 0,
         BACKSPACE_FIRST,
@@ -40,7 +39,9 @@ typedef struct {
     Arena *arena_frame;
     Arena *arena_permanent;
     PlayerMap *player_map;
-    PlayerFreeList player_free_list;
+    PlayerState *player_state;
+    NameState *name_state;
+    NameChunkState *name_chunk_state;
     Tab tab;
     TextBoxData text_box_data;
     Texture2D profilePicture;
@@ -52,19 +53,16 @@ typedef struct {
 
 const int FONT_ID_BODY_16 = 0;
 
-Clay_Color text_color = {255, 255, 255, 255};
+Clay_Color white = {255, 255, 255, 255};
 
 // Blueish
-Clay_Color background_color = {33, 31, 41, 255};
-Clay_Color background_color_on_hover = {63, 61, 71, 255};
+Clay_Color blue = {33, 31, 41, 255};
+Clay_Color blue_ligth = {63, 61, 71, 255};
 
 // Gray
-Clay_Color background_color_window = {90, 90, 90, 255};
-Clay_Color background_color_header = {90, 90, 90, 255};
-
-// Lighter gray
-Clay_Color header_button_background_color = {140, 140, 140, 255};
-Clay_Color header_button_background_color_on_hover = {160, 160, 160, 255};
+Clay_Color gray = {90, 90, 90, 255};
+Clay_Color gray_light = {140, 140, 140, 255};
+Clay_Color gray_lighter = {160, 160, 160, 255};
 
 // Violet
 Clay_Color violet = {120, 90, 210, 255};
@@ -82,7 +80,8 @@ Camera camera = {.fovy = 30};
 typedef enum
 {
     CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL,
-    CUSTOM_LAYOUT_ELEMENT_CIRCLE
+    CUSTOM_LAYOUT_ELEMENT_CIRCLE,
+    CUSTOM_LAYOUT_ELEMENT_RAY_TEXTBOX
 } CustomLayoutElementType;
 
 typedef struct
@@ -92,11 +91,16 @@ typedef struct
     float scale;
 } CustomLayoutElement_3DModel;
 
+typedef struct {
+    CustomLayoutElementType type; 
+} CustomLayoutElement_RayTextBox;
+
 typedef struct
 {
     CustomLayoutElementType type;
     union {
         CustomLayoutElement_3DModel model;
+        CustomLayoutElement_RayTextBox ray_texbox;
     } customData;
 } CustomLayoutElement;
 

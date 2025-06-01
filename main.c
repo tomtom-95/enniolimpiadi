@@ -22,7 +22,7 @@ GetLayout(LayoutData *data) {
 
     Clay_BeginLayout();
     CLAY({ .id = CLAY_ID("MainWindow"),
-        .backgroundColor = background_color,
+        .backgroundColor = blue,
         .layout = {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
             .sizing = layoutExpand,
@@ -34,7 +34,7 @@ GetLayout(LayoutData *data) {
         LayoutHeaderBar(data);
         CLAY({
             .id = CLAY_ID("MainContent"),
-            .backgroundColor = background_color_window,
+            .backgroundColor = gray,
             .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() },
             .layout = {
                 .sizing = layoutExpand,
@@ -59,11 +59,11 @@ GetLayout(LayoutData *data) {
                 } break;
                 case TAB_NEW_TOURNAMENT:
                 {
-                    LayoutAddTournamentWindow(data);
+                    // LayoutAddTournamentWindow(data);
                 } break;
                 case TAB_CUSTOM:
                 {
-                    LayoutCustomElement(data);
+                    // LayoutCustomElement(data);
                 }
             }
         }
@@ -90,17 +90,6 @@ CameraInit() {
 }
 
 int main(void) {
-    log_set_level(TMLOG_DEBUG);
-
-    FILE *logfile = fopen("../logs/main.log", "w");
-    if (!logfile) {
-        printf("Failed to open file for logging");
-        return 1;
-    }
-
-    // Log all levels to file
-    log_add_fp(logfile, TMLOG_TRACE);
-
     Clay_Raylib_Initialize(
         1024,
         768,
@@ -128,37 +117,54 @@ int main(void) {
     SetTextureFilter(fonts[FONT_ID_BODY_16].texture, TEXTURE_FILTER_BILINEAR);
     Clay_SetMeasureTextFunction(Raylib_MeasureText, fonts);
 
-    // My stuff to test if I can get what I want on the UI
     Arena arena_permanent = arena_alloc(MegaByte(1));
     Arena arena_frame = arena_alloc(MegaByte(1));
 
-    String gianni = string_from_cstring((u8 *)"Gianni");
-    String giulio = string_from_cstring((u8 *)"Giulio");
-    String ping_pong = string_from_cstring((u8 *)"Ping Pong");
-    String machiavelli = string_from_cstring((u8 *)"Machiavelli");
+    NameState name_state = {.arena = &arena_permanent, .first_free = NULL};
+    NameChunkState name_chunk_state = {.arena = &arena_permanent, .first_free = NULL};
+    PlayerState player_state = {.arena = &arena_permanent, .first_free = NULL};
 
-    PlayerFreeList player_free_list = {.first_free_entry = NULL};
-    NameFreeList name_free_list = {.first_free_entry = NULL};
+    String giulio = string_from_cstring_lit("Giulio");
+    String riccardo = string_from_cstring_lit("Riccardo");
+    String mario = string_from_cstring_lit("Mario");
+    String newriccardo = string_from_cstring_lit("New Riccardo");
 
-    PlayerMap *player_map = player_map_init(&arena_permanent, 16);
-    player_create(&arena_permanent, player_map, gianni, &player_free_list);
-    player_enroll(&arena_permanent, player_map, gianni, ping_pong, &name_free_list);
-    player_enroll(&arena_permanent, player_map, gianni, machiavelli, &name_free_list);
+    String ping_pong = string_from_cstring_lit("Ping Pong");
+    String machiavelli = string_from_cstring_lit("Machiavelli");
 
-    player_create(&arena_permanent, player_map, giulio, &player_free_list);
-    player_enroll(&arena_permanent, player_map, giulio, ping_pong, &name_free_list);
+    PlayerMap *player_map = player_map_init(&arena_permanent, 1);
+    player_create(&name_chunk_state, &player_state, player_map, riccardo);
+    player_create(&name_chunk_state, &player_state, player_map, giulio);
+    player_create(&name_chunk_state, &player_state, player_map, mario);
+    player_enroll(&name_state, &name_chunk_state, player_map, riccardo, ping_pong);
+    player_enroll(&name_state, &name_chunk_state, player_map, riccardo, machiavelli);
+    player_rename(player_map, &name_chunk_state, riccardo, newriccardo);
 
     Texture2D profilePicture = LoadTexture("../resources/Ennio.jpg");
 
     Model my_model = LoadModel("../resources/castle.obj");
     Texture2D my_texture = LoadTexture("../resources/castle_diffuse.png");
 
+    u32 max_str_len = 64;
+    TextBoxData text_box_data = {
+        .max_str_len = max_str_len,
+        .str.len = cstring_len("Enter player name"),
+        .str.str = arena_push(&arena_permanent, max_str_len)
+    };
+    memcpy(
+        text_box_data.str.str,
+        "Enter player name",
+        cstring_len("Enter player name")
+    );
+
     LayoutData data = {
         .arena_frame = &arena_frame,
         .arena_permanent = &arena_permanent,
         .player_map = player_map,
-        .player_free_list = player_free_list,
-        .text_box_data = {0},
+        .player_state = &player_state,
+        .name_state = &name_state,
+        .name_chunk_state = &name_chunk_state,
+        .text_box_data = text_box_data,
         .profilePicture = profilePicture,
         .my_model = my_model,
         .my_texture = my_texture

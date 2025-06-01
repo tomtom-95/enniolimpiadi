@@ -365,6 +365,15 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts) {
                     case CUSTOM_LAYOUT_ELEMENT_CIRCLE: {
                         // TODO: render a simple circle
                     }
+                    case CUSTOM_LAYOUT_ELEMENT_RAY_TEXTBOX: {
+                        Rectangle textBox = { 
+                            boundingBox.x,
+                            boundingBox.y,
+                            boundingBox.width,
+                            boundingBox.height
+                        };
+                        DrawRectangleRec(textBox, RAYWHITE);
+                    }
                     default: break;
                 }
                 break;

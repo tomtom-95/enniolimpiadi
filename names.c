@@ -61,6 +61,20 @@ name_save(NameChunkState *name_chunk_state, String str) {
     return name;
 }
 
+String
+name_to_string(Arena *arena, Name name) {
+    u64 bytes_left = name.len;
+    String str = {.len = bytes_left, .str = arena_push(arena, bytes_left)};
+    NameChunk *name_chunk = name.head;
+    while (bytes_left) {
+        u64 bytes_to_copy = getmin((u64)NAME_CHUNK_PAYLOAD_SIZE, bytes_left);
+        memcpy(str.str + name.len - bytes_left, name_chunk->str, bytes_to_copy);
+        bytes_left -= bytes_to_copy;
+        name_chunk = name_chunk->next;
+    }
+    return str;
+}
+
 void
 name_delete(NameChunkState *name_chunk_state, Name *name) {
     NameChunk **chunk = &(name->head);

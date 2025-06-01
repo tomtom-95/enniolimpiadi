@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "arena.c"
+#include "string.c"
 #include "registration.c"
 
 #include "clay.h"
@@ -13,38 +14,42 @@
 void
 LayoutPlayersWindow(LayoutData *data) {
     for (int j = 0; j < data->player_map->bucket_count; j++) {
-        PlayerNode **players = data->player_map->players + j;
-        while (*players) {
-            Clay_String player_string = {
+        Player **player = data->player_map->players + j;
+        while (*player) {
+            String player_string = name_to_string(data->arena_frame, (*player)->player_name);
+            Clay_String clay_player_string = {
                 .isStaticallyAllocated = false,
-                .length = (*players)->player_name.size,
-                .chars = (const char *)((*players)->player_name.str),
+                .length = (s32)player_string.len,
+                .chars = (const char *)(player_string.str),
             };
-            CLAY_TEXT(player_string, CLAY_TEXT_CONFIG({
+            CLAY_TEXT(clay_player_string, CLAY_TEXT_CONFIG({
                 .fontId = FONT_ID_BODY_16,
                 .fontSize = 24,
-                .textColor = text_color
+                .textColor = white
             }));
-            players = &((*players)->next);
+            player = &((*player)->next);
         }
     }
 }
 
 void
 LayoutTournamentsWindow(LayoutData *data) {
-    TournamentNamesArray tournament_names_array = (
-        list_tournaments(data->arena_frame, data->player_map)
+    StringList string_list = list_tournaments(
+        data->arena_frame,
+        data->player_map
     );
-    for (u64 i = 0; i < tournament_names_array.count; i++) {
+    StringNode *node = string_list.head;
+    while (node) {
         Clay_String tournament_string = {
             .isStaticallyAllocated = false,
-            .length = tournament_names_array.names[i].size,
-            .chars = (const char *)(tournament_names_array.names[i].str),
+            .length = (s32)(node->str).len,
+            .chars = (const char *)((node->str).str),
         };
+        node = node->next;
         CLAY_TEXT(tournament_string, CLAY_TEXT_CONFIG({
             .fontId = FONT_ID_BODY_16,
             .fontSize = 24,
-            .textColor = text_color
+            .textColor = white
         }));
     }
 }
@@ -63,11 +68,11 @@ LayoutAddPlayerWindow(LayoutData *data) {
     }) {
         CLAY({
             .id = CLAY_ID("UsernameInput"),
-            .backgroundColor = background_color,
+            .backgroundColor = blue,
             .cornerRadius = CLAY_CORNER_RADIUS(6),
             .border = {
                 .width = {.left = 1, .right = 1, .top = 1, .bottom = 1},
-                .color = Clay_Hovered() ? background_color_on_hover : background_color
+                .color = Clay_Hovered() ? violet_light : violet
             },
             .layout = {
                 .sizing = {
@@ -77,40 +82,33 @@ LayoutAddPlayerWindow(LayoutData *data) {
                 .padding = CLAY_PADDING_ALL(12)
             }
         }) {
-            // Should I just render a textbox with raylib here?
-            Clay_OnHover(HandleTextBoxInteraction, (intptr_t)data);
-            String *tmp_str = arena_push(data->arena_frame, sizeof(String));
-            if ((data->text_box_data).letter_count == 0) {
-                String player_name = string_from_cstring((u8 *)"Enter a player name");
-                memcpy(tmp_str, &player_name, sizeof(String));
-            }
-            else {
-                memcpy(
-                    tmp_str->str,
-                    (data->text_box_data).name,
-                    (data->text_box_data).letter_count+1
-                );
-                tmp_str->size = (data->text_box_data).letter_count;
-                if (Clay_Hovered()) {
-                    if ((((data->text_box_data).frame_counter/60)%2) == 1) {
-                        tmp_str->str[tmp_str->size] = '|';
-                        tmp_str->str[++(tmp_str->size)] = '\0';
-                    }
-                }
-                else {
-                    tmp_str->str[tmp_str->size] = '\0'; // do I really need this?
-                }
-            }
-            Clay_String textbox_string = {
-                .isStaticallyAllocated = true,
-                .length = tmp_str->size,
-                .chars = (const char *)tmp_str->str
+            CustomLayoutElement *modelData = (
+                arena_push(data->arena_frame, sizeof(CustomLayoutElement))
+            ); 
+            *modelData = (CustomLayoutElement) {
+                .type = CUSTOM_LAYOUT_ELEMENT_RAY_TEXTBOX
             };
-            CLAY_TEXT(textbox_string, CLAY_TEXT_CONFIG({
-                .fontId = FONT_ID_BODY_16,
-                .fontSize = 16,
-                .textColor = text_color
-            }));
+            CLAY({
+                .id = CLAY_ID("CustomTextBox"),
+                .backgroundColor = white,
+                .layout = {
+                    .sizing = layoutExpand
+                },
+                .custom = {
+                    .customData = modelData
+                },
+            }) {}
+            // Clay_OnHover(HandleTextBoxInteraction, (intptr_t)data);
+            // Clay_String textbox_string = {
+            //     .isStaticallyAllocated = true,
+            //     .length = (s32)data->text_box_data.str.len,
+            //     .chars = (const char *)data->text_box_data.str.str
+            // };
+            // CLAY_TEXT(textbox_string, CLAY_TEXT_CONFIG({
+            //     .fontId = FONT_ID_BODY_16,
+            //     .fontSize = 16,
+            //     .textColor = white
+            // }));
         }
     }
     Clay_Color current_add_player_button_color;
@@ -138,37 +136,11 @@ LayoutAddPlayerWindow(LayoutData *data) {
             }
         }
     }) {
-        Clay_OnHover(HandleAddPlayerButtonInteraction, (intptr_t)data);
+        // Clay_OnHover(HandleAddPlayerButtonInteraction, (intptr_t)data);
         CLAY_TEXT(CLAY_STRING("Add Player"), CLAY_TEXT_CONFIG({
             .fontId = FONT_ID_BODY_16,
             .fontSize = 18,
-            .textColor = text_color,
-        }));
-    }
-    CLAY({
-        .id = CLAY_ID("AddPlayerFeedback"),
-        .backgroundColor = background_color,
-        .layout = {
-            .sizing = {
-                .width = CLAY_SIZING_GROW(0),
-                .height = CLAY_SIZING_FIXED(56)
-            },
-            .padding = CLAY_PADDING_ALL(16),
-            .childAlignment = {
-                .x = CLAY_ALIGN_X_CENTER,
-                .y = CLAY_ALIGN_Y_CENTER
-            }
-        }
-    }) {
-        Clay_String feedback_string = {
-            .isStaticallyAllocated = true,
-            .length = data->text_box_data.letter_count,
-            .chars = (const char *)data->text_box_data.name
-        };
-        CLAY_TEXT(feedback_string, CLAY_TEXT_CONFIG({
-            .fontId = FONT_ID_BODY_16,
-            .fontSize = 18,
-            .textColor = text_color,
+            .textColor = white,
         }));
     }
 }
@@ -189,47 +161,52 @@ LayoutAddTournamentWindow(LayoutData *data) {
 
 void
 LayoutCustomElement(LayoutData *data) {
-    CustomLayoutElement *modelData = (
-        arena_push(data->arena_frame, sizeof(CustomLayoutElement))
-    );
-    *modelData = (CustomLayoutElement) { 
-        .type = CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL,
-        .customData.model = {
-            .model = data->my_model,
-            .texture = data->my_texture,
-            .scale = 0.3f,
-        }
-    };
-    CLAY({ .id = CLAY_ID("CustomElementWindow"),
-        .backgroundColor = violet,
-        .layout = {
-            .layoutDirection = CLAY_LEFT_TO_RIGHT,
-            .sizing = layoutExpand,
-            .padding = CLAY_PADDING_ALL(16),
-            .childGap = 16
-        }
-    }) {
-        CLAY({
-            .id = CLAY_ID("Bridge"),
-            .backgroundColor = header_button_background_color,
-            .layout = {
-                .sizing = layoutExpand
-            },
-            .custom = {
-                .customData = modelData
-            },
-        }) {}
-        CLAY({
-            .id = CLAY_ID("Bridge2"),
-            .backgroundColor = violet,
-            .layout = {
-                .sizing = layoutExpand
-            },
-            .custom = {
-                .customData = modelData
-            },
-        }) {}
-    }
+
 }
+
+// void
+// LayoutCustomElement(LayoutData *data) {
+//     CustomLayoutElement *modelData = (
+//         arena_push(data->arena_frame, sizeof(CustomLayoutElement))
+//     );
+//     *modelData = (CustomLayoutElement) { 
+//         .type = CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL,
+//         .customData.model = {
+//             .model = data->my_model,
+//             .texture = data->my_texture,
+//             .scale = 0.3f,
+//         }
+//     };
+//     CLAY({ .id = CLAY_ID("CustomElementWindow"),
+//         .backgroundColor = violet,
+//         .layout = {
+//             .layoutDirection = CLAY_LEFT_TO_RIGHT,
+//             .sizing = layoutExpand,
+//             .padding = CLAY_PADDING_ALL(16),
+//             .childGap = 16
+//         }
+//     }) {
+//         CLAY({
+//             .id = CLAY_ID("Bridge"),
+//             .backgroundColor = header_button_background_color,
+//             .layout = {
+//                 .sizing = layoutExpand
+//             },
+//             .custom = {
+//                 .customData = modelData
+//             },
+//         }) {}
+//         CLAY({
+//             .id = CLAY_ID("Bridge2"),
+//             .backgroundColor = violet,
+//             .layout = {
+//                 .sizing = layoutExpand
+//             },
+//             .custom = {
+//                 .customData = modelData
+//             },
+//         }) {}
+//     }
+// }
 
 #endif
