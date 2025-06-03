@@ -154,11 +154,8 @@ int main(void) {
         .str.str = arena_push(&arena_permanent, max_str_len),
         .str_final.len = 0,
         .str_final.str = arena_push(&arena_permanent, max_str_len),
-        .x_offset = 0,
-        .y_offset = 0,
-        .x_offset_start = 10,
-        .x_offset_end = 10,
-        .y_offset_start = 10,
+        .y_offset = 12,
+        .y_offset_start = 12,
         .y_offset_end = -8
     };
 

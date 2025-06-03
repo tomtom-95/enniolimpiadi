@@ -21,11 +21,8 @@ typedef struct {
     String str;
     String str_final;
     u32 max_str_len;
-    s32 x_offset;
     s32 y_offset;
-    s32 x_offset_start; 
     s32 y_offset_start;
-    s32 x_offset_end;
     s32 y_offset_end;
     enum BackspaceKeyState {
         BACKSPACE_NOT_PRESSED = 0,

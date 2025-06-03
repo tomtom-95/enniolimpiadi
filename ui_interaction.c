@@ -128,13 +128,6 @@ HandlePlayerTextBoxInputs(TextBoxData *textBoxData) {
         }
         key = GetCharPressed();  // Check next character in the queue
     }
-
-    String *str_final = &(textBoxData->str_final);
-    string_cpy(str_final, str);
-
-    if (((textBoxData->frame_counter/20)%2) == 0) {
-        str_final->str[(str_final->len)++] = (u8)'_';
-    }
 }
 
 void
