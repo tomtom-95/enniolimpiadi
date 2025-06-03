@@ -24,6 +24,26 @@
         .a = (unsigned char)roundf(color.a)  \
     }
 
+void
+DrawTrimmedRectangle(Rectangle textBox, char *label, Color color, Font *fonts) {
+    Vector2 p0 = {.x = textBox.x, .y = textBox.y};
+    Vector2 p1 = {.x = textBox.x + 80, .y = textBox.y};
+    Vector2 p2 = {.x = textBox.x + textBox.width, .y = textBox.y};
+    Vector2 p3 = {.x = textBox.x + textBox.width, .y = textBox.y + textBox.height};
+    Vector2 p4 = {.x = textBox.x, .y = textBox.y + textBox.height};
+
+    Font fontToUse = fonts[FONT_ID_BODY_16];
+    DrawLine(p1.x, p1.y, p2.x, p2.y, color);
+    DrawLine(p2.x, p2.y, p3.x, p3.y, color);
+    DrawLine(p3.x, p3.y, p4.x, p4.y, color);
+    DrawLine(p4.x, p4.y, p0.x, p0.y, color);
+
+    DrawTextEx(
+        fontToUse, label, (Vector2){p0.x + 5, p0.y - 5},
+        10, 0.2, WHITE
+    );
+}
+
 // Get a ray trace from the screen position (i.e mouse) within a specific section of the screen
 Ray
 GetScreenToWorldPointWithZDistance(
@@ -156,7 +176,12 @@ void Clay_Raylib_Close()
 }
 
 
-void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts) {
+void
+Clay_Raylib_Render(
+    Clay_RenderCommandArray renderCommands,
+    Font* fonts,
+    LayoutData layout_data
+) {
     for (int j = 0; j < renderCommands.length; j++) {
         Clay_RenderCommand *renderCommand = (
             Clay_RenderCommandArray_Get(&renderCommands, j)
@@ -362,18 +387,75 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts) {
                         EndMode3D();
                         break;
                     }
-                    case CUSTOM_LAYOUT_ELEMENT_CIRCLE: {
-                        // TODO: render a simple circle
-                    }
-                    case CUSTOM_LAYOUT_ELEMENT_RAY_TEXTBOX: {
-                        Rectangle textBox = { 
-                            boundingBox.x,
-                            boundingBox.y,
-                            boundingBox.width,
-                            boundingBox.height
-                        };
-                        DrawRectangleRec(textBox, RAYWHITE);
-                    }
+                    // case CUSTOM_LAYOUT_ELEMENT_CIRCLE: {
+                    //     // TODO: render a simple circle
+                    // }
+                    // case CUSTOM_LAYOUT_ELEMENT_RAY_TEXTBOX: {
+                    //     Font fontToUse = fonts[FONT_ID_BODY_16];
+                    //     Clay_RectangleRenderData *rectangle_config = &renderCommand->renderData.rectangle;
+
+                    //     float radius;
+                    //     if (rectangle_config->cornerRadius.topLeft > 0) {
+                    //         if (boundingBox.width > boundingBox.height) {
+                    //             radius = (rectangle_config->cornerRadius.topLeft * 2) / (float)boundingBox.height;
+                    //         }
+                    //         else {
+                    //             radius = (rectangle_config->cornerRadius.topLeft * 2) / (float)boundingBox.width;
+                    //         }
+                    //     }
+
+                    //     Rectangle textBox = { 
+                    //         (int)boundingBox.x,
+                    //         (int)boundingBox.y,
+                    //         (int)boundingBox.width,
+                    //         (int)boundingBox.height,
+                    //     };
+                    //     DrawRectangleRounded(
+                    //         textBox, radius, 8, CLAY_COLOR_TO_RAYLIB_COLOR(config->backgroundColor)
+                    //     );
+
+                    //     if (layout_data.mouseOnClick) {
+                    //         DrawTrimmedRectangle(textBox, layout_data.label, WHITE, fonts);
+                    //         DrawTextEx(
+                    //             fontToUse, layout_data.name, (Vector2){boundingBox.x + 5, boundingBox.y + 8},
+                    //             40, 0.5, WHITE
+                    //         );
+                    //     }
+                    //     else {
+                    //         if (layout_data.mouseOnText) {
+                    //             if (layout_data.letterCount == 0) {
+                    //                 DrawRectangleLines(
+                    //                     (int)textBox.x, (int)textBox.y,
+                    //                     (int)textBox.width, (int)textBox.height, WHITE
+                    //                 );
+                    //                 DrawTextEx(
+                    //                     fontToUse, layout_data.label,
+                    //                     (Vector2){boundingBox.x + 5, boundingBox.y + 8}, 20, 0.5, WHITE
+                    //                 );
+                    //             }
+                    //             else {
+                    //                 DrawTrimmedRectangle(textBox, layout_data.label, BLACK, fonts);
+                    //                 DrawText(layout_data.name, (int)textBox.x + 5, (int)textBox.y + 8, 40, WHITE);
+                    //             }
+                    //         }
+                    //         else {
+                    //             if (layout_data.letterCount == 0) {
+                    //                 DrawRectangleLines(
+                    //                     (int)textBox.x, (int)textBox.y,
+                    //                     (int)textBox.width, (int)textBox.height, DARKGRAY
+                    //                 );
+                    //                 DrawTextEx(
+                    //                     fontToUse, layout_data.label,
+                    //                     (Vector2){boundingBox.x + 5, boundingBox.y + 8}, 20, 0.5, WHITE
+                    //                 );
+                    //             }
+                    //             else {
+                    //                 DrawTrimmedRectangle(textBox, layout_data.label, BLACK, fonts);
+                    //                 DrawText(layout_data.name, (int)textBox.x + 5, (int)textBox.y + 8, 40, WHITE);
+                    //             }
+                    //         }
+                    //     }
+                    // }
                     default: break;
                 }
                 break;

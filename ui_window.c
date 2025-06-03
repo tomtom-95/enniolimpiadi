@@ -55,74 +55,196 @@ LayoutTournamentsWindow(LayoutData *data) {
 }
 
 void
-LayoutAddPlayerWindow(LayoutData *data) {
-    CLAY({
-        .id = CLAY_ID("UsernameContainer"),
-        .layout = {
-            .layoutDirection = CLAY_TOP_TO_BOTTOM,
-            .sizing = {
-                .width = CLAY_SIZING_GROW(0)
-            },
-            .childGap = 8
+LayoutPlayerTextBoxWithFloatingLabel(LayoutData *layoutData) {
+    TextBoxData *textBoxData = &(layoutData->text_box_data);
+    Clay_ElementId lastClicked = layoutData->last_element_clicked;
+    bool isTextBoxClicked = (
+        layoutData->last_element_clicked.id == Clay_GetElementId(CLAY_STRING("PlayerTextBox")).id ||
+        layoutData->last_element_clicked.id == Clay_GetElementId(CLAY_STRING("FloatingLabel")).id
+    );
+    if (isTextBoxClicked) {
+        if (layoutData->text_box_data.x_offset < 10) {
+            ++layoutData->text_box_data.x_offset;
         }
-    }) {
+        if (layoutData->text_box_data.y_offset > -8) {
+            layoutData->text_box_data.y_offset -= 2;
+        }
         CLAY({
-            .id = CLAY_ID("UsernameInput"),
-            .backgroundColor = blue,
+            .id = CLAY_ID("FloatingLabel"),
+            .backgroundColor = gray,
             .cornerRadius = CLAY_CORNER_RADIUS(6),
-            .border = {
-                .width = {.left = 1, .right = 1, .top = 1, .bottom = 1},
-                .color = Clay_Hovered() ? violet_light : violet
-            },
             .layout = {
                 .sizing = {
-                    .width = CLAY_SIZING_GROW(0),
-                    .height = CLAY_SIZING_GROW(40)
+                    .width = CLAY_SIZING_FIT(0),
+                    .height = CLAY_SIZING_FIT(0)
                 },
-                .padding = CLAY_PADDING_ALL(12)
+                .padding = { .left = 5, .right = 5, .top = 0, .bottom = 0 }
+            },
+            .floating = {
+                .attachTo = CLAY_ATTACH_TO_PARENT,
+                .attachPoints = {
+                    .element = CLAY_ATTACH_POINT_LEFT_TOP,
+                    .parent = CLAY_ATTACH_POINT_LEFT_TOP
+                },
+                .offset = {
+                    10, // layoutData->text_box_data.x_offset,
+                    layoutData->text_box_data.y_offset
+                }
             }
         }) {
-            CustomLayoutElement *modelData = (
-                arena_push(data->arena_frame, sizeof(CustomLayoutElement))
-            ); 
-            *modelData = (CustomLayoutElement) {
-                .type = CUSTOM_LAYOUT_ELEMENT_RAY_TEXTBOX
-            };
-            CLAY({
-                .id = CLAY_ID("CustomTextBox"),
-                .backgroundColor = white,
-                .layout = {
-                    .sizing = layoutExpand
-                },
-                .custom = {
-                    .customData = modelData
-                },
-            }) {}
-            // Clay_OnHover(HandleTextBoxInteraction, (intptr_t)data);
-            // Clay_String textbox_string = {
-            //     .isStaticallyAllocated = true,
-            //     .length = (s32)data->text_box_data.str.len,
-            //     .chars = (const char *)data->text_box_data.str.str
-            // };
-            // CLAY_TEXT(textbox_string, CLAY_TEXT_CONFIG({
-            //     .fontId = FONT_ID_BODY_16,
-            //     .fontSize = 16,
-            //     .textColor = white
-            // }));
+            CLAY_TEXT(CLAY_STRING("Enter new player name"), CLAY_TEXT_CONFIG({
+                .fontId = FONT_ID_BODY_16,
+                .fontSize = 15,
+                .textColor = white
+            }));
         }
-    }
-    Clay_Color current_add_player_button_color;
-    if (data->add_player_button_data.add_player_button_state == ADD_PLAYER_BUTTON_NOT_PRESSED) {
-        current_add_player_button_color = violet_light;
+        Clay_String str_player_name = {
+            .isStaticallyAllocated = true,
+            .length = (s32)layoutData->text_box_data.str_final.len,
+            .chars = (const char *)layoutData->text_box_data.str_final.str
+        };
+        CLAY_TEXT(str_player_name, CLAY_TEXT_CONFIG({
+            .fontId = FONT_ID_BODY_16,
+            .fontSize = 15,
+            .textColor = { 255, 255, 255, 255 }
+        }));
     }
     else {
-        current_add_player_button_color = violet;
+        if (textBoxData->str.len == 0) {
+            if (textBoxData->x_offset > textBoxData->x_offset_end) {
+                --textBoxData->x_offset;
+            }
+            if (textBoxData->y_offset < textBoxData->y_offset_start) {
+                textBoxData->y_offset += 2;
+            }
+            CLAY({
+                .id = CLAY_ID("FloatingLabel"),
+                .backgroundColor = gray,
+                .cornerRadius = CLAY_CORNER_RADIUS(6),
+                .layout = {
+                    .sizing = {
+                        .width = CLAY_SIZING_FIT(0),
+                        .height = CLAY_SIZING_FIT(0)
+                    },
+                    .padding = { .left = 5, .right = 5, .top = 0, .bottom = 0 }
+                },
+                .floating = {
+                    .attachTo = CLAY_ATTACH_TO_PARENT,
+                    .attachPoints = {
+                        .element = CLAY_ATTACH_POINT_LEFT_TOP,
+                        .parent = CLAY_ATTACH_POINT_LEFT_TOP
+                    },
+                    .offset = {
+                        10,
+                        // data->text_box_data.x_offset,
+                        textBoxData->y_offset
+                    }
+                }
+            }) {
+                Clay_OnHover(HandleFloatingLabelInteraction, (intptr_t)layoutData);
+                CLAY_TEXT(CLAY_STRING("Enter new player name"), CLAY_TEXT_CONFIG({
+                    .fontId = FONT_ID_BODY_16,
+                    .fontSize = 15,
+                    .textColor = white
+                }));
+            }
+        }
+        else {
+            CLAY({
+                .id = CLAY_ID("FloatingLabel"),
+                .backgroundColor = gray,
+                .cornerRadius = CLAY_CORNER_RADIUS(6),
+                .layout = {
+                    .sizing = {
+                        .width = CLAY_SIZING_FIT(0),
+                        .height = CLAY_SIZING_FIT(0)
+                    },
+                    .padding = { .left = 5, .right = 5, .top = 0, .bottom = 0 }
+                },
+                .floating = {
+                    .attachTo = CLAY_ATTACH_TO_PARENT,
+                    .attachPoints = {
+                        .element = CLAY_ATTACH_POINT_LEFT_TOP,
+                        .parent = CLAY_ATTACH_POINT_LEFT_TOP
+                    },
+                    .offset = {10, -8}
+                }
+            }) {
+                CLAY_TEXT(CLAY_STRING("Enter new player name"), CLAY_TEXT_CONFIG({
+                    .fontId = FONT_ID_BODY_16,
+                    .fontSize = 15,
+                    .textColor = white
+                }));
+            }
+            Clay_String str_player_name = {
+                .isStaticallyAllocated = true,
+                .length = (s32)layoutData->text_box_data.str_final.len,
+                .chars = (const char *)layoutData->text_box_data.str_final.str
+            };
+            CLAY_TEXT(str_player_name, CLAY_TEXT_CONFIG({
+                .fontId = FONT_ID_BODY_16,
+                .fontSize = 15,
+                .textColor = { 255, 255, 255, 255 }
+            }));
+        }
+    }
+}
+
+void
+LayoutAddPlayerWindow(LayoutData *data) {
+    TextBoxData *textBoxData = &(data->text_box_data);
+    Clay_Color color_border;
+    u16 width_border;
+    bool isTextBoxClicked = (
+        data->last_element_clicked.id == Clay_GetElementId(CLAY_STRING("PlayerTextBox")).id ||
+        data->last_element_clicked.id == Clay_GetElementId(CLAY_STRING("FloatingLabel")).id
+    );
+    bool isTextBoxHoverer = (
+        Clay_PointerOver(Clay_GetElementId(CLAY_STRING("PlayerTextBox"))) ||
+        Clay_PointerOver(Clay_GetElementId(CLAY_STRING("FloatingLabel")))
+    );
+
+    if (isTextBoxClicked) {
+        color_border = gray_light;
+        width_border = 3;
+    }
+    else {
+        width_border = 1;
+        if (isTextBoxHoverer) {
+            color_border = blue_ligth;
+        }
+        else {
+            color_border = blue;
+        }
+    }
+    CLAY({
+        .id = CLAY_ID("PlayerTextBox"),
+        .backgroundColor = gray,
+        .cornerRadius = CLAY_CORNER_RADIUS(6),
+        .border = {
+            .color = color_border,
+            .width = {width_border, width_border, width_border, width_border}
+        },
+        .layout = {
+            .sizing = {
+                .width = CLAY_SIZING_GROW(0),
+                .height = CLAY_SIZING_FIT(40)
+            },
+            .padding = CLAY_PADDING_ALL(12)
+        }
+    }) {
+        Clay_OnHover(HandlePlayerTextBoxInteraction, (intptr_t)data);
+        if (isTextBoxClicked) {
+            HandlePlayerTextBoxInputs(textBoxData);
+        }
+        else {
+            textBoxData->frame_counter = 0;
+        }
+        LayoutPlayerTextBoxWithFloatingLabel(data);
     }
     CLAY({
         .id = CLAY_ID("AddPlayerButton"),
-        .backgroundColor = (
-            Clay_Hovered() ? current_add_player_button_color : violet
-        ),
+        .backgroundColor = Clay_Hovered() ? violet_light : violet,
         .cornerRadius = CLAY_CORNER_RADIUS(8),
         .layout = {
             .sizing = {
@@ -136,7 +258,7 @@ LayoutAddPlayerWindow(LayoutData *data) {
             }
         }
     }) {
-        // Clay_OnHover(HandleAddPlayerButtonInteraction, (intptr_t)data);
+        Clay_OnHover(HandleAddPlayerButtonInteraction, (intptr_t)data);
         CLAY_TEXT(CLAY_STRING("Add Player"), CLAY_TEXT_CONFIG({
             .fontId = FONT_ID_BODY_16,
             .fontSize = 18,
@@ -158,55 +280,5 @@ LayoutAddTournamentWindow(LayoutData *data) {
         }
     }) {}
 }
-
-void
-LayoutCustomElement(LayoutData *data) {
-
-}
-
-// void
-// LayoutCustomElement(LayoutData *data) {
-//     CustomLayoutElement *modelData = (
-//         arena_push(data->arena_frame, sizeof(CustomLayoutElement))
-//     );
-//     *modelData = (CustomLayoutElement) { 
-//         .type = CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL,
-//         .customData.model = {
-//             .model = data->my_model,
-//             .texture = data->my_texture,
-//             .scale = 0.3f,
-//         }
-//     };
-//     CLAY({ .id = CLAY_ID("CustomElementWindow"),
-//         .backgroundColor = violet,
-//         .layout = {
-//             .layoutDirection = CLAY_LEFT_TO_RIGHT,
-//             .sizing = layoutExpand,
-//             .padding = CLAY_PADDING_ALL(16),
-//             .childGap = 16
-//         }
-//     }) {
-//         CLAY({
-//             .id = CLAY_ID("Bridge"),
-//             .backgroundColor = header_button_background_color,
-//             .layout = {
-//                 .sizing = layoutExpand
-//             },
-//             .custom = {
-//                 .customData = modelData
-//             },
-//         }) {}
-//         CLAY({
-//             .id = CLAY_ID("Bridge2"),
-//             .backgroundColor = violet,
-//             .layout = {
-//                 .sizing = layoutExpand
-//             },
-//             .custom = {
-//                 .customData = modelData
-//             },
-//         }) {}
-//     }
-// }
 
 #endif

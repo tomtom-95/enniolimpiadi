@@ -112,6 +112,8 @@ int main(void) {
        .height = GetScreenHeight()
     }, (Clay_ErrorHandler) { HandleClayErrors });
 
+    Clay_SetDebugModeEnabled(true);
+
     Font fonts[1];
     fonts[FONT_ID_BODY_16] = LoadFontEx("resources/Roboto-Regular.ttf", 48, 0, 400);
     SetTextureFilter(fonts[FONT_ID_BODY_16].texture, TEXTURE_FILTER_BILINEAR);
@@ -148,16 +150,19 @@ int main(void) {
     u32 max_str_len = 64;
     TextBoxData text_box_data = {
         .max_str_len = max_str_len,
-        .str.len = cstring_len("Enter player name"),
-        .str.str = arena_push(&arena_permanent, max_str_len)
+        .str.len = 0,
+        .str.str = arena_push(&arena_permanent, max_str_len),
+        .str_final.len = 0,
+        .str_final.str = arena_push(&arena_permanent, max_str_len),
+        .x_offset = 0,
+        .y_offset = 0,
+        .x_offset_start = 10,
+        .x_offset_end = 10,
+        .y_offset_start = 10,
+        .y_offset_end = -8
     };
-    memcpy(
-        text_box_data.str.str,
-        "Enter player name",
-        cstring_len("Enter player name")
-    );
 
-    LayoutData data = {
+    LayoutData layout_data = {
         .arena_frame = &arena_frame,
         .arena_permanent = &arena_permanent,
         .player_map = player_map,
@@ -167,7 +172,7 @@ int main(void) {
         .text_box_data = text_box_data,
         .profilePicture = profilePicture,
         .my_model = my_model,
-        .my_texture = my_texture
+        .my_texture = my_texture,
     };
 
     SetTargetFPS(60);
@@ -189,11 +194,11 @@ int main(void) {
             GetFrameTime()
         );
 
-        Clay_RenderCommandArray renderCommands = GetLayout(&data);
+        Clay_RenderCommandArray renderCommands = GetLayout(&layout_data);
 
         BeginDrawing();
         ClearBackground(BLACK);
-        Clay_Raylib_Render(renderCommands, fonts);
+        Clay_Raylib_Render(renderCommands, fonts, layout_data);
         EndDrawing();
     }
     // This function is new since the video was published

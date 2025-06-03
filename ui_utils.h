@@ -19,7 +19,14 @@ typedef struct {
     double frame_timer;
     u64 frame_counter;
     String str;
+    String str_final;
     u32 max_str_len;
+    s32 x_offset;
+    s32 y_offset;
+    s32 x_offset_start; 
+    s32 y_offset_start;
+    s32 x_offset_end;
+    s32 y_offset_end;
     enum BackspaceKeyState {
         BACKSPACE_NOT_PRESSED = 0,
         BACKSPACE_FIRST,
@@ -45,7 +52,7 @@ typedef struct {
     Tab tab;
     TextBoxData text_box_data;
     Texture2D profilePicture;
-    Clay_ElementId last_clicked;
+    Clay_ElementId last_element_clicked;
     Model my_model;
     Texture2D my_texture;
     AddPlayerButtonData add_player_button_data;
@@ -92,15 +99,20 @@ typedef struct
 } CustomLayoutElement_3DModel;
 
 typedef struct {
-    CustomLayoutElementType type; 
-} CustomLayoutElement_RayTextBox;
+    bool mouseOnText; 
+    bool mouseOnClick;
+    char label[16];
+    char name[16];
+    int letterCount;
+    int framesCounter;
+} CustomLayoutRayTextBox;
 
 typedef struct
 {
     CustomLayoutElementType type;
     union {
         CustomLayoutElement_3DModel model;
-        CustomLayoutElement_RayTextBox ray_texbox;
+        CustomLayoutRayTextBox ray_textbox;
     } customData;
 } CustomLayoutElement;
 
