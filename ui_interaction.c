@@ -89,46 +89,46 @@ HandleFloatingLabelInteraction(
     }
 }
 
-void
-HandlePlayerTextBoxInputs(TextBoxData *textBoxData) {
-    String *str = &(textBoxData->str);
-    ++(textBoxData->frame_counter);
-    if (IsKeyPressed(KEY_BACKSPACE) || IsKeyDown(KEY_BACKSPACE)) {
-        if (textBoxData->backspace_key_state == BACKSPACE_NOT_PRESSED) {
-            if (str->len != 0) {
-                --(str->len);
-            }
-            textBoxData->backspace_key_state = BACKSPACE_FIRST; 
-        }
-        else if (textBoxData->backspace_key_state == BACKSPACE_FIRST) {
-            textBoxData->frame_timer += GetFrameTime();
-            if (textBoxData->frame_timer > 0.35f) {
-                textBoxData->frame_timer = 0;
-                textBoxData->backspace_key_state = BACKSPACE_SECOND;
-            } 
-        }
-        else {
-            textBoxData->frame_timer += GetFrameTime();
-            if (textBoxData->frame_timer > 0.03f) {
-                textBoxData->frame_timer = 0;
-                if (str->len != 0) {
-                    --(str->len);
-                }
-            } 
-        }
-    }
-    else {
-        textBoxData->backspace_key_state = BACKSPACE_NOT_PRESSED;
-    }
-    int key = GetCharPressed();
-    while (key > 0) {
-        // NOTE: Only allow keys in range [32..125]
-        if ((key >= 32) && (key <= 125) && (str->len < textBoxData->max_str_len)) {
-            str->str[(str->len)++] = (u8)key;
-        }
-        key = GetCharPressed();  // Check next character in the queue
-    }
-}
+// void
+// HandlePlayerTextBoxInputs(TextBoxData *textBoxData) {
+//     String *str = &(textBoxData->str);
+//     ++(textBoxData->frame_counter);
+//     if (IsKeyPressed(KEY_BACKSPACE) || IsKeyDown(KEY_BACKSPACE)) {
+//         if (textBoxData->backspace_key_state == BACKSPACE_NOT_PRESSED) {
+//             if (str->len != 0) {
+//                 --(str->len);
+//             }
+//             textBoxData->backspace_key_state = BACKSPACE_FIRST; 
+//         }
+//         else if (textBoxData->backspace_key_state == BACKSPACE_FIRST) {
+//             textBoxData->frame_timer += GetFrameTime();
+//             if (textBoxData->frame_timer > 0.35f) {
+//                 textBoxData->frame_timer = 0;
+//                 textBoxData->backspace_key_state = BACKSPACE_SECOND;
+//             } 
+//         }
+//         else {
+//             textBoxData->frame_timer += GetFrameTime();
+//             if (textBoxData->frame_timer > 0.03f) {
+//                 textBoxData->frame_timer = 0;
+//                 if (str->len != 0) {
+//                     --(str->len);
+//                 }
+//             } 
+//         }
+//     }
+//     else {
+//         textBoxData->backspace_key_state = BACKSPACE_NOT_PRESSED;
+//     }
+//     int key = GetCharPressed();
+//     while (key > 0) {
+//         // NOTE: Only allow keys in range [32..125]
+//         if ((key >= 32) && (key <= 125) && (str->len < textBoxData->max_str_len)) {
+//             str->str[(str->len)++] = (u8)key;
+//         }
+//         key = GetCharPressed();  // Check next character in the queue
+//     }
+// }
 
 void
 HandleAddPlayerButtonInteraction(

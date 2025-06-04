@@ -17,8 +17,81 @@ void HandleClayErrors(Clay_ErrorData errorData) {
 }
 
 Clay_RenderCommandArray 
-GetLayout(LayoutData *data) {
-    data->arena_frame->pos = 0;
+GetLayout(LayoutData *layoutData) {
+    layoutData->arena_frame->pos = 0;
+
+    // --------------------------------- TextBox Logic --------------------------------- //
+    Clay_ElementData playerTextBoxElementData = Clay_GetElementData(Clay_GetElementId(CLAY_STRING("PlayerTextBox")));
+    float playerTextBoxYTop = playerTextBoxElementData.boundingBox.y;
+    float playerTextBoxYCenter = (
+        playerTextBoxYTop + playerTextBoxElementData.boundingBox.height / 2
+    );
+
+    TextBoxData *textBoxData = &(layoutData->text_box_data);
+    Clay_ElementId lastClicked = layoutData->last_element_clicked;
+    bool isTextBoxClicked = (
+        lastClicked.id == Clay_GetElementId(CLAY_STRING("PlayerTextBox")).id ||
+        lastClicked.id == Clay_GetElementId(CLAY_STRING("FloatingLabel")).id
+    );
+    if (isTextBoxClicked) {
+        String *str = &(textBoxData->str);
+        ++(textBoxData->frame_counter);
+        if (IsKeyPressed(KEY_BACKSPACE) || IsKeyDown(KEY_BACKSPACE)) {
+            if (textBoxData->backspace_key_state == BACKSPACE_NOT_PRESSED) {
+                if (str->len != 0) {
+                    --(str->len);
+                }
+                textBoxData->backspace_key_state = BACKSPACE_FIRST; 
+            }
+            else if (textBoxData->backspace_key_state == BACKSPACE_FIRST) {
+                textBoxData->frame_timer += GetFrameTime();
+                if (textBoxData->frame_timer > 0.35f) {
+                    textBoxData->frame_timer = 0;
+                    textBoxData->backspace_key_state = BACKSPACE_SECOND;
+                } 
+            }
+            else {
+                textBoxData->frame_timer += GetFrameTime();
+                if (textBoxData->frame_timer > 0.03f) {
+                    textBoxData->frame_timer = 0;
+                    if (str->len != 0) {
+                        --(str->len);
+                    }
+                } 
+            }
+        }
+        else {
+            textBoxData->backspace_key_state = BACKSPACE_NOT_PRESSED;
+        }
+        int key = GetCharPressed();
+        while (key > 0) {
+            // NOTE: Only allow keys in range [32..125]
+            if ((key >= 32) && (key <= 125) && (str->len < textBoxData->max_str_len)) {
+                str->str[(str->len)++] = (u8)key;
+            }
+            key = GetCharPressed();  // Check next character in the queue
+        }
+
+        if (textBoxData->floatingLabelYTop > playerTextBoxYTop  - 8) {
+            textBoxData->floatingLabelYTop -= 2;
+        }
+    }
+    else {
+        textBoxData->frame_counter = 0;
+        if (textBoxData->str.len == 0) {
+            if (textBoxData->floatingLabelYTop < playerTextBoxYCenter - 8) {
+                textBoxData->floatingLabelYTop += 2;
+            }
+        }
+    }
+    textBoxData->floatingLabelYOffset = textBoxData->floatingLabelYTop - playerTextBoxYTop;
+
+    String *str_final = &(textBoxData->str_final);
+    string_cpy(str_final, &(textBoxData->str));
+    if (((textBoxData->frame_counter/40)%2) == 1) {
+        str_final->str[(str_final->len)++] = (u8)'_';
+    }
+    // --------------------------------- TextBox Logic End --------------------------------- //
 
     Clay_BeginLayout();
     CLAY({ .id = CLAY_ID("MainWindow"),
@@ -30,8 +103,8 @@ GetLayout(LayoutData *data) {
             .childGap = 16
         }
     }) {
-        Clay_OnHover(HandleMainWindowInteraction, (intptr_t)data);
-        LayoutHeaderBar(data);
+        Clay_OnHover(HandleMainWindowInteraction, (intptr_t)layoutData);
+        LayoutHeaderBar(layoutData);
         CLAY({
             .id = CLAY_ID("MainContent"),
             .backgroundColor = gray,
@@ -44,18 +117,18 @@ GetLayout(LayoutData *data) {
             },
             .cornerRadius = CLAY_CORNER_RADIUS(8)
         }) {
-            switch (data->tab) {
+            switch (layoutData->tab) {
                 case TAB_PLAYERS:
                 {
-                    LayoutPlayersWindow(data);
+                    LayoutPlayersWindow(layoutData);
                 } break;
                 case TAB_TOURNAMENTS:
                 {
-                    LayoutTournamentsWindow(data);
+                    LayoutTournamentsWindow(layoutData);
                 } break;
                 case TAB_NEW_PLAYER:
                 {
-                    LayoutAddPlayerWindow(data);
+                    LayoutAddPlayerWindow(layoutData);
                 } break;
                 case TAB_NEW_TOURNAMENT:
                 {
@@ -70,7 +143,7 @@ GetLayout(LayoutData *data) {
     }
     Clay_RenderCommandArray renderCommands = Clay_EndLayout();
     for (int32_t i = 0; i < renderCommands.length; i++) {
-        Clay_RenderCommandArray_Get(&renderCommands, i)->boundingBox.y += data->yOffset;
+        Clay_RenderCommandArray_Get(&renderCommands, i)->boundingBox.y += layoutData->yOffset;
     }
     return renderCommands;
 }
@@ -154,9 +227,11 @@ int main(void) {
         .str.str = arena_push(&arena_permanent, max_str_len),
         .str_final.len = 0,
         .str_final.str = arena_push(&arena_permanent, max_str_len),
-        .y_offset = 12,
-        .y_offset_start = 12,
-        .y_offset_end = -8
+        .floatingLabelYTop = 120, // TODO: this must not be hardcoded!
+        .floatingLabelYOffset = 0
+        // .y_offset = 12,
+        // .y_offset_start = 12,
+        // .y_offset_end = -8
     };
 
     LayoutData layout_data = {

@@ -21,9 +21,8 @@ typedef struct {
     String str;
     String str_final;
     u32 max_str_len;
-    s32 y_offset;
-    s32 y_offset_start;
-    s32 y_offset_end;
+    float floatingLabelYTop;
+    float floatingLabelYOffset;
     enum BackspaceKeyState {
         BACKSPACE_NOT_PRESSED = 0,
         BACKSPACE_FIRST,
