@@ -12,6 +12,54 @@
 #include "ui_interaction.c"
 
 void
+HandleUserWriting(LayoutData *layoutData) {
+    TextBoxData *textBoxData = &(layoutData->text_box_data);
+
+    String *str = &(textBoxData->str);
+    if (IsKeyPressed(KEY_BACKSPACE) || IsKeyDown(KEY_BACKSPACE)) {
+        if (textBoxData->backspace_key_state == BACKSPACE_NOT_PRESSED) {
+            if (str->len != 0) {
+                --(str->len);
+            }
+            textBoxData->backspace_key_state = BACKSPACE_FIRST; 
+        }
+        else if (textBoxData->backspace_key_state == BACKSPACE_FIRST) {
+            textBoxData->frame_timer += GetFrameTime();
+            if (textBoxData->frame_timer > 0.35f) {
+                textBoxData->frame_timer = 0;
+                textBoxData->backspace_key_state = BACKSPACE_SECOND;
+            } 
+        }
+        else {
+            textBoxData->frame_timer += GetFrameTime();
+            if (textBoxData->frame_timer > 0.03f) {
+                textBoxData->frame_timer = 0;
+                if (str->len != 0) {
+                    --(str->len);
+                }
+            } 
+        }
+    }
+    else {
+        textBoxData->backspace_key_state = BACKSPACE_NOT_PRESSED;
+    }
+    int key = GetCharPressed();
+    while (key > 0) {
+        // NOTE: Only allow keys in range [32..125]
+        if ((key >= 32) && (key <= 125) && (str->len < textBoxData->max_str_len)) {
+            str->str[(str->len)++] = (u8)key;
+        }
+        key = GetCharPressed();  // Check next character in the queue
+    }
+
+    String *str_final = &(textBoxData->str_final);
+    string_cpy(str_final, &(textBoxData->str));
+    if (((textBoxData->frame_counter/40)%2) == 1) {
+        str_final->str[(str_final->len)++] = (u8)'_';
+    }
+}
+
+void
 LayoutPlayersWindow(LayoutData *data) {
     for (int j = 0; j < data->player_map->bucket_count; j++) {
         Player **player = data->player_map->players + j;
@@ -55,69 +103,36 @@ LayoutTournamentsWindow(LayoutData *data) {
 }
 
 void
-LayoutPlayerTextBoxWithFloatingLabel(LayoutData *layoutData) {
-    TextBoxData *textBoxData = &(layoutData->text_box_data);
-    CLAY({
-        .id = CLAY_ID("FloatingLabel"),
-        .backgroundColor = gray,
-        .cornerRadius = CLAY_CORNER_RADIUS(6),
-        .layout = {
-            .sizing = {.width = CLAY_SIZING_FIT(0), .height = CLAY_SIZING_FIT(0)},
-            .padding = { .left = 5, .right = 5, .top = 0, .bottom = 0 }
-        },
-        .floating = {
-            .attachTo = CLAY_ATTACH_TO_PARENT,
-            .attachPoints = {
-                .element = CLAY_ATTACH_POINT_LEFT_TOP,
-                .parent = CLAY_ATTACH_POINT_LEFT_TOP
-            },
-            .offset = {10, textBoxData->floatingLabelYOffset}
-        }
-    }) {
-        Clay_OnHover(HandleFloatingLabelInteraction, (intptr_t)layoutData);
-        CLAY_TEXT(CLAY_STRING("Enter new player name"), CLAY_TEXT_CONFIG({
-            .fontId = FONT_ID_BODY_16, .fontSize = 15, .textColor = white
-        }));
-    }
-    Clay_String str_player_name = {
-        .isStaticallyAllocated = true,
-        .length = (s32)textBoxData->str_final.len,
-        .chars = (const char *)textBoxData->str_final.str
-    };
-    CLAY_TEXT(str_player_name, CLAY_TEXT_CONFIG({
-        .fontId = FONT_ID_BODY_16,
-        .fontSize = 15,
-        .textColor = { 255, 255, 255, 255 }
-    }));
-}
-
-void
 LayoutAddPlayerWindow(LayoutData *data) {
     TextBoxData *textBoxData = &(data->text_box_data);
     Clay_Color color_border;
     u16 width_border;
-    bool isTextBoxClicked = (
-        data->last_element_clicked.id == Clay_GetElementId(CLAY_STRING("PlayerTextBox")).id ||
-        data->last_element_clicked.id == Clay_GetElementId(CLAY_STRING("FloatingLabel")).id
+
+    Clay_ElementId playerTextBoxId = Clay_GetElementId(CLAY_STRING("PlayerTextBox"));
+    Clay_ElementId floatingLabelId = Clay_GetElementId(CLAY_STRING("FloatingLabel"));
+
+    bool isTextBoxHovered = (
+        Clay_PointerOver(playerTextBoxId) ||
+        Clay_PointerOver(floatingLabelId)
     );
-    bool isTextBoxHoverer = (
-        Clay_PointerOver(Clay_GetElementId(CLAY_STRING("PlayerTextBox"))) ||
-        Clay_PointerOver(Clay_GetElementId(CLAY_STRING("FloatingLabel")))
+
+    bool isTextBoxClicked = (
+        data->last_element_clicked.id == playerTextBoxId.id ||
+        data->last_element_clicked.id == floatingLabelId.id
     );
 
     if (isTextBoxClicked) {
-        color_border = gray_light;
         width_border = 3;
+        color_border = gray_light;
+        ++data->text_box_data.frame_counter;
+        HandleUserWriting(data);
     }
     else {
         width_border = 1;
-        if (isTextBoxHoverer) {
-            color_border = blue_ligth;
-        }
-        else {
-            color_border = blue;
-        }
+        color_border = isTextBoxHovered ? blue_ligth : blue;
+        data->text_box_data.frame_counter = 0;
     }
+
     CLAY({
         .id = CLAY_ID("PlayerTextBox"),
         .backgroundColor = gray,
@@ -135,28 +150,6 @@ LayoutAddPlayerWindow(LayoutData *data) {
         }
     }) {
         Clay_OnHover(HandlePlayerTextBoxInteraction, (intptr_t)data);
-        CLAY({
-            .id = CLAY_ID("FloatingLabel"),
-            .backgroundColor = gray,
-            .cornerRadius = CLAY_CORNER_RADIUS(6),
-            .layout = {
-                .sizing = {.width = CLAY_SIZING_FIT(0), .height = CLAY_SIZING_FIT(0)},
-                .padding = { .left = 5, .right = 5, .top = 0, .bottom = 0 }
-            },
-            .floating = {
-                .attachTo = CLAY_ATTACH_TO_PARENT,
-                .attachPoints = {
-                    .element = CLAY_ATTACH_POINT_LEFT_TOP,
-                    .parent = CLAY_ATTACH_POINT_LEFT_TOP
-                },
-                .offset = {10, textBoxData->floatingLabelYOffset}
-            }
-        }) {
-            Clay_OnHover(HandleFloatingLabelInteraction, (intptr_t)data);
-            CLAY_TEXT(CLAY_STRING("Enter new player name"), CLAY_TEXT_CONFIG({
-                .fontId = FONT_ID_BODY_16, .fontSize = 15, .textColor = white
-            }));
-        }
         Clay_String str_player_name = {
             .isStaticallyAllocated = true,
             .length = (s32)textBoxData->str_final.len,
@@ -164,8 +157,8 @@ LayoutAddPlayerWindow(LayoutData *data) {
         };
         CLAY_TEXT(str_player_name, CLAY_TEXT_CONFIG({
             .fontId = FONT_ID_BODY_16,
-            .fontSize = 15,
-            .textColor = { 255, 255, 255, 255 }
+            .fontSize = (u16)textBoxData->fontSize,
+            .textColor = white
         }));
     }
     CLAY({

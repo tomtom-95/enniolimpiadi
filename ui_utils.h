@@ -16,11 +16,12 @@ typedef enum {
 } Tab;
 
 typedef struct {
-    double frame_timer;
+    u32 max_str_len;
     u64 frame_counter;
+    s32 fontSize;
+    double frame_timer;
     String str;
     String str_final;
-    u32 max_str_len;
     float floatingLabelYTop;
     float floatingLabelYOffset;
     enum BackspaceKeyState {
@@ -28,6 +29,7 @@ typedef struct {
         BACKSPACE_FIRST,
         BACKSPACE_SECOND,
     } backspace_key_state;
+    Clay_Color colorBorder;
 } TextBoxData;
 
 typedef struct {

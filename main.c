@@ -20,79 +20,6 @@ Clay_RenderCommandArray
 GetLayout(LayoutData *layoutData) {
     layoutData->arena_frame->pos = 0;
 
-    // --------------------------------- TextBox Logic --------------------------------- //
-    Clay_ElementData playerTextBoxElementData = Clay_GetElementData(Clay_GetElementId(CLAY_STRING("PlayerTextBox")));
-    float playerTextBoxYTop = playerTextBoxElementData.boundingBox.y;
-    float playerTextBoxYCenter = (
-        playerTextBoxYTop + playerTextBoxElementData.boundingBox.height / 2
-    );
-
-    TextBoxData *textBoxData = &(layoutData->text_box_data);
-    Clay_ElementId lastClicked = layoutData->last_element_clicked;
-    bool isTextBoxClicked = (
-        lastClicked.id == Clay_GetElementId(CLAY_STRING("PlayerTextBox")).id ||
-        lastClicked.id == Clay_GetElementId(CLAY_STRING("FloatingLabel")).id
-    );
-    if (isTextBoxClicked) {
-        String *str = &(textBoxData->str);
-        ++(textBoxData->frame_counter);
-        if (IsKeyPressed(KEY_BACKSPACE) || IsKeyDown(KEY_BACKSPACE)) {
-            if (textBoxData->backspace_key_state == BACKSPACE_NOT_PRESSED) {
-                if (str->len != 0) {
-                    --(str->len);
-                }
-                textBoxData->backspace_key_state = BACKSPACE_FIRST; 
-            }
-            else if (textBoxData->backspace_key_state == BACKSPACE_FIRST) {
-                textBoxData->frame_timer += GetFrameTime();
-                if (textBoxData->frame_timer > 0.35f) {
-                    textBoxData->frame_timer = 0;
-                    textBoxData->backspace_key_state = BACKSPACE_SECOND;
-                } 
-            }
-            else {
-                textBoxData->frame_timer += GetFrameTime();
-                if (textBoxData->frame_timer > 0.03f) {
-                    textBoxData->frame_timer = 0;
-                    if (str->len != 0) {
-                        --(str->len);
-                    }
-                } 
-            }
-        }
-        else {
-            textBoxData->backspace_key_state = BACKSPACE_NOT_PRESSED;
-        }
-        int key = GetCharPressed();
-        while (key > 0) {
-            // NOTE: Only allow keys in range [32..125]
-            if ((key >= 32) && (key <= 125) && (str->len < textBoxData->max_str_len)) {
-                str->str[(str->len)++] = (u8)key;
-            }
-            key = GetCharPressed();  // Check next character in the queue
-        }
-
-        if (textBoxData->floatingLabelYTop > playerTextBoxYTop  - 8) {
-            textBoxData->floatingLabelYTop -= 2;
-        }
-    }
-    else {
-        textBoxData->frame_counter = 0;
-        if (textBoxData->str.len == 0) {
-            if (textBoxData->floatingLabelYTop < playerTextBoxYCenter - 8) {
-                textBoxData->floatingLabelYTop += 2;
-            }
-        }
-    }
-    textBoxData->floatingLabelYOffset = textBoxData->floatingLabelYTop - playerTextBoxYTop;
-
-    String *str_final = &(textBoxData->str_final);
-    string_cpy(str_final, &(textBoxData->str));
-    if (((textBoxData->frame_counter/40)%2) == 1) {
-        str_final->str[(str_final->len)++] = (u8)'_';
-    }
-    // --------------------------------- TextBox Logic End --------------------------------- //
-
     Clay_BeginLayout();
     CLAY({ .id = CLAY_ID("MainWindow"),
         .backgroundColor = blue,
@@ -141,10 +68,76 @@ GetLayout(LayoutData *layoutData) {
             }
         }
     }
+
+    // Layout of floating element with animation
+    if (layoutData->tab == TAB_NEW_PLAYER) {
+        TextBoxData *textBoxData = &(layoutData->text_box_data);
+
+        Clay_ElementId playerTextBoxId = Clay_GetElementId(CLAY_STRING("PlayerTextBox"));
+        Clay_ElementId floatingLabelId = Clay_GetElementId(CLAY_STRING("FloatingLabel"));
+        Clay_ElementData playerTextBoxElementData = Clay_GetElementData(playerTextBoxId);
+        Clay_ElementData floatingLabelElementData = Clay_GetElementData(floatingLabelId);
+
+        s32 fontSize = textBoxData->fontSize;
+        Clay_BoundingBox playerTextBoxBoundingBox = playerTextBoxElementData.boundingBox;
+        Clay_BoundingBox floatingLabelBoundingBox = floatingLabelElementData.boundingBox;
+
+        bool isTextBoxClicked = (
+            layoutData->last_element_clicked.id == playerTextBoxId.id ||
+            layoutData->last_element_clicked.id == floatingLabelId.id
+        );
+        if (isTextBoxClicked) {
+            float yOffset = -(fontSize / 2);
+            if (textBoxData->floatingLabelYOffset > yOffset) {
+                textBoxData->floatingLabelYOffset -= 2;
+            }
+        }
+        else {
+            if (textBoxData->str.len == 0) {
+                float yOffset = (playerTextBoxBoundingBox.height - fontSize) / 2;
+                if (textBoxData->floatingLabelYOffset < yOffset) {
+                    textBoxData->floatingLabelYOffset += 2;
+                }
+            }
+        }
+
+        if (playerTextBoxBoundingBox.x != 0) { // PlayerTextBox has actually been rendered
+            if (floatingLabelBoundingBox.x == 0) { // FloatingLabel has not been rendered yet 
+                textBoxData->floatingLabelYOffset = (playerTextBoxBoundingBox.height - fontSize) / 2;
+            }
+            CLAY({
+                .id = CLAY_ID("FloatingLabel"),
+                .backgroundColor = gray,
+                .cornerRadius = CLAY_CORNER_RADIUS(6),
+                .layout = {
+                    .sizing = {.width = CLAY_SIZING_FIT(0), .height = CLAY_SIZING_FIT(0)},
+                    .padding = { .left = 5, .right = 5, .top = 0, .bottom = 0 }
+                },
+                .floating = {
+                    .parentId = playerTextBoxId.id,
+                    .attachTo = CLAY_ATTACH_TO_ELEMENT_WITH_ID,
+                    .attachPoints = {
+                        .element = CLAY_ATTACH_POINT_LEFT_TOP,
+                        .parent = CLAY_ATTACH_POINT_LEFT_TOP
+                    },
+                    .offset = {10, textBoxData->floatingLabelYOffset}
+                }
+            }) {
+                Clay_OnHover(HandleFloatingLabelInteraction, (intptr_t)layoutData);
+                CLAY_TEXT(CLAY_STRING("Enter new player name"), CLAY_TEXT_CONFIG({
+                    .fontId = FONT_ID_BODY_16, .fontSize = (u16)fontSize, .textColor = white
+                }));
+            }
+        }
+    }
+
     Clay_RenderCommandArray renderCommands = Clay_EndLayout();
+
+
     for (int32_t i = 0; i < renderCommands.length; i++) {
         Clay_RenderCommandArray_Get(&renderCommands, i)->boundingBox.y += layoutData->yOffset;
     }
+
     return renderCommands;
 }
 
@@ -164,13 +157,8 @@ CameraInit() {
 
 int main(void) {
     Clay_Raylib_Initialize(
-        1024,
-        768,
-        "Enniolimpiadi",
-        FLAG_WINDOW_RESIZABLE |
-        FLAG_WINDOW_HIGHDPI |
-        FLAG_MSAA_4X_HINT |
-        FLAG_VSYNC_HINT
+        1024, 768, "Enniolimpiadi",
+        FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT
     );
 
     CameraInit();
@@ -223,15 +211,11 @@ int main(void) {
     u32 max_str_len = 64;
     TextBoxData text_box_data = {
         .max_str_len = max_str_len,
+        .fontSize = 15,
         .str.len = 0,
         .str.str = arena_push(&arena_permanent, max_str_len),
         .str_final.len = 0,
-        .str_final.str = arena_push(&arena_permanent, max_str_len),
-        .floatingLabelYTop = 120, // TODO: this must not be hardcoded!
-        .floatingLabelYOffset = 0
-        // .y_offset = 12,
-        // .y_offset_start = 12,
-        // .y_offset_end = -8
+        .str_final.str = arena_push(&arena_permanent, max_str_len)
     };
 
     LayoutData layout_data = {
@@ -246,6 +230,12 @@ int main(void) {
         .my_model = my_model,
         .my_texture = my_texture,
     };
+
+    Clay_ElementData elementData = (
+        Clay_GetElementData(Clay_GetElementId(CLAY_STRING("PlayerTextBox")))
+    );
+    float yCenter = elementData.boundingBox.y + elementData.boundingBox.height / 2;
+    layout_data.text_box_data.floatingLabelYTop = yCenter;
 
     SetTargetFPS(60);
     while (!WindowShouldClose()) {

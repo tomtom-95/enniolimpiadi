@@ -9,6 +9,7 @@
     ],
     "files.associations": {
         "__locale": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "ios": "c"
     }
 }
