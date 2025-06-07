@@ -142,10 +142,7 @@ LayoutAddPlayerWindow(LayoutData *data) {
             .width = {width_border, width_border, width_border, width_border}
         },
         .layout = {
-            .sizing = {
-                .width = CLAY_SIZING_GROW(0),
-                .height = CLAY_SIZING_FIT(40)
-            },
+            .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_FIT(40) },
             .padding = CLAY_PADDING_ALL(12)
         }
     }) {

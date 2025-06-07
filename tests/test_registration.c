@@ -29,6 +29,7 @@ int main(void) {
     player_create(&name_chunk_state, &player_state, player_map, riccardo);
     player_create(&name_chunk_state, &player_state, player_map, giulio);
     player_create(&name_chunk_state, &player_state, player_map, mario);
+    player_create(&name_chunk_state, &player_state, player_map, riccardo);
     player_enroll(&name_state, &name_chunk_state, player_map, riccardo, ping_pong);
     player_enroll(&name_state, &name_chunk_state, player_map, riccardo, machiavelli);
     player_withdraw(&name_state, &name_chunk_state, player_map, riccardo, ping_pong);

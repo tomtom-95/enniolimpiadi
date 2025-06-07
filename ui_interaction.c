@@ -73,6 +73,10 @@ HandleAddPlayerButtonInteraction(Clay_ElementId elementId, Clay_PointerData poin
     LayoutData *layoutData = (LayoutData *)data;
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         layoutData->last_element_clicked = elementId;
+        player_create(
+            layoutData->name_chunk_state, layoutData->player_state, layoutData->player_map,
+            layoutData->text_box_data.str
+        );
     }
 }
 

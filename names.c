@@ -92,11 +92,12 @@ name_cmp(Name name1, Name name2) {
         return false;
     }
 
+    u64 bytes_left = name1.len;
     u64 needed_chunks = (name1.len + NAME_CHUNK_PAYLOAD_SIZE - 1) / NAME_CHUNK_PAYLOAD_SIZE;
     NameChunk *chunk1 = name1.head;
     NameChunk *chunk2 = name2.head;
     for (u64 i = 0; i < needed_chunks; ++i) {
-        if (memcmp(chunk1, chunk2, NAME_CHUNK_PAYLOAD_SIZE)) {
+        if (memcmp(chunk1, chunk2, getmin(bytes_left, (u64)NAME_CHUNK_PAYLOAD_SIZE))) {
             return false;
         }
         else {

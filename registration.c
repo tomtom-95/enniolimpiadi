@@ -55,7 +55,7 @@ player_create(
     Name player_name = name_save(name_chunk_state, str_player_name);
     while (*player) {
         if (name_cmp((*player)->player_name, player_name)) {
-            log_error("%s, is already present", player_name);
+            log_error("%s, is already present", str_player_name);
             name_delete(name_chunk_state, &player_name);
             return;
         }
