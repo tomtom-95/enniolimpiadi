@@ -126,12 +126,7 @@ Raylib_MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, void *
     return textSize;
 }
 
-void Clay_Raylib_Initialize(
-    int width,
-    int height,
-    const char *title,
-    unsigned int flags
-) {
+void Clay_Raylib_Initialize(int width, int height, const char *title, unsigned int flags) {
     SetConfigFlags(flags);
     InitWindow(width, height, title);
 }
@@ -151,7 +146,6 @@ Clay_Raylib_Close(void) {
 
     CloseWindow();
 }
-
 
 void
 Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutData layout_data) {
@@ -328,9 +322,8 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
                         break;
                     }
                     case CUSTOM_LAYOUT_TEXTBOX: {
-                        // Clay_TextRenderData *textData = &renderCommand->renderData.text;
-                        // printf("textData: %c", textData->stringContents.chars[0]);
-                        Font fontToUse = fonts[0]; // TODO: do not hardcode 0
+                        TextBoxData textBoxData = layout_data.text_box_data;
+                        Font fontToUse = fonts[textBoxData.font_id];
                         s32 strlen = (s32)layout_data.text_box_data.str.len;
     
                         // Calculate width of the cursor
@@ -342,12 +335,8 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
                             codepoint = (int)layout_data.text_box_data.str.str[layout_data.text_box_data.cursor_position];
                         }
                         int glyphIndex = GetGlyphIndex(fontToUse, codepoint);
-                            
                         int advance = fontToUse.glyphs[glyphIndex].advanceX;
-
-                        // float scale = textData->fontSize / (float)fontToUse.baseSize;
-                        float scale = 16 / (float)fontToUse.baseSize;
-
+                        float scale = textBoxData.fontSize / (float)fontToUse.baseSize;
                         float widthInPixels = advance * scale;
 
                         // Calculate position of the cursor
@@ -355,19 +344,14 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
                             .len = layout_data.text_box_data.str.len,
                             .str = arena_push(layout_data.arena_frame, layout_data.text_box_data.str.len + 1)
                         };
-                        memcpy(tmp.str, layout_data.text_box_data.str.str, layout_data.text_box_data.str.len);
-                        tmp.str[layout_data.text_box_data.str.len] = '\0';
-
-                        // Vector2 size = MeasureTextEx(fontToUse, tmp.str, textData->fontSize, textData->letterSpacing);
-                        // int str_len = layout_data.text_box_data.str.len;
-                        // layout_data.text_box_data.str.str[str_len] = '\0';
-                        Vector2 size = MeasureTextEx(fontToUse, tmp.str, 16, 0);
+                        memcpy(tmp.str, layout_data.text_box_data.str.str, layout_data.text_box_data.cursor_position);
+                        tmp.str[layout_data.text_box_data.cursor_position] = '\0';
+                        Vector2 size = MeasureTextEx(fontToUse, tmp.str, textBoxData.fontSize, 0);
                         float stringWidthInPixels = size.x;
 
-                        if ((layout_data.text_box_data.frame_counter / 40) % 2 == 1) {
+                        if ((layout_data.text_box_data.frame_counter / 40) % 2 == 0) {
                             DrawRectangle(
-                                // boundingBox.x + stringWidthInPixels, boundingBox.y, (int)(widthInPixels), textData->fontSize,
-                                boundingBox.x + stringWidthInPixels, boundingBox.y, (int)(widthInPixels), 16,
+                                boundingBox.x + stringWidthInPixels, boundingBox.y, 1, textBoxData.fontSize,
                                 CLAY_COLOR_TO_RAYLIB_COLOR(WHITE)
                             );
                         }

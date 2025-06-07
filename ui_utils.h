@@ -20,6 +20,7 @@ typedef struct {
     u64 frame_counter;
     s32 fontSize;
     double frame_timer;
+    int font_id;
     String str;
     float floatingLabelYOffset;
     enum BackspaceKeyState {

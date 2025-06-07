@@ -152,15 +152,14 @@ main(void) {
     );
 
     Clay_Initialize(
-        clayMemory,
-        (Clay_Dimensions) {.width = GetScreenWidth(), .height = GetScreenHeight()},
+        clayMemory, (Clay_Dimensions) {.width = GetScreenWidth(), .height = GetScreenHeight()},
         (Clay_ErrorHandler) { HandleClayErrors }
     );
 
     Clay_SetDebugModeEnabled(true);
 
     Font fonts[1];
-    fonts[FONT_ID_BODY_16] = LoadFontEx("resources/Roboto-Regular.ttf", 48, 0, 400);
+    fonts[FONT_ID_BODY_16] = LoadFontEx("resources/cour.ttf", 48, 0, 400);
     SetTextureFilter(fonts[FONT_ID_BODY_16].texture, TEXTURE_FILTER_BILINEAR);
     Clay_SetMeasureTextFunction(Raylib_MeasureText, fonts);
 
@@ -189,6 +188,7 @@ main(void) {
 
     u32 max_str_len = 64;
     TextBoxData text_box_data = {
+        .font_id = FONT_ID_BODY_16,
         .cursor_position = 0,
         .max_str_len = max_str_len,
         .fontSize = 16,
