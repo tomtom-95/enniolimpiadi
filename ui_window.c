@@ -20,6 +20,7 @@ HandleUserWriting(LayoutData *layoutData) {
         if (textBoxData->backspace_key_state == BACKSPACE_NOT_PRESSED) {
             if (str->len != 0) {
                 --(str->len);
+                --(textBoxData->cursor_position);
             }
             textBoxData->backspace_key_state = BACKSPACE_FIRST; 
         }
@@ -36,6 +37,7 @@ HandleUserWriting(LayoutData *layoutData) {
                 textBoxData->frame_timer = 0;
                 if (str->len != 0) {
                     --(str->len);
+                    --(textBoxData->cursor_position);
                 }
             } 
         }
@@ -45,17 +47,23 @@ HandleUserWriting(LayoutData *layoutData) {
     }
     int key = GetCharPressed();
     while (key > 0) {
-        // NOTE: Only allow keys in range [32..125]
-        if ((key >= 32) && (key <= 125) && (str->len < textBoxData->max_str_len)) {
-            str->str[(str->len)++] = (u8)key;
-        }
-        key = GetCharPressed();  // Check next character in the queue
-    }
+        u8 *p_cursor = textBoxData->str.str + textBoxData->cursor_position;
+        memmove(p_cursor, p_cursor + 1, textBoxData->str.len - textBoxData->cursor_position);
 
-    String *str_final = &(textBoxData->str_final);
-    string_cpy(str_final, &(textBoxData->str));
-    if (((textBoxData->frame_counter/40)%2) == 1) {
-        str_final->str[(str_final->len)++] = (u8)'_';
+        if (key == KEY_RIGHT) {
+            ++textBoxData->cursor_position;
+        }
+        else if (key == KEY_LEFT) {
+            --textBoxData->cursor_position;
+        }
+        // NOTE: Only allow keys in range [32..125]
+        else if ((key >= 32) && (key <= 125) && (str->len < textBoxData->max_str_len)) {
+            str->str[(str->len)++] = (u8)key;
+            ++textBoxData->cursor_position;
+        }
+
+        // Check next character in the queue
+        key = GetCharPressed();
     }
 }
 
@@ -133,6 +141,11 @@ LayoutAddPlayerWindow(LayoutData *data) {
         data->text_box_data.frame_counter = 0;
     }
 
+    CustomLayoutElement *customLayoutElement = arena_push(data->arena_frame, sizeof(CustomLayoutElement));
+    *customLayoutElement = (CustomLayoutElement) {
+        .type = CUSTOM_LAYOUT_TEXTBOX
+    };
+
     CLAY({
         .id = CLAY_ID("PlayerTextBox"),
         .backgroundColor = gray,
@@ -144,19 +157,27 @@ LayoutAddPlayerWindow(LayoutData *data) {
         .layout = {
             .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_FIT(40) },
             .padding = CLAY_PADDING_ALL(12)
-        }
+        },
     }) {
         Clay_OnHover(HandlePlayerTextBoxInteraction, (intptr_t)data);
-        Clay_String str_player_name = {
-            .isStaticallyAllocated = true,
-            .length = (s32)textBoxData->str_final.len,
-            .chars = (const char *)textBoxData->str_final.str
-        };
-        CLAY_TEXT(str_player_name, CLAY_TEXT_CONFIG({
-            .fontId = FONT_ID_BODY_16,
-            .fontSize = (u16)textBoxData->fontSize,
-            .textColor = white
-        }));
+        CLAY({
+            .id = CLAY_ID("TextContainer"),
+            .layout = {
+                .sizing = layoutExpand,
+            },
+            .custom = { .customData = customLayoutElement}
+        }) {
+            Clay_String str_player_name = {
+                .isStaticallyAllocated = true,
+                .length = (s32)textBoxData->str.len,
+                .chars = (const char *)textBoxData->str.str
+            };
+            CLAY_TEXT(str_player_name, CLAY_TEXT_CONFIG({
+                .fontId = FONT_ID_BODY_16,
+                .fontSize = (u16)textBoxData->fontSize,
+                .textColor = white
+            }));
+        }
     }
     CLAY({
         .id = CLAY_ID("AddPlayerButton"),

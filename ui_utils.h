@@ -15,12 +15,12 @@ typedef enum {
 } Tab;
 
 typedef struct {
+    u32 cursor_position;
     u32 max_str_len;
     u64 frame_counter;
     s32 fontSize;
     double frame_timer;
     String str;
-    String str_final;
     float floatingLabelYOffset;
     enum BackspaceKeyState {
         BACKSPACE_NOT_PRESSED = 0,
@@ -50,6 +50,26 @@ typedef struct {
     Clay_ElementId last_element_clicked;
     AddPlayerButtonData add_player_button_data;
 } LayoutData;
+
+typedef enum {
+    CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL,
+    CUSTOM_LAYOUT_TEXTBOX
+} CustomLayoutElementType;
+
+typedef struct {
+    Model model;
+    float scale;
+    Vector3 position;
+    Matrix rotation;
+} CustomLayoutElement_3DModel;
+
+typedef struct {
+    CustomLayoutElementType type;
+    union {
+        CustomLayoutElement_3DModel model;
+    } customData;
+} CustomLayoutElement;
+
 
 const int FONT_ID_BODY_16 = 0;
 

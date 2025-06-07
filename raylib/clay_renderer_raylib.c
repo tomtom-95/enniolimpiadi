@@ -26,30 +26,11 @@
 
 Camera Raylib_camera;
 
-typedef enum
-{
-    CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL
-} CustomLayoutElementType;
-
-typedef struct
-{
-    Model model;
-    float scale;
-    Vector3 position;
-    Matrix rotation;
-} CustomLayoutElement_3DModel;
-
-typedef struct
-{
-    CustomLayoutElementType type;
-    union {
-        CustomLayoutElement_3DModel model;
-    } customData;
-} CustomLayoutElement;
-
 // Get a ray trace from the screen position (i.e mouse) within a specific section of the screen
 Ray
-GetScreenToWorldPointWithZDistance(Vector2 position, Camera camera, int screenWidth, int screenHeight, float zDistance) {
+GetScreenToWorldPointWithZDistance(
+    Vector2 position, Camera camera, int screenWidth, int screenHeight, float zDistance
+) {
     Ray ray = { 0 };
 
     // Calculate normalized device coordinates
@@ -104,11 +85,7 @@ GetScreenToWorldPointWithZDistance(Vector2 position, Camera camera, int screenWi
 }
 
 static inline Clay_Dimensions
-Raylib_MeasureText(
-    Clay_StringSlice text,
-    Clay_TextElementConfig *config,
-    void *userData
-) {
+Raylib_MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, void *userData) {
     // Measure string size for Font
     Clay_Dimensions textSize = { 0 };
 
@@ -133,8 +110,12 @@ Raylib_MeasureText(
             continue;
         }
         int index = text.chars[i] - 32;
-        if (fontToUse.glyphs[index].advanceX != 0) lineTextWidth += fontToUse.glyphs[index].advanceX;
-        else lineTextWidth += (fontToUse.recs[index].width + fontToUse.glyphs[index].offsetX);
+        if (fontToUse.glyphs[index].advanceX != 0) {
+            lineTextWidth += fontToUse.glyphs[index].advanceX;
+        }
+        else {
+            lineTextWidth += (fontToUse.recs[index].width + fontToUse.glyphs[index].offsetX);
+        }
     }
 
     maxTextWidth = fmax(maxTextWidth, lineTextWidth);
@@ -173,7 +154,7 @@ Clay_Raylib_Close(void) {
 
 
 void
-Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts,LayoutData layout_data) {
+Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutData layout_data) {
     for (int j = 0; j < renderCommands.length; j++) {
         Clay_RenderCommand *renderCommand = (
             Clay_RenderCommandArray_Get(&renderCommands, j)
@@ -200,12 +181,11 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts,LayoutDat
                 memcpy(temp_render_buffer, textData->stringContents.chars, textData->stringContents.length);
                 temp_render_buffer[textData->stringContents.length] = '\0';
                 DrawTextEx(
-                    fontToUse, temp_render_buffer,
-                    (Vector2){boundingBox.x, boundingBox.y},
+                    fontToUse, temp_render_buffer, (Vector2){boundingBox.x, boundingBox.y},
                     (float)textData->fontSize, (float)textData->letterSpacing,
                     CLAY_COLOR_TO_RAYLIB_COLOR(textData->textColor)
                 );
-    
+
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
@@ -345,6 +325,53 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts,LayoutDat
                             customElement->customData.model.scale * scaleValue, WHITE
                         );
                         EndMode3D();
+                        break;
+                    }
+                    case CUSTOM_LAYOUT_TEXTBOX: {
+                        // Clay_TextRenderData *textData = &renderCommand->renderData.text;
+                        // printf("textData: %c", textData->stringContents.chars[0]);
+                        Font fontToUse = fonts[0]; // TODO: do not hardcode 0
+                        s32 strlen = (s32)layout_data.text_box_data.str.len;
+    
+                        // Calculate width of the cursor
+                        int codepoint;
+                        if (layout_data.text_box_data.cursor_position == strlen) {
+                            codepoint = (int)' ';
+                        }
+                        else {
+                            codepoint = (int)layout_data.text_box_data.str.str[layout_data.text_box_data.cursor_position];
+                        }
+                        int glyphIndex = GetGlyphIndex(fontToUse, codepoint);
+                            
+                        int advance = fontToUse.glyphs[glyphIndex].advanceX;
+
+                        // float scale = textData->fontSize / (float)fontToUse.baseSize;
+                        float scale = 16 / (float)fontToUse.baseSize;
+
+                        float widthInPixels = advance * scale;
+
+                        // Calculate position of the cursor
+                        String tmp = {
+                            .len = layout_data.text_box_data.str.len,
+                            .str = arena_push(layout_data.arena_frame, layout_data.text_box_data.str.len + 1)
+                        };
+                        memcpy(tmp.str, layout_data.text_box_data.str.str, layout_data.text_box_data.str.len);
+                        tmp.str[layout_data.text_box_data.str.len] = '\0';
+
+                        // Vector2 size = MeasureTextEx(fontToUse, tmp.str, textData->fontSize, textData->letterSpacing);
+                        // int str_len = layout_data.text_box_data.str.len;
+                        // layout_data.text_box_data.str.str[str_len] = '\0';
+                        Vector2 size = MeasureTextEx(fontToUse, tmp.str, 16, 0);
+                        float stringWidthInPixels = size.x;
+
+                        if ((layout_data.text_box_data.frame_counter / 40) % 2 == 1) {
+                            DrawRectangle(
+                                // boundingBox.x + stringWidthInPixels, boundingBox.y, (int)(widthInPixels), textData->fontSize,
+                                boundingBox.x + stringWidthInPixels, boundingBox.y, (int)(widthInPixels), 16,
+                                CLAY_COLOR_TO_RAYLIB_COLOR(WHITE)
+                            );
+                        }
+    
                         break;
                     }
                     default: break;

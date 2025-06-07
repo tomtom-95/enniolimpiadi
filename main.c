@@ -189,12 +189,11 @@ main(void) {
 
     u32 max_str_len = 64;
     TextBoxData text_box_data = {
+        .cursor_position = 0,
         .max_str_len = max_str_len,
-        .fontSize = 15,
+        .fontSize = 16,
         .str.len = 0,
-        .str.str = arena_push(&arena_permanent, max_str_len),
-        .str_final.len = 0,
-        .str_final.str = arena_push(&arena_permanent, max_str_len)
+        .str.str = arena_push(&arena_permanent, max_str_len)
     };
 
     LayoutData layout_data = {
