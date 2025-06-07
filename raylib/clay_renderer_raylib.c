@@ -24,26 +24,6 @@
         .a = (unsigned char)roundf(color.a)  \
     }
 
-void
-DrawTrimmedRectangle(Rectangle textBox, char *label, Color color, Font *fonts) {
-    Vector2 p0 = {.x = textBox.x, .y = textBox.y};
-    Vector2 p1 = {.x = textBox.x + 80, .y = textBox.y};
-    Vector2 p2 = {.x = textBox.x + textBox.width, .y = textBox.y};
-    Vector2 p3 = {.x = textBox.x + textBox.width, .y = textBox.y + textBox.height};
-    Vector2 p4 = {.x = textBox.x, .y = textBox.y + textBox.height};
-
-    Font fontToUse = fonts[FONT_ID_BODY_16];
-    DrawLine(p1.x, p1.y, p2.x, p2.y, color);
-    DrawLine(p2.x, p2.y, p3.x, p3.y, color);
-    DrawLine(p3.x, p3.y, p4.x, p4.y, color);
-    DrawLine(p4.x, p4.y, p0.x, p0.y, color);
-
-    DrawTextEx(
-        fontToUse, label, (Vector2){p0.x + 5, p0.y - 5},
-        10, 0.2, WHITE
-    );
-}
-
 // Get a ray trace from the screen position (i.e mouse) within a specific section of the screen
 Ray
 GetScreenToWorldPointWithZDistance(
@@ -115,8 +95,8 @@ Raylib_MeasureText(
     // Measure string size for Font
     Clay_Dimensions textSize = { 0 };
 
-    float maxTextWidth = 0.0f;
-    float lineTextWidth = 0;
+    double maxTextWidth = 0.0f;
+    double lineTextWidth = 0;
 
     float textHeight = config->fontSize;
     Font* fonts = (Font*)userData;
@@ -156,7 +136,6 @@ void Clay_Raylib_Initialize(
 ) {
     SetConfigFlags(flags);
     InitWindow(width, height, title);
-    // EnableEventWaiting();
 }
 
 // A MALLOC'd buffer, that we keep modifying inorder to save from so many Malloc and Free Calls.
@@ -165,8 +144,8 @@ static char *temp_render_buffer = NULL;
 static int temp_render_buffer_len = 0;
 
 // Call after closing the window to clean up the render buffer
-void Clay_Raylib_Close()
-{
+void
+Clay_Raylib_Close(void) {
     if(temp_render_buffer) {
         free(temp_render_buffer);
     }
@@ -192,7 +171,7 @@ Clay_Raylib_Render(
                 Clay_TextRenderData *textData = &renderCommand->renderData.text;
                 Font fontToUse = fonts[textData->fontId];
     
-                int strlen = textData->stringContents.length + 1;
+                u64 strlen = textData->stringContents.length + 1;
     
                 if(strlen > temp_render_buffer_len) {
                     // Grow the temp buffer if we need a larger string
@@ -238,10 +217,8 @@ Clay_Raylib_Render(
             }
             case CLAY_RENDER_COMMAND_TYPE_SCISSOR_START: {
                 BeginScissorMode(
-                    (int)roundf(boundingBox.x),
-                    (int)roundf(boundingBox.y),
-                    (int)roundf(boundingBox.width),
-                    (int)roundf(boundingBox.height)
+                    (int)roundf(boundingBox.x), (int)roundf(boundingBox.y),
+                    (int)roundf(boundingBox.width), (int)roundf(boundingBox.height)
                 );
                 break;
             }
@@ -265,19 +242,11 @@ Clay_Raylib_Render(
                         .width = boundingBox.width,
                         .height = boundingBox.height,
                     };
-                    DrawRectangleRounded(
-                        raylib_rectangle,
-                        radius,
-                        8,
-                        CLAY_COLOR_TO_RAYLIB_COLOR(config->backgroundColor)
-                    );
+                    DrawRectangleRounded(raylib_rectangle, radius, 8, CLAY_COLOR_TO_RAYLIB_COLOR(config->backgroundColor));
                 }
                 else {
                     DrawRectangle(
-                        boundingBox.x,
-                        boundingBox.y,
-                        boundingBox.width,
-                        boundingBox.height,
+                        (int)boundingBox.x, (int)boundingBox.y, (int)boundingBox.width, (int)boundingBox.height,
                         CLAY_COLOR_TO_RAYLIB_COLOR(config->backgroundColor)
                     );
                 }
@@ -287,177 +256,85 @@ Clay_Raylib_Render(
                 Clay_BorderRenderData *config = &renderCommand->renderData.border;
                 // Left border
                 if (config->width.left > 0) {
-                    DrawRectangle((int)roundf(boundingBox.x), (int)roundf(boundingBox.y + config->cornerRadius.topLeft), (int)config->width.left, (int)roundf(boundingBox.height - config->cornerRadius.topLeft - config->cornerRadius.bottomLeft), CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
+                    DrawRectangle(
+                        (int)roundf(boundingBox.x), (int)roundf(boundingBox.y + config->cornerRadius.topLeft),
+                        (int)config->width.left, (int)roundf(boundingBox.height - config->cornerRadius.topLeft - config->cornerRadius.bottomLeft),
+                        CLAY_COLOR_TO_RAYLIB_COLOR(config->color)
+                    );
                 }
                 // Right border
                 if (config->width.right > 0) {
-                    DrawRectangle((int)roundf(boundingBox.x + boundingBox.width - config->width.right), (int)roundf(boundingBox.y + config->cornerRadius.topRight), (int)config->width.right, (int)roundf(boundingBox.height - config->cornerRadius.topRight - config->cornerRadius.bottomRight), CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
+                    DrawRectangle(
+                        (int)roundf(boundingBox.x + boundingBox.width - config->width.right), (int)roundf(boundingBox.y + config->cornerRadius.topRight),
+                        (int)config->width.right, (int)roundf(boundingBox.height - config->cornerRadius.topRight - config->cornerRadius.bottomRight),
+                        CLAY_COLOR_TO_RAYLIB_COLOR(config->color)
+                    );
                 }
                 // Top border
                 if (config->width.top > 0) {
-                    DrawRectangle((int)roundf(boundingBox.x + config->cornerRadius.topLeft), (int)roundf(boundingBox.y), (int)roundf(boundingBox.width - config->cornerRadius.topLeft - config->cornerRadius.topRight), (int)config->width.top, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
+                    DrawRectangle(
+                        (int)roundf(boundingBox.x + config->cornerRadius.topLeft), (int)roundf(boundingBox.y),
+                        (int)roundf(boundingBox.width - config->cornerRadius.topLeft - config->cornerRadius.topRight), (int)config->width.top,
+                        CLAY_COLOR_TO_RAYLIB_COLOR(config->color)
+                    );
                 }
                 // Bottom border
                 if (config->width.bottom > 0) {
-                    DrawRectangle((int)roundf(boundingBox.x + config->cornerRadius.bottomLeft), (int)roundf(boundingBox.y + boundingBox.height - config->width.bottom), (int)roundf(boundingBox.width - config->cornerRadius.bottomLeft - config->cornerRadius.bottomRight), (int)config->width.bottom, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
+                    DrawRectangle(
+                        (int)roundf(boundingBox.x + config->cornerRadius.bottomLeft), (int)roundf(boundingBox.y + boundingBox.height - config->width.bottom),
+                        (int)roundf(boundingBox.width - config->cornerRadius.bottomLeft - config->cornerRadius.bottomRight), (int)config->width.bottom,
+                        CLAY_COLOR_TO_RAYLIB_COLOR(config->color)
+                    );
                 }
                 if (config->cornerRadius.topLeft > 0) {
-                    DrawRing((Vector2) { roundf(boundingBox.x + config->cornerRadius.topLeft), roundf(boundingBox.y + config->cornerRadius.topLeft) }, roundf(config->cornerRadius.topLeft - config->width.top), config->cornerRadius.topLeft, 180, 270, 10, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
+                    DrawRing(
+                        (Vector2) {
+                            roundf(boundingBox.x + config->cornerRadius.topLeft), roundf(boundingBox.y + config->cornerRadius.topLeft)
+                        },
+                        roundf(config->cornerRadius.topLeft - config->width.top), config->cornerRadius.topLeft, 180, 270, 10, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
                 }
                 if (config->cornerRadius.topRight > 0) {
-                    DrawRing((Vector2) { roundf(boundingBox.x + boundingBox.width - config->cornerRadius.topRight), roundf(boundingBox.y + config->cornerRadius.topRight) }, roundf(config->cornerRadius.topRight - config->width.top), config->cornerRadius.topRight, 270, 360, 10, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
+                    DrawRing(
+                        (Vector2) {
+                            roundf(boundingBox.x + boundingBox.width - config->cornerRadius.topRight), roundf(boundingBox.y + config->cornerRadius.topRight)
+                        },
+                        roundf(config->cornerRadius.topRight - config->width.top), config->cornerRadius.topRight, 270, 360, 10, CLAY_COLOR_TO_RAYLIB_COLOR(config->color)
+                    );
                 }
                 if (config->cornerRadius.bottomLeft > 0) {
-                    DrawRing((Vector2) { roundf(boundingBox.x + config->cornerRadius.bottomLeft), roundf(boundingBox.y + boundingBox.height - config->cornerRadius.bottomLeft) }, roundf(config->cornerRadius.bottomLeft - config->width.bottom), config->cornerRadius.bottomLeft, 90, 180, 10, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
+                    DrawRing(
+                        (Vector2) {
+                            roundf(boundingBox.x + config->cornerRadius.bottomLeft), roundf(boundingBox.y + boundingBox.height - config->cornerRadius.bottomLeft)
+                        },
+                        roundf(config->cornerRadius.bottomLeft - config->width.bottom), config->cornerRadius.bottomLeft, 90, 180, 10, CLAY_COLOR_TO_RAYLIB_COLOR(config->color)
+                    );
                 }
                 if (config->cornerRadius.bottomRight > 0) {
-                    DrawRing((Vector2) { roundf(boundingBox.x + boundingBox.width - config->cornerRadius.bottomRight), roundf(boundingBox.y + boundingBox.height - config->cornerRadius.bottomRight) }, roundf(config->cornerRadius.bottomRight - config->width.bottom), config->cornerRadius.bottomRight, 0.1, 90, 10, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
+                    DrawRing(
+                        (Vector2) {
+                            roundf(boundingBox.x + boundingBox.width - config->cornerRadius.bottomRight), roundf(boundingBox.y + boundingBox.height - config->cornerRadius.bottomRight)
+                        },
+                        roundf(config->cornerRadius.bottomRight - config->width.bottom), config->cornerRadius.bottomRight, (float)0.1, 90, 10, CLAY_COLOR_TO_RAYLIB_COLOR(config->color)
+                    );
                 }
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_CUSTOM: {
                 Clay_CustomRenderData *config = &renderCommand->renderData.custom;
-                CustomLayoutElement *customElement = (CustomLayoutElement *)config->customData;
-                if (!customElement) {
-                    continue;
-                }
-                switch (customElement->type) {
-                    case CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL: {
-                        Clay_BoundingBox rootBox = renderCommands.internalArray[0].boundingBox;
-                        float scaleValue = CLAY__MIN(
-                            CLAY__MIN(1, 768 / rootBox.height) * CLAY__MAX(1, rootBox.width / 1024), 1.5f
-                        );
-                        scaleValue = 0.8f;
-                        Model model = customElement->customData.model.model;
-                        model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = (
-                            customElement->customData.model.texture
-                        );
-
-                        // Calculate position based on the bounding box of this specific element
-                        // Convert 2D screen coordinates to 3D world positions
-                        float normalizedX = (boundingBox.x + boundingBox.width * 0.1f) / rootBox.width;
-                        float normalizedY = (boundingBox.y + boundingBox.height * 0.1f) / rootBox.height;
-    
-                        // Map normalized coordinates to 3D world space
-                        // Spread models along X axis based on their UI position
-                        Vector3 position = { 
-                            (normalizedX - 0.5f) * 80.0f,  // Spread along X axis
-                            0.0f,                          // Keep same Y level
-                            0.0f                           // Keep same Z level
-                        };
-                        // Vector3 position = {
-                        //     .x = boundingBox.x,
-                        //     .y = boundingBox.y,
-                        //     .z = 0.0f
-                        // };
-                        // Vector3 position = {
-                        //     .x = 200.0f,
-                        //     .y = 0.0f,
-                        //     .z = 0.0f
-                        // };
-
-                        // Create a camera for this specific viewport area
-                        Camera localCamera = camera;
-    
-                        UpdateCamera(&localCamera, CAMERA_FIRST_PERSON);
-
-                        DrawCircle(
-                            boundingBox.x,
-                            boundingBox.y,
-                            30,
-                            BLACK
-                        );
-
-                        DrawRectangle(
-                            boundingBox.x,
-                            boundingBox.y,
-                            boundingBox.width,
-                            boundingBox.height,
-                            CLAY_COLOR_TO_RAYLIB_COLOR(config->backgroundColor)
-                        );
-
-                        BeginMode3D(camera);
-                        DrawModel(
-                            model,
-                            position,
-                            customElement->customData.model.scale * scaleValue,
-                            WHITE
-                        );
-                        DrawGrid(20, 10.0f);
-                        EndMode3D();
-                        break;
-                    }
-                    // case CUSTOM_LAYOUT_ELEMENT_CIRCLE: {
-                    //     // TODO: render a simple circle
-                    // }
-                    // case CUSTOM_LAYOUT_ELEMENT_RAY_TEXTBOX: {
-                    //     Font fontToUse = fonts[FONT_ID_BODY_16];
-                    //     Clay_RectangleRenderData *rectangle_config = &renderCommand->renderData.rectangle;
-
-                    //     float radius;
-                    //     if (rectangle_config->cornerRadius.topLeft > 0) {
-                    //         if (boundingBox.width > boundingBox.height) {
-                    //             radius = (rectangle_config->cornerRadius.topLeft * 2) / (float)boundingBox.height;
-                    //         }
-                    //         else {
-                    //             radius = (rectangle_config->cornerRadius.topLeft * 2) / (float)boundingBox.width;
-                    //         }
-                    //     }
-
-                    //     Rectangle textBox = { 
-                    //         (int)boundingBox.x,
-                    //         (int)boundingBox.y,
-                    //         (int)boundingBox.width,
-                    //         (int)boundingBox.height,
-                    //     };
-                    //     DrawRectangleRounded(
-                    //         textBox, radius, 8, CLAY_COLOR_TO_RAYLIB_COLOR(config->backgroundColor)
-                    //     );
-
-                    //     if (layout_data.mouseOnClick) {
-                    //         DrawTrimmedRectangle(textBox, layout_data.label, WHITE, fonts);
-                    //         DrawTextEx(
-                    //             fontToUse, layout_data.name, (Vector2){boundingBox.x + 5, boundingBox.y + 8},
-                    //             40, 0.5, WHITE
-                    //         );
-                    //     }
-                    //     else {
-                    //         if (layout_data.mouseOnText) {
-                    //             if (layout_data.letterCount == 0) {
-                    //                 DrawRectangleLines(
-                    //                     (int)textBox.x, (int)textBox.y,
-                    //                     (int)textBox.width, (int)textBox.height, WHITE
-                    //                 );
-                    //                 DrawTextEx(
-                    //                     fontToUse, layout_data.label,
-                    //                     (Vector2){boundingBox.x + 5, boundingBox.y + 8}, 20, 0.5, WHITE
-                    //                 );
-                    //             }
-                    //             else {
-                    //                 DrawTrimmedRectangle(textBox, layout_data.label, BLACK, fonts);
-                    //                 DrawText(layout_data.name, (int)textBox.x + 5, (int)textBox.y + 8, 40, WHITE);
-                    //             }
-                    //         }
-                    //         else {
-                    //             if (layout_data.letterCount == 0) {
-                    //                 DrawRectangleLines(
-                    //                     (int)textBox.x, (int)textBox.y,
-                    //                     (int)textBox.width, (int)textBox.height, DARKGRAY
-                    //                 );
-                    //                 DrawTextEx(
-                    //                     fontToUse, layout_data.label,
-                    //                     (Vector2){boundingBox.x + 5, boundingBox.y + 8}, 20, 0.5, WHITE
-                    //                 );
-                    //             }
-                    //             else {
-                    //                 DrawTrimmedRectangle(textBox, layout_data.label, BLACK, fonts);
-                    //                 DrawText(layout_data.name, (int)textBox.x + 5, (int)textBox.y + 8, 40, WHITE);
-                    //             }
-                    //         }
-                    //     }
-                    // }
-                    default: break;
-                }
+                // CustomLayoutElement *customElement = (CustomLayoutElement *)config->customData;
+                // if (!customElement) continue;
+                // switch (customElement->type) {
+                //     case CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL: {
+                //         Clay_BoundingBox rootBox = renderCommands.internalArray[0].boundingBox;
+                //         float scaleValue = CLAY__MIN(CLAY__MIN(1, 768 / rootBox.height) * CLAY__MAX(1, rootBox.width / 1024), 1.5f);
+                //         Ray positionRay = GetScreenToWorldPointWithZDistance((Vector2) { renderCommand->boundingBox.x + renderCommand->boundingBox.width / 2, renderCommand->boundingBox.y + (renderCommand->boundingBox.height / 2) + 20 }, Raylib_camera, (int)roundf(rootBox.width), (int)roundf(rootBox.height), 140);
+                //         BeginMode3D(Raylib_camera);
+                //             DrawModel(customElement->customData.model.model, positionRay.position, customElement->customData.model.scale * scaleValue, WHITE);        // Draw 3d model with texture
+                //         EndMode3D();
+                //         break;
+                //     }
+                //     default: break;
+                // } 
                 break;
             }
             default: {

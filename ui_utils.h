@@ -11,8 +11,7 @@ typedef enum {
     TAB_PLAYERS = 0,
     TAB_TOURNAMENTS,
     TAB_NEW_PLAYER,
-    TAB_NEW_TOURNAMENT,
-    TAB_CUSTOM
+    TAB_NEW_TOURNAMENT
 } Tab;
 
 typedef struct {
@@ -22,7 +21,6 @@ typedef struct {
     double frame_timer;
     String str;
     String str_final;
-    float floatingLabelYTop;
     float floatingLabelYOffset;
     enum BackspaceKeyState {
         BACKSPACE_NOT_PRESSED = 0,
@@ -49,10 +47,7 @@ typedef struct {
     NameChunkState *name_chunk_state;
     Tab tab;
     TextBoxData text_box_data;
-    Texture2D profilePicture;
     Clay_ElementId last_element_clicked;
-    Model my_model;
-    Texture2D my_texture;
     AddPlayerButtonData add_player_button_data;
 } LayoutData;
 
@@ -73,45 +68,6 @@ Clay_Color gray_lighter = {160, 160, 160, 255};
 Clay_Color violet = {120, 90, 210, 255};
 Clay_Color violet_light = {140, 110, 230, 255};
 
-Clay_Sizing layoutExpand = {
-    .width = CLAY_SIZING_GROW(0),
-    .height = CLAY_SIZING_GROW(0)
-};
-
-// Camera Raylib_camera;
-// Define the camera to look into our 3d world
-Camera camera = {.fovy = 30};
-
-typedef enum
-{
-    CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL,
-    CUSTOM_LAYOUT_ELEMENT_CIRCLE,
-    CUSTOM_LAYOUT_ELEMENT_RAY_TEXTBOX
-} CustomLayoutElementType;
-
-typedef struct
-{
-    Model model;
-    Texture2D texture;
-    float scale;
-} CustomLayoutElement_3DModel;
-
-typedef struct {
-    bool mouseOnText; 
-    bool mouseOnClick;
-    char label[16];
-    char name[16];
-    int letterCount;
-    int framesCounter;
-} CustomLayoutRayTextBox;
-
-typedef struct
-{
-    CustomLayoutElementType type;
-    union {
-        CustomLayoutElement_3DModel model;
-        CustomLayoutRayTextBox ray_textbox;
-    } customData;
-} CustomLayoutElement;
+Clay_Sizing layoutExpand = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0) };
 
 #endif

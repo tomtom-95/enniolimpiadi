@@ -186,18 +186,4 @@ LayoutAddPlayerWindow(LayoutData *data) {
     }
 }
 
-void
-LayoutAddTournamentWindow(LayoutData *data) {
-    CLAY({
-        .id = CLAY_ID("ProfilePicture"),
-        .layout = {
-            .sizing = layoutExpand
-        },
-        .image = {
-            .imageData = &(data->profilePicture),
-            .sourceDimensions = {640, 640}
-        }
-    }) {}
-}
-
 #endif

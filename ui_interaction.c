@@ -39,9 +39,20 @@ HandleNewPlayerButtonInteraction(
     Clay_PointerData pointerData,
     intptr_t data
 ) {
-    LayoutData *user_data = (LayoutData *)data;
+    LayoutData *layoutData = (LayoutData *)data;
+    TextBoxData *textBoxData = &(layoutData->text_box_data);
+
+    Clay_ElementId playerTextBoxId = Clay_GetElementId(CLAY_STRING("PlayerTextBox"));
+    Clay_ElementData playerTextBoxElementData = Clay_GetElementData(playerTextBoxId);
+    Clay_BoundingBox playerTextBoxBoundingBox = playerTextBoxElementData.boundingBox;
+
+    s32 fontSize = textBoxData->fontSize;
+
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        user_data->tab = TAB_NEW_PLAYER;
+        layoutData->tab = TAB_NEW_PLAYER;
+        if (textBoxData->str.len == 0) {
+            textBoxData->floatingLabelYOffset = (playerTextBoxBoundingBox.height - fontSize) / 2;
+        }
     } 
 }
 
@@ -54,18 +65,6 @@ HandleNewTournamentButtonInteraction(
     LayoutData *user_data = (LayoutData *)data;
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         user_data->tab = TAB_NEW_TOURNAMENT;
-    } 
-}
-
-void
-HandleCustomElementButtonInteraction(
-    Clay_ElementId elementId,
-    Clay_PointerData pointerData,
-    intptr_t data
-) {
-    LayoutData *user_data = (LayoutData *)data;
-    if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        user_data->tab = TAB_CUSTOM;
     } 
 }
 

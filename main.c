@@ -24,10 +24,8 @@ GetLayout(LayoutData *layoutData) {
     CLAY({ .id = CLAY_ID("MainWindow"),
         .backgroundColor = blue,
         .layout = {
-            .layoutDirection = CLAY_TOP_TO_BOTTOM,
-            .sizing = layoutExpand,
-            .padding = CLAY_PADDING_ALL(16),
-            .childGap = 16
+            .sizing = layoutExpand, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16,
+            .padding = CLAY_PADDING_ALL(16)
         }
     }) {
         Clay_OnHover(HandleMainWindowInteraction, (intptr_t)layoutData);
@@ -37,10 +35,8 @@ GetLayout(LayoutData *layoutData) {
             .backgroundColor = gray,
             .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() },
             .layout = {
-                .sizing = layoutExpand,
-                .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                .childGap = 16,
-                .padding = CLAY_PADDING_ALL(16),
+                .sizing = layoutExpand, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16,
+                .padding = CLAY_PADDING_ALL(16)
             },
             .cornerRadius = CLAY_CORNER_RADIUS(8)
         }) {
@@ -61,10 +57,6 @@ GetLayout(LayoutData *layoutData) {
                 {
                     // LayoutAddTournamentWindow(data);
                 } break;
-                case TAB_CUSTOM:
-                {
-                    // LayoutCustomElement(data);
-                }
             }
         }
     }
@@ -74,36 +66,42 @@ GetLayout(LayoutData *layoutData) {
         TextBoxData *textBoxData = &(layoutData->text_box_data);
 
         Clay_ElementId playerTextBoxId = Clay_GetElementId(CLAY_STRING("PlayerTextBox"));
-        Clay_ElementId floatingLabelId = Clay_GetElementId(CLAY_STRING("FloatingLabel"));
         Clay_ElementData playerTextBoxElementData = Clay_GetElementData(playerTextBoxId);
-        Clay_ElementData floatingLabelElementData = Clay_GetElementData(floatingLabelId);
-
-        s32 fontSize = textBoxData->fontSize;
         Clay_BoundingBox playerTextBoxBoundingBox = playerTextBoxElementData.boundingBox;
+
+        Clay_ElementId floatingLabelId = Clay_GetElementId(CLAY_STRING("FloatingLabel"));
+        Clay_ElementData floatingLabelElementData = Clay_GetElementData(floatingLabelId);
         Clay_BoundingBox floatingLabelBoundingBox = floatingLabelElementData.boundingBox;
 
-        bool isTextBoxClicked = (
-            layoutData->last_element_clicked.id == playerTextBoxId.id ||
-            layoutData->last_element_clicked.id == floatingLabelId.id
-        );
-        if (isTextBoxClicked) {
-            float yOffset = -(fontSize / 2);
-            if (textBoxData->floatingLabelYOffset > yOffset) {
-                textBoxData->floatingLabelYOffset -= 2;
-            }
-        }
-        else {
-            if (textBoxData->str.len == 0) {
-                float yOffset = (playerTextBoxBoundingBox.height - fontSize) / 2;
-                if (textBoxData->floatingLabelYOffset < yOffset) {
-                    textBoxData->floatingLabelYOffset += 2;
-                }
-            }
-        }
+        s32 fontSize = textBoxData->fontSize;
 
-        if (playerTextBoxBoundingBox.x != 0) { // PlayerTextBox has actually been rendered
-            if (floatingLabelBoundingBox.x == 0) { // FloatingLabel has not been rendered yet 
+        // PlayerTextBox has actually been rendered
+        // This code will run starting from the second time that the textbox is rendered
+        if (playerTextBoxBoundingBox.x != 0) { 
+            // FloatingLabel has not been rendered yet: set his position to be
+            // the middle of the text box without any transition
+            if (floatingLabelBoundingBox.x == 0) {
                 textBoxData->floatingLabelYOffset = (playerTextBoxBoundingBox.height - fontSize) / 2;
+            }
+            else {
+                bool isTextBoxClicked = (
+                    layoutData->last_element_clicked.id == playerTextBoxId.id ||
+                    layoutData->last_element_clicked.id == floatingLabelId.id
+                );
+                if (isTextBoxClicked) {
+                    float yOffset = -(fontSize / 2);
+                    if (textBoxData->floatingLabelYOffset > yOffset) {
+                        textBoxData->floatingLabelYOffset -= 2;
+                    }
+                }
+                else {
+                    if (textBoxData->str.len == 0) {
+                        float yOffset = (playerTextBoxBoundingBox.height - fontSize) / 2;
+                        if (textBoxData->floatingLabelYOffset < yOffset) {
+                            textBoxData->floatingLabelYOffset += 2;
+                        }
+                    }
+                }
             }
             CLAY({
                 .id = CLAY_ID("FloatingLabel"),
@@ -141,37 +139,23 @@ GetLayout(LayoutData *layoutData) {
     return renderCommands;
 }
 
-void
-CameraInit() {
-    // Camera position
-    camera.position = (Vector3){ 50.0f, 50.0f, 50.0f };
-    // Camera looking at point
-    camera.target = (Vector3){ 0.0f, 10.0f, 0.0f };
-    // Camera up vector (rotation towards target)
-    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
-    // Camera field-of-view Y
-    camera.fovy = 30.0f;
-    // Camera mode type
-    camera.projection = CAMERA_PERSPECTIVE;
-}
-
-int main(void) {
+int
+main(void) {
     Clay_Raylib_Initialize(
         1024, 768, "Enniolimpiadi",
         FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT
     );
-
-    CameraInit();
 
     uint64_t clayRequiredMemory = Clay_MinMemorySize();
     Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(
         clayRequiredMemory, malloc(clayRequiredMemory)
     );
 
-    Clay_Initialize(clayMemory, (Clay_Dimensions) {
-       .width = GetScreenWidth(),
-       .height = GetScreenHeight()
-    }, (Clay_ErrorHandler) { HandleClayErrors });
+    Clay_Initialize(
+        clayMemory,
+        (Clay_Dimensions) {.width = GetScreenWidth(), .height = GetScreenHeight()},
+        (Clay_ErrorHandler) { HandleClayErrors }
+    );
 
     Clay_SetDebugModeEnabled(true);
 
@@ -203,11 +187,6 @@ int main(void) {
     player_enroll(&name_state, &name_chunk_state, player_map, riccardo, machiavelli);
     player_rename(player_map, &name_chunk_state, riccardo, newriccardo);
 
-    Texture2D profilePicture = LoadTexture("../resources/Ennio.jpg");
-
-    Model my_model = LoadModel("../resources/castle.obj");
-    Texture2D my_texture = LoadTexture("../resources/castle_diffuse.png");
-
     u32 max_str_len = 64;
     TextBoxData text_box_data = {
         .max_str_len = max_str_len,
@@ -226,35 +205,16 @@ int main(void) {
         .name_state = &name_state,
         .name_chunk_state = &name_chunk_state,
         .text_box_data = text_box_data,
-        .profilePicture = profilePicture,
-        .my_model = my_model,
-        .my_texture = my_texture,
     };
-
-    Clay_ElementData elementData = (
-        Clay_GetElementData(Clay_GetElementId(CLAY_STRING("PlayerTextBox")))
-    );
-    float yCenter = elementData.boundingBox.y + elementData.boundingBox.height / 2;
-    layout_data.text_box_data.floatingLabelYTop = yCenter;
 
     SetTargetFPS(60);
     while (!WindowShouldClose()) {
-        Clay_SetLayoutDimensions((Clay_Dimensions) {
-            .width = GetScreenWidth(),
-            .height = GetScreenHeight()
-        });
+        Clay_SetLayoutDimensions((Clay_Dimensions) { .width = GetScreenWidth(), .height = GetScreenHeight() });
 
         Vector2 mousePosition = GetMousePosition();
         Vector2 scrollDelta = GetMouseWheelMoveV();
-        Clay_SetPointerState(
-            (Clay_Vector2) { mousePosition.x, mousePosition.y },
-            IsMouseButtonDown(0)
-        );
-        Clay_UpdateScrollContainers(
-            true,
-            (Clay_Vector2) { scrollDelta.x, scrollDelta.y },
-            GetFrameTime()
-        );
+        Clay_SetPointerState((Clay_Vector2) { mousePosition.x, mousePosition.y }, IsMouseButtonDown(0));
+        Clay_UpdateScrollContainers(true, (Clay_Vector2) { scrollDelta.x, scrollDelta.y }, GetFrameTime());
 
         Clay_RenderCommandArray renderCommands = GetLayout(&layout_data);
 
@@ -263,6 +223,6 @@ int main(void) {
         Clay_Raylib_Render(renderCommands, fonts, layout_data);
         EndDrawing();
     }
-    // This function is new since the video was published
+
     Clay_Raylib_Close();
 }
