@@ -55,8 +55,58 @@ HandleNewTournamentButtonInteraction(Clay_ElementId elementId, Clay_PointerData 
 void
 HandlePlayerTextBoxInteraction(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t data) {
     LayoutData *layoutData = (LayoutData *)data;
+    TextBoxData *textBoxData = &(layoutData->text_box_data);
+
+    // Get character size
+    Font font = fonts[textBoxData->font_id];
+
+    // Use 20 or more characters to minimize rounding errors
+    const char *testStr = "AAAAAAAAAAAAAAAAAAAA";
+    int testLen = (int)strlen(testStr);
+    Vector2 size = MeasureTextEx(font, testStr, textBoxData->fontSize, 0);
+    float characterWidthPixels = size.x / (float)testLen;
+
+    // Get position of the mouse pointer
+    Clay_Vector2 mousePosition = pointerData.position;
+
+    // Get position of the TextContainer bounding box
+    Clay_ElementData textContainerData = (
+        Clay_GetElementData(Clay_GetElementId(CLAY_STRING("TextContainer")))
+    );
+    Clay_BoundingBox textContainerBoundingBox = textContainerData.boundingBox;
+
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         layoutData->last_element_clicked = elementId;
+        textBoxData->textBoxDataState = ONE_CLICK_STATE; 
+        textBoxData->frame_counter = 0;
+        textBoxData->highlight_end = 0;
+        textBoxData->frame_timer_text_highlight = 0;
+        textBoxData->highlightWidthPixels = 0;
+
+        float delta = mousePosition.x - textContainerBoundingBox.x;
+
+        u32 mousePositionIndex = (u32)(delta / characterWidthPixels);
+        if (mousePositionIndex > textBoxData->str.len) {
+            textBoxData->cursor_position = textBoxData->str.len;
+        }
+        else {
+            textBoxData->cursor_position = mousePositionIndex;
+        }
+    }
+    else if (pointerData.state == CLAY_POINTER_DATA_PRESSED) {
+        textBoxData->frame_timer_text_highlight += GetFrameTime();
+        if (textBoxData->frame_timer_text_highlight > 0.2f) {
+            textBoxData->textBoxDataState = COUNTINUOUS_CLICK_STATE; 
+
+            float delta = mousePosition.x - textContainerBoundingBox.x;
+            u32 mousePositionIndex = (u32)(delta / characterWidthPixels);
+            if (mousePositionIndex > layoutData->text_box_data.str.len) {
+                textBoxData->highlight_end = textBoxData->str.len;
+            }
+            else {
+                textBoxData->highlight_end = mousePositionIndex;
+            }
+        }
     }
 }
 

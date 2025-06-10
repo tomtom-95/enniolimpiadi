@@ -29,7 +29,7 @@ HandleUserWriting(LayoutData *layoutData) {
         }
         else if (textBoxData->backspace_key_state == BACKSPACE_FIRST) {
             textBoxData->frame_timer += GetFrameTime();
-            if (textBoxData->frame_timer > 0.35f) {
+            if (textBoxData->frame_timer > 0.4f) {
                 textBoxData->frame_timer = 0;
                 textBoxData->backspace_key_state = BACKSPACE_SECOND;
             } 
@@ -183,22 +183,9 @@ LayoutAddPlayerWindow(LayoutData *data) {
         Clay_OnHover(HandlePlayerTextBoxInteraction, (intptr_t)data);
         CLAY({
             .id = CLAY_ID("TextContainer"),
-            .layout = {
-                .sizing = layoutExpand,
-            },
+            .layout = { .sizing = layoutExpand },
             .custom = { .customData = customLayoutElement}
-        }) {
-            Clay_String str_player_name = {
-                .isStaticallyAllocated = true,
-                .length = (s32)textBoxData->str.len,
-                .chars = (const char *)textBoxData->str.str
-            };
-            CLAY_TEXT(str_player_name, CLAY_TEXT_CONFIG({
-                .fontId = FONT_ID_BODY_16,
-                .fontSize = (u16)textBoxData->fontSize,
-                .textColor = white
-            }));
-        }
+        }) {}
     }
     CLAY({
         .id = CLAY_ID("AddPlayerButton"),

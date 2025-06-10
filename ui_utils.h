@@ -15,6 +15,12 @@ typedef enum {
 } Tab;
 
 typedef struct {
+    u32 highlight_end;
+    float click_position_start;
+    float click_position_end;
+    float frame_timer_text_highlight;
+    int highlightWidthPixels;
+    Clay_Vector2 cursor_vector;
     u32 cursor_position;
     u32 max_str_len;
     u64 frame_counter;
@@ -23,6 +29,10 @@ typedef struct {
     int font_id;
     String str;
     float floatingLabelYOffset;
+    enum TextBoxDataState {
+        ONE_CLICK_STATE,
+        COUNTINUOUS_CLICK_STATE
+    } textBoxDataState;
     enum BackspaceKeyState {
         BACKSPACE_NOT_PRESSED = 0,
         BACKSPACE_FIRST,
@@ -73,6 +83,7 @@ typedef struct {
 
 
 const int FONT_ID_BODY_16 = 0;
+Font fonts[1];
 
 Clay_Color white = {255, 255, 255, 255};
 

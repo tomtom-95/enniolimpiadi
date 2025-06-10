@@ -158,8 +158,7 @@ main(void) {
 
     Clay_SetDebugModeEnabled(true);
 
-    Font fonts[1];
-    fonts[FONT_ID_BODY_16] = LoadFontEx("resources/cour.ttf", 48, 0, 400);
+    fonts[FONT_ID_BODY_16] = LoadFontEx("resources/FiraCode-Regular.ttf", 48, 0, 400);
     SetTextureFilter(fonts[FONT_ID_BODY_16].texture, TEXTURE_FILTER_BILINEAR);
     Clay_SetMeasureTextFunction(Raylib_MeasureText, fonts);
 
