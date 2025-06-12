@@ -77,7 +77,7 @@ HandlePlayerTextBoxInteraction(Clay_ElementId elementId, Clay_PointerData pointe
 
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         layoutData->last_element_clicked = elementId;
-        textBoxData->textBoxDataState = ONE_CLICK_STATE; 
+        textBoxData->textBoxDataState = CLICK_STATE; 
         textBoxData->frame_counter = 0;
         textBoxData->highlight_end = 0;
         textBoxData->highlight_start = 0; 
@@ -97,7 +97,7 @@ HandlePlayerTextBoxInteraction(Clay_ElementId elementId, Clay_PointerData pointe
     else if (pointerData.state == CLAY_POINTER_DATA_PRESSED) {
         textBoxData->frame_timer_text_highlight += GetFrameTime();
         if (textBoxData->frame_timer_text_highlight > 0.2f) {
-            textBoxData->textBoxDataState = COUNTINUOUS_CLICK_STATE; 
+            textBoxData->textBoxDataState = HIGHLIGHT_STATE; 
 
             float delta = mousePosition.x - textContainerBoundingBox.x;
             u32 mousePositionIndex = (u32)(delta / characterWidthPixels);

@@ -32,9 +32,8 @@ typedef struct {
     String str;
     float floatingLabelYOffset;
     enum TextBoxDataState {
-        ONE_CLICK_STATE,
-        COUNTINUOUS_CLICK_STATE,
-        FROM_COUNTINUOUS_TO_ONE_CLICK
+        CLICK_STATE,
+        HIGHLIGHT_STATE
     } textBoxDataState;
     enum BackspaceKeyState {
         BACKSPACE_NOT_PRESSED = 0,

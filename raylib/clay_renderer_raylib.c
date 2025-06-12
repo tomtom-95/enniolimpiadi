@@ -355,12 +355,9 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
                         memcpy(tmp.str, layout_data.text_box_data.str.str, layout_data.text_box_data.cursor_position);
                         tmp.str[layout_data.text_box_data.cursor_position] = '\0';
 
-
                         Vector2 textMeasure = MeasureTextEx(fontToUse, tmp.str, (float)textBoxData.fontSize, 0);
 
-
-
-                        if (layout_data.text_box_data.textBoxDataState == ONE_CLICK_STATE) {
+                        if (layout_data.text_box_data.textBoxDataState == CLICK_STATE) {
                             if ((layout_data.text_box_data.frame_counter / 40) % 2 == 0) {
                                 DrawRectangle(
                                     (int)(boundingBox.x + textMeasure.x), (int)boundingBox.y,
@@ -368,8 +365,9 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
                                 );
                             }
                         }
-                        else if (layout_data.text_box_data.textBoxDataState == COUNTINUOUS_CLICK_STATE) {
-                            int len = textBoxData.highlight_end - textBoxData.highlight_start;
+                        else if (layout_data.text_box_data.textBoxDataState == HIGHLIGHT_STATE) {
+                            assert(textBoxData.highlight_end >= textBoxData.highlight_start);
+                            int len = (int)(textBoxData.highlight_end - textBoxData.highlight_start);
 
                             // Extract substring (copy, not slice, since Raylib uses null-terminated strings)
                             char temp[256]; // assume this is large enough
