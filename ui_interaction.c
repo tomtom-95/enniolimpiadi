@@ -80,6 +80,7 @@ HandlePlayerTextBoxInteraction(Clay_ElementId elementId, Clay_PointerData pointe
         textBoxData->textBoxDataState = ONE_CLICK_STATE; 
         textBoxData->frame_counter = 0;
         textBoxData->highlight_end = 0;
+        textBoxData->highlight_start = 0; 
         textBoxData->frame_timer_text_highlight = 0;
         textBoxData->highlightWidthPixels = 0;
 
@@ -100,11 +101,22 @@ HandlePlayerTextBoxInteraction(Clay_ElementId elementId, Clay_PointerData pointe
 
             float delta = mousePosition.x - textContainerBoundingBox.x;
             u32 mousePositionIndex = (u32)(delta / characterWidthPixels);
+
+            u32 highlight_pos;
             if (mousePositionIndex > layoutData->text_box_data.str.len) {
-                textBoxData->highlight_end = textBoxData->str.len;
+                highlight_pos = textBoxData->str.len;
             }
             else {
-                textBoxData->highlight_end = mousePositionIndex;
+                highlight_pos = mousePositionIndex;
+            }
+
+            if (highlight_pos > textBoxData->cursor_position) {
+                textBoxData->highlight_start = textBoxData->cursor_position;
+                textBoxData->highlight_end = highlight_pos;
+            } 
+            else {
+                textBoxData->highlight_start = highlight_pos;
+                textBoxData->highlight_end = textBoxData->cursor_position;
             }
         }
     }

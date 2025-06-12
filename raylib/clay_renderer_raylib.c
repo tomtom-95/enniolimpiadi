@@ -369,13 +369,11 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
                             }
                         }
                         else if (layout_data.text_box_data.textBoxDataState == COUNTINUOUS_CLICK_STATE) {
-                            int startIndex = getmin((u64)textBoxData.cursor_position, (u64)textBoxData.highlight_end);
-                            int endIndex   = getmax((u64)textBoxData.cursor_position, (u64)textBoxData.highlight_end);
-                            int len        = endIndex - startIndex;
+                            int len = textBoxData.highlight_end - textBoxData.highlight_start;
 
                             // Extract substring (copy, not slice, since Raylib uses null-terminated strings)
                             char temp[256]; // assume this is large enough
-                            memcpy(temp, &textBoxData.str.str[startIndex], len);
+                            memcpy(temp, &textBoxData.str.str[textBoxData.highlight_start], len);
                             temp[len] = '\0';
 
                             Vector2 measure = MeasureTextEx(fontToUse, temp, textBoxData.fontSize, 0);
@@ -383,26 +381,12 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
 
                             // Now find X position of the start of the highlight
                             // Same method, from 0 to startIndex
-                            memcpy(temp, textBoxData.str.str, startIndex);
-                            temp[startIndex] = '\0';
+                            memcpy(temp, textBoxData.str.str, textBoxData.highlight_start);
+                            temp[textBoxData.highlight_start] = '\0';
                             Vector2 prefixMeasure = MeasureTextEx(fontToUse, temp, textBoxData.fontSize, 0);
                             float startX = boundingBox.x + prefixMeasure.x;
 
-                            // DrawRectangle((int)roundf(startX), (int)boundingBox.y, (int)roundf(width), textBoxData.fontSize, BLACK);
-
-                            int delta = textBoxData.highlight_end - textBoxData.cursor_position;
-
-                            if (delta > 0) {
-                                int start = (int)roundf(boundingBox.x + textBoxData.cursor_position * characterWidthPixels);
-                                int width = (int)roundf(delta * characterWidthPixels);
-                                DrawRectangle(start, (int)boundingBox.y, width, textBoxData.fontSize, BLACK);
-                            }
-                            else {
-                                textBoxData.cursor_position = textBoxData.highlight_end; 
-                                int start = (int)roundf(boundingBox.x + textBoxData.cursor_position * characterWidthPixels);
-                                int width = (int)roundf(-delta * characterWidthPixels);
-                                DrawRectangle(start, (int)boundingBox.y, width, textBoxData.fontSize, BLACK);
-                            }
+                            DrawRectangle((int)startX, (int)boundingBox.y, (int)width, textBoxData.fontSize, BLACK);
                         }
                         DrawTextEx(
                             fontToUse, str_original.str, (Vector2){boundingBox.x, boundingBox.y},

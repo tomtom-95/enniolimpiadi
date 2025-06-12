@@ -15,10 +15,12 @@ typedef enum {
 } Tab;
 
 typedef struct {
+    u32 highlight_start;
     u32 highlight_end;
     float click_position_start;
     float click_position_end;
     float frame_timer_text_highlight;
+    float highlight_frame_timer;
     int highlightWidthPixels;
     Clay_Vector2 cursor_vector;
     u32 cursor_position;
@@ -31,7 +33,8 @@ typedef struct {
     float floatingLabelYOffset;
     enum TextBoxDataState {
         ONE_CLICK_STATE,
-        COUNTINUOUS_CLICK_STATE
+        COUNTINUOUS_CLICK_STATE,
+        FROM_COUNTINUOUS_TO_ONE_CLICK
     } textBoxDataState;
     enum BackspaceKeyState {
         BACKSPACE_NOT_PRESSED = 0,

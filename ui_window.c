@@ -13,71 +13,98 @@
 
 void
 HandleUserWriting(LayoutData *layoutData) {
+    // TODO: If I am in the CLAY_POINTER_DATA_PRESSED state using backspace must delete all the
+    //       characters highlighted and writing a character must first delete all the character highlighted
     TextBoxData *textBoxData = &(layoutData->text_box_data);
 
     String *str = &(textBoxData->str);
-    if (IsKeyPressed(KEY_BACKSPACE) || IsKeyDown(KEY_BACKSPACE)) {
-        u8 *p_cursor = textBoxData->str.str + textBoxData->cursor_position;
-        if (textBoxData->backspace_key_state == BACKSPACE_NOT_PRESSED) {
-            if (str->len != 0) {
-                memmove(p_cursor - 1, p_cursor, textBoxData->str.len - textBoxData->cursor_position);
-                --(str->len);
-                --(textBoxData->cursor_position);
-                textBoxData->frame_counter = 0;
-            }
-            textBoxData->backspace_key_state = BACKSPACE_FIRST; 
-        }
-        else if (textBoxData->backspace_key_state == BACKSPACE_FIRST) {
-            textBoxData->frame_timer += GetFrameTime();
-            if (textBoxData->frame_timer > 0.4f) {
-                textBoxData->frame_timer = 0;
-                textBoxData->backspace_key_state = BACKSPACE_SECOND;
-            } 
-        }
-        else {
-            textBoxData->frame_timer += GetFrameTime();
-            if (textBoxData->frame_timer > 0.03f) {
-                textBoxData->frame_timer = 0;
-                if (str->len != 0) {
-                    memmove(p_cursor - 1, p_cursor, textBoxData->str.len - textBoxData->cursor_position);
-                    --(str->len);
-                    --(textBoxData->cursor_position);
-                    textBoxData->frame_counter = 0;
-                }
-            } 
+    if (textBoxData->textBoxDataState == COUNTINUOUS_CLICK_STATE) {
+        if (IsKeyPressed(KEY_BACKSPACE) || IsKeyDown(KEY_BACKSPACE)) {
+            textBoxData->textBoxDataState = FROM_COUNTINUOUS_TO_ONE_CLICK;
+            textBoxData->highlight_frame_timer = 0;
+            memmove(
+                str->str + textBoxData->highlight_start,
+                str->str + textBoxData->highlight_end,
+                str->len - textBoxData->highlight_end
+            );
+            str->len -= (textBoxData->highlight_end - textBoxData->highlight_start);
+            textBoxData->cursor_position = textBoxData->highlight_start;
+            textBoxData->highlight_start = 0;
+            textBoxData->highlight_end = 0;
         }
     }
     else {
-        textBoxData->backspace_key_state = BACKSPACE_NOT_PRESSED;
-    }
-
-    int key = GetCharPressed();
-    while (key > 0) {
-        u8 *p_cursor = textBoxData->str.str + textBoxData->cursor_position;
-        memmove(p_cursor + 1, p_cursor, textBoxData->str.len - textBoxData->cursor_position);
-
-        // NOTE: Only allow keys in range [32..125]
-        if ((key >= 32) && (key <= 125) && (str->len < textBoxData->max_str_len)) {
-            str->str[(textBoxData->cursor_position)++] = (u8)key;
-            ++textBoxData->str.len;
-            textBoxData->frame_counter = 0;
+        if (textBoxData->textBoxDataState == FROM_COUNTINUOUS_TO_ONE_CLICK) {
+            textBoxData->highlight_frame_timer += GetFrameTime();
+            if (textBoxData->highlight_frame_timer > 0.2) {
+                textBoxData->textBoxDataState = ONE_CLICK_STATE;
+            }
         }
+        else {
+            if (IsKeyPressed(KEY_BACKSPACE) || IsKeyDown(KEY_BACKSPACE)) {
+                u8 *p_cursor = textBoxData->str.str + textBoxData->cursor_position;
+                if (textBoxData->backspace_key_state == BACKSPACE_NOT_PRESSED) {
+                    if (str->len != 0) {
+                        memmove(p_cursor - 1, p_cursor, textBoxData->str.len - textBoxData->cursor_position);
+                        --(str->len);
+                        --(textBoxData->cursor_position);
+                        textBoxData->frame_counter = 0;
+                    }
+                    textBoxData->backspace_key_state = BACKSPACE_FIRST; 
+                }
+                else if (textBoxData->backspace_key_state == BACKSPACE_FIRST) {
+                    textBoxData->frame_timer += GetFrameTime();
+                    if (textBoxData->frame_timer > 0.4f) {
+                        textBoxData->frame_timer = 0;
+                        textBoxData->backspace_key_state = BACKSPACE_SECOND;
+                    } 
+                }
+                else {
+                    textBoxData->frame_timer += GetFrameTime();
+                    if (textBoxData->frame_timer > 0.03f) {
+                        textBoxData->frame_timer = 0;
+                        if (str->len != 0) {
+                            memmove(p_cursor - 1, p_cursor, textBoxData->str.len - textBoxData->cursor_position);
+                            --(str->len);
+                            --(textBoxData->cursor_position);
+                            textBoxData->frame_counter = 0;
+                        }
+                    } 
+                }
+            }
+            else {
+                textBoxData->backspace_key_state = BACKSPACE_NOT_PRESSED;
+            }
 
-        // Check next character in the queue
-        key = GetCharPressed();
-    }
+            int key = GetCharPressed();
+            while (key > 0) {
+                u8 *p_cursor = textBoxData->str.str + textBoxData->cursor_position;
+                memmove(p_cursor + 1, p_cursor, textBoxData->str.len - textBoxData->cursor_position);
 
-    key = GetKeyPressed();
-    while (key > 0) {
-        if (key == KEY_RIGHT) {
-            ++textBoxData->cursor_position;
-            textBoxData->frame_counter = 0;
+                // NOTE: Only allow keys in range [32..125]
+                if ((key >= 32) && (key <= 125) && (str->len < textBoxData->max_str_len)) {
+                    str->str[(textBoxData->cursor_position)++] = (u8)key;
+                    ++textBoxData->str.len;
+                    textBoxData->frame_counter = 0;
+                }
+
+                // Check next character in the queue
+                key = GetCharPressed();
+            }
+
+            key = GetKeyPressed();
+            while (key > 0) {
+                if (key == KEY_RIGHT) {
+                    ++textBoxData->cursor_position;
+                    textBoxData->frame_counter = 0;
+                }
+                else if (key == KEY_LEFT) {
+                    --textBoxData->cursor_position;
+                    textBoxData->frame_counter = 0;
+                }
+                key = GetKeyPressed();
+            }
         }
-        else if (key == KEY_LEFT) {
-            --textBoxData->cursor_position;
-            textBoxData->frame_counter = 0;
-        }
-        key = GetKeyPressed();
     }
 }
 
