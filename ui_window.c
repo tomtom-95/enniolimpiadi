@@ -30,6 +30,17 @@ HandleUserWriting(LayoutData *layoutData) {
             *highlight_start = 0;
             *highlight_end = 0;
         }
+
+        int key = GetCharPressed();
+        if (key > 0) {
+            // TODO: delete all the stuff that is highlighted, go to CLICK_STATE and write key
+            // Check next character in the queue
+        }
+
+        key = GetKeyPressed();
+        if (key > 0) {
+            // TODO: go to the character after cursor, go to CLICK_STATE
+        }
     }
     else {
         if (IsKeyPressed(KEY_BACKSPACE) || IsKeyDown(KEY_BACKSPACE)) {
@@ -196,13 +207,28 @@ LayoutAddPlayerWindow(LayoutData *data) {
             .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_FIT(40) },
             .padding = CLAY_PADDING_ALL(12)
         },
+        .clip = { .horizontal = true, .childOffset = Clay_GetScrollOffset() }
     }) {
         Clay_OnHover(HandlePlayerTextBoxInteraction, (intptr_t)data);
         CLAY({
             .id = CLAY_ID("TextContainer"),
             .layout = { .sizing = layoutExpand },
-            .custom = { .customData = customLayoutElement}
-        }) {}
+            .custom = { .customData = customLayoutElement }
+        }) {
+            char tmpstr[256];
+            memcpy(tmpstr, data->text_box_data.str.str, data->text_box_data.str.len);
+            tmpstr[data->text_box_data.str.len] = '\0';
+            Clay_String tmp_string = {
+                .isStaticallyAllocated = false,
+                .length = (s32)data->text_box_data.str.len,
+                .chars = (const char *)(data->text_box_data.str.str),
+            };
+            CLAY_TEXT(tmp_string, CLAY_TEXT_CONFIG({
+                .fontId = FONT_ID_BODY_16,
+                .fontSize = data->text_box_data.fontSize,
+                .textColor = white
+            }));
+        }
     }
     CLAY({
         .id = CLAY_ID("AddPlayerButton"),

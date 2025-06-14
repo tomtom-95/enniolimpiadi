@@ -178,9 +178,6 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
                 Vector2 textMeasure = MeasureTextEx(
                     fontToUse, temp_render_buffer, (float)textData->fontSize, (float)textData->letterSpacing
                 );
-                if (temp_render_buffer[0] == 'c') {
-                    DrawRectangle(boundingBox.x, boundingBox.y, (int)textMeasure.x, (int)textMeasure.y, BLACK);
-                }
 
                 DrawTextEx(
                     fontToUse, temp_render_buffer, (Vector2){boundingBox.x, boundingBox.y},
@@ -290,17 +287,21 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
                 if (config->cornerRadius.bottomLeft > 0) {
                     DrawRing(
                         (Vector2) {
-                            roundf(boundingBox.x + config->cornerRadius.bottomLeft), roundf(boundingBox.y + boundingBox.height - config->cornerRadius.bottomLeft)
+                            roundf(boundingBox.x + config->cornerRadius.bottomLeft),
+                            roundf(boundingBox.y + boundingBox.height - config->cornerRadius.bottomLeft)
                         },
-                        roundf(config->cornerRadius.bottomLeft - config->width.bottom), config->cornerRadius.bottomLeft, 90, 180, 10, CLAY_COLOR_TO_RAYLIB_COLOR(config->color)
+                        roundf(config->cornerRadius.bottomLeft - config->width.bottom),
+                        config->cornerRadius.bottomLeft, 90, 180, 10, CLAY_COLOR_TO_RAYLIB_COLOR(config->color)
                     );
                 }
                 if (config->cornerRadius.bottomRight > 0) {
                     DrawRing(
                         (Vector2) {
-                            roundf(boundingBox.x + boundingBox.width - config->cornerRadius.bottomRight), roundf(boundingBox.y + boundingBox.height - config->cornerRadius.bottomRight)
+                            roundf(boundingBox.x + boundingBox.width - config->cornerRadius.bottomRight),
+                            roundf(boundingBox.y + boundingBox.height - config->cornerRadius.bottomRight)
                         },
-                        roundf(config->cornerRadius.bottomRight - config->width.bottom), config->cornerRadius.bottomRight, (float)0.1, 90, 10, CLAY_COLOR_TO_RAYLIB_COLOR(config->color)
+                        roundf(config->cornerRadius.bottomRight - config->width.bottom),
+                        config->cornerRadius.bottomRight, (float)0.1, 90, 10, CLAY_COLOR_TO_RAYLIB_COLOR(config->color)
                     );
                 }
                 break;
@@ -330,67 +331,59 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
                         break;
                     }
                     case CUSTOM_LAYOUT_TEXTBOX: {
+                        // BeginScissorMode(
+                        //     (int)roundf(boundingBox.x), (int)roundf(boundingBox.y),
+                        //     (int)roundf(boundingBox.width), (int)roundf(boundingBox.height)
+                        // );
+
                         TextBoxData textBoxData = layout_data.text_box_data;
                         Font fontToUse = fonts[textBoxData.font_id];
-    
-                        // Use 20 or more characters to minimize rounding errors
-                        const char *testStr = "AAAAAAAAAAAAAAAAAAAA";
-                        int testLen = (int)strlen(testStr);
-                        Vector2 size = MeasureTextEx(fontToUse, testStr, layout_data.text_box_data.fontSize, 0);
-                        float characterWidthPixels = size.x / (float)testLen;
 
-                        // Insert NUL character to original string
-                        String str_original = {
-                            .len = layout_data.text_box_data.str.len,
-                            .str = arena_push(layout_data.arena_frame, layout_data.text_box_data.str.len + 1)
-                        };
-                        memcpy(str_original.str, layout_data.text_box_data.str.str, layout_data.text_box_data.str.len);
-                        str_original.str[layout_data.text_box_data.str.len] = '\0';
+                        char str[textBoxData.str.len + 1];
+                        memcpy(str, textBoxData.str.str, textBoxData.str.len);
+                        str[textBoxData.str.len] = '\0';
 
-                        // Calculate position of the cursor
-                        String tmp = {
-                            .len = layout_data.text_box_data.cursor_position + 1,
-                            .str = arena_push(layout_data.arena_frame, layout_data.text_box_data.str.len + 1)
-                        };
-                        memcpy(tmp.str, layout_data.text_box_data.str.str, layout_data.text_box_data.cursor_position);
-                        tmp.str[layout_data.text_box_data.cursor_position] = '\0';
-
-                        Vector2 textMeasure = MeasureTextEx(fontToUse, tmp.str, (float)textBoxData.fontSize, 0);
+                        char strCursor[textBoxData.cursor_position + 1];
+                        memcpy(strCursor, textBoxData.str.str, textBoxData.cursor_position);
+                        strCursor[textBoxData.cursor_position] = '\0';
+                        Vector2 textCursorMeasure = MeasureTextEx(fontToUse, strCursor, (float)textBoxData.fontSize, 0);
 
                         if (layout_data.text_box_data.textBoxDataState == CLICK_STATE) {
                             if ((layout_data.text_box_data.frame_counter / 40) % 2 == 0) {
                                 DrawRectangle(
-                                    (int)(boundingBox.x + textMeasure.x), (int)boundingBox.y,
+                                    (int)(boundingBox.x + textCursorMeasure.x), (int)boundingBox.y,
                                     1, textBoxData.fontSize, CLAY_COLOR_TO_RAYLIB_COLOR(WHITE)
                                 );
                             }
                         }
                         else if (layout_data.text_box_data.textBoxDataState == HIGHLIGHT_STATE) {
                             assert(textBoxData.highlight_end >= textBoxData.highlight_start);
-                            int len = (int)(textBoxData.highlight_end - textBoxData.highlight_start);
+                            int lenHighlight = (int)(textBoxData.highlight_end - textBoxData.highlight_start);
 
-                            // Extract substring (copy, not slice, since Raylib uses null-terminated strings)
-                            char temp[256]; // assume this is large enough
-                            memcpy(temp, &textBoxData.str.str[textBoxData.highlight_start], len);
-                            temp[len] = '\0';
+                            char strHighlight[lenHighlight + 1];
+                            memcpy(strHighlight, &textBoxData.str.str[textBoxData.highlight_start], lenHighlight);
+                            strHighlight[lenHighlight] = '\0';
+                            Vector2 textHighlightWidthMeasure = MeasureTextEx(fontToUse, strHighlight, textBoxData.fontSize, 0);
 
-                            Vector2 measure = MeasureTextEx(fontToUse, temp, textBoxData.fontSize, 0);
-                            float width = measure.x;
+                            char strPrefix[textBoxData.highlight_start + 1];
+                            memcpy(strPrefix, textBoxData.str.str, textBoxData.highlight_start);
+                            strPrefix[textBoxData.highlight_start] = '\0';
+                            Vector2 prefixWidthMeasure = MeasureTextEx(fontToUse, strPrefix, textBoxData.fontSize, 0);
 
-                            // Now find X position of the start of the highlight
-                            // Same method, from 0 to startIndex
-                            memcpy(temp, textBoxData.str.str, textBoxData.highlight_start);
-                            temp[textBoxData.highlight_start] = '\0';
-                            Vector2 prefixMeasure = MeasureTextEx(fontToUse, temp, textBoxData.fontSize, 0);
-                            float startX = boundingBox.x + prefixMeasure.x;
-
-                            DrawRectangle((int)startX, (int)boundingBox.y, (int)width, textBoxData.fontSize, BLACK);
+                            DrawRectangle(
+                                (int)(boundingBox.x + prefixWidthMeasure.x), (int)(boundingBox.y),
+                                (int)textHighlightWidthMeasure.x, textBoxData.fontSize, BLACK
+                            );
                         }
-                        DrawTextEx(
-                            fontToUse, str_original.str, (Vector2){boundingBox.x, boundingBox.y},
-                            (float)textBoxData.fontSize, 0, CLAY_COLOR_TO_RAYLIB_COLOR(white)
-                        );
-    
+
+                        // textBoxData.scrollOffset = 10;
+                        // DrawTextEx(
+                        //     fontToUse, str, (Vector2){boundingBox.x - textBoxData.scrollOffset, boundingBox.y},
+                        //     (float)textBoxData.fontSize, 0, CLAY_COLOR_TO_RAYLIB_COLOR(white)
+                        // );
+
+                        // EndScissorMode();
+
                         break;
                     }
                     default: break;

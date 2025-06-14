@@ -33,7 +33,6 @@ GetLayout(LayoutData *layoutData) {
         CLAY({
             .id = CLAY_ID("MainContent"),
             .backgroundColor = gray,
-            .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() },
             .layout = {
                 .sizing = layoutExpand, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16,
                 .padding = CLAY_PADDING_ALL(16)
@@ -55,7 +54,14 @@ GetLayout(LayoutData *layoutData) {
                 } break;
                 case TAB_NEW_TOURNAMENT:
                 {
-                    // LayoutAddTournamentWindow(data);
+                    // Clay internally tracks the scroll containers offset, and Clay_GetScrollOffset returns the x,y offset of the currently open element
+                    CLAY({ .clip = { .horizontal = true, .childOffset = Clay_GetScrollOffset() } }) {
+                        CLAY_TEXT(CLAY_STRING("kkkkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjdfjkdjfkdljflkdsjdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjdfjkdjfkdljflkdsj"), CLAY_TEXT_CONFIG({
+                            .fontId = FONT_ID_BODY_16,
+                            .fontSize = 24,
+                            .textColor = white
+                        }));
+                    }
                 } break;
             }
         }
@@ -156,7 +162,7 @@ main(void) {
         (Clay_ErrorHandler) { HandleClayErrors }
     );
 
-    Clay_SetDebugModeEnabled(true);
+    Clay_SetDebugModeEnabled(false);
 
     fonts[FONT_ID_BODY_16] = LoadFontEx("resources/FiraCode-Regular.ttf", 48, 0, 400);
     SetTextureFilter(fonts[FONT_ID_BODY_16].texture, TEXTURE_FILTER_BILINEAR);
@@ -185,14 +191,15 @@ main(void) {
     player_enroll(&name_state, &name_chunk_state, player_map, riccardo, machiavelli);
     player_rename(player_map, &name_chunk_state, riccardo, newriccardo);
 
-    u32 max_str_len = 64;
+    u32 max_str_len = 256;
     TextBoxData text_box_data = {
         .font_id = FONT_ID_BODY_16,
         .cursor_position = 0,
         .max_str_len = max_str_len,
         .fontSize = 16,
         .str.len = 0,
-        .str.str = arena_push(&arena_permanent, max_str_len)
+        .str.str = arena_push(&arena_permanent, max_str_len),
+        .scrollOffset = 0
     };
 
     LayoutData layout_data = {

@@ -17,6 +17,7 @@ typedef enum {
 typedef struct {
     u32 highlight_start;
     u32 highlight_end;
+    float scrollOffset;
     float click_position_start;
     float click_position_end;
     float frame_timer_text_highlight;
