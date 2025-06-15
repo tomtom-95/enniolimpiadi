@@ -63,14 +63,13 @@ HandleTextBoxV2Interaction(Clay_ElementId elementId, Clay_PointerData pointerDat
         Clay_ElementId textContainerV2Id = Clay_GetElementId(CLAY_STRING("TextContainerV2"));
         Clay_ElementData textContainerV2Data = Clay_GetElementData(textContainerV2Id);
 
+        // Calculate cursorIdx on user click based on clicked position
         u16 cursorIdx = 0;
-        char subString[textBoxDataV2->strUser.len];
-        subString[cursorIdx] = '\0';
         float subStringLen = 0;
+        char subString[textBoxDataV2->strUser.len];
         float characterLen = MeasureTextEx(textBoxDataV2->font, "A", textBoxDataV2->fontSize, 0).x;
 
         float delta = pointerData.position.x - textContainerV2Data.boundingBox.x;
-
         while (delta - subStringLen > characterLen / 2 && cursorIdx < textBoxDataV2->strUser.len) {
             ++cursorIdx;
 

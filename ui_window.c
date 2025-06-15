@@ -266,21 +266,26 @@ LayoutTextBoxV2(LayoutData *layoutData) {
         .layout = {
             .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_FIT(40) },
             .padding = CLAY_PADDING_ALL(12)
-        },
-        .clip = { .horizontal = true, .childOffset = Clay_GetScrollOffset() },
+        }
     }) {
         Clay_OnHover(HandleTextBoxV2Interaction, (intptr_t)layoutData);
         CLAY({
-            .id = CLAY_ID("TextContainerV2"),
+            .id = CLAY_ID("TextWrapperV2"),
             .layout = { .sizing = layoutExpand },
-            .custom = { .customData = customLayoutElement }
+            .clip = { .horizontal = true, .childOffset = Clay_GetScrollOffset() }
         }) {
-            CLAY_TEXT(
-                Clay_String_from_String(textBoxDataV2->strOutput), CLAY_TEXT_CONFIG({
-                .fontId = FONT_ID_BODY_16,
-                .fontSize = 16,
-                .textColor = white
-            }));
+            CLAY({
+                .id = CLAY_ID("TextContainerV2"),
+                .layout = { .sizing = layoutExpand },
+                .custom = { .customData = customLayoutElement }
+            }) {
+                CLAY_TEXT(
+                    Clay_String_from_String(textBoxDataV2->strOutput), CLAY_TEXT_CONFIG({
+                    .fontId = FONT_ID_BODY_16,
+                    .fontSize = 16,
+                    .textColor = white
+                }));
+            }
         }
     }
 }
