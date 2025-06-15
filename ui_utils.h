@@ -15,6 +15,7 @@ typedef enum {
 } Tab;
 
 typedef struct {
+    bool someKeyPressed;
     u32 highlight_start;
     u32 highlight_end;
     float scrollOffset;
@@ -34,7 +35,8 @@ typedef struct {
     float floatingLabelYOffset;
     enum TextBoxDataState {
         CLICK_STATE,
-        HIGHLIGHT_STATE
+        HIGHLIGHT_STATE,
+        HIGHLIGHT_STATE_IDLE
     } textBoxDataState;
     enum BackspaceKeyState {
         BACKSPACE_NOT_PRESSED = 0,
@@ -43,6 +45,25 @@ typedef struct {
     } backspace_key_state;
     Clay_Color colorBorder;
 } TextBoxData;
+
+typedef struct {
+    u16 strLenMax;
+    u16 widthBorder;
+    u16 cursorIdx;
+    u16 cursorFrequency;
+    u64 frameCounter;
+    Vector2 cursorPos;
+    String strOutput;
+    String strUser;
+    String strLabel;
+    Clay_Color colorBorder;
+    float backspaceTimer;
+    bool backspaceHeld;
+    float backspaceRepeatDelay;
+    float backspaceRepeatRate;
+    Font font;
+    int fontSize;
+} TextBoxDataV2;
 
 typedef struct {
     enum AddPlayerButtonState {
@@ -61,13 +82,15 @@ typedef struct {
     NameChunkState *name_chunk_state;
     Tab tab;
     TextBoxData text_box_data;
+    TextBoxDataV2 textBoxDataV2;
     Clay_ElementId last_element_clicked;
     AddPlayerButtonData add_player_button_data;
 } LayoutData;
 
 typedef enum {
     CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL,
-    CUSTOM_LAYOUT_TEXTBOX
+    CUSTOM_LAYOUT_TEXTBOX,
+    CUSTOM_LAYOUT_TEXTBOX_V2
 } CustomLayoutElementType;
 
 typedef struct {
@@ -81,6 +104,7 @@ typedef struct {
     CustomLayoutElementType type;
     union {
         CustomLayoutElement_3DModel model;
+        TextBoxDataV2 *textBoxDataV2;
     } customData;
 } CustomLayoutElement;
 
@@ -104,5 +128,15 @@ Clay_Color violet = {120, 90, 210, 255};
 Clay_Color violet_light = {140, 110, 230, 255};
 
 Clay_Sizing layoutExpand = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0) };
+
+Clay_String
+Clay_String_from_String(String string) {
+    Clay_String clay_string = {
+        .isStaticallyAllocated = false,
+        .length = (s32)string.len,
+        .chars = (const char *)string.str
+    };
+    return clay_string;
+}
 
 #endif

@@ -53,6 +53,34 @@ HandleNewTournamentButtonInteraction(Clay_ElementId elementId, Clay_PointerData 
 }
 
 void
+HandleTextBoxV2Interaction(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t data) {
+    LayoutData *layoutData = (LayoutData *)data;
+    TextBoxDataV2 *textBoxDataV2 = &layoutData->textBoxDataV2;
+    if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        layoutData->last_element_clicked = elementId;
+
+        Clay_ElementId textContainerV2Id = Clay_GetElementId(CLAY_STRING("TextContainerV2"));
+        Clay_ElementData textContainerV2Data = Clay_GetElementData(textContainerV2Id);
+
+        int cursorIdx = 0;
+        float subStringLen = 0;
+        char subString[textBoxDataV2->strUser.len];
+        float delta = pointerData.position.x - textContainerV2Data.boundingBox.x;
+        while (subStringLen < delta && cursorIdx < textBoxDataV2->strUser.len) {
+            memcpy(subString, textBoxDataV2->strUser.str, cursorIdx);
+            subString[cursorIdx] = '\0';
+
+            subStringLen = MeasureTextEx(
+                textBoxDataV2->font, subString, textBoxDataV2->fontSize, 0
+            ).x;
+
+            ++cursorIdx;
+        }
+        layoutData->textBoxDataV2.cursorIdx = cursorIdx;
+    }
+}
+
+void
 HandlePlayerTextBoxInteraction(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t data) {
     LayoutData *layoutData = (LayoutData *)data;
     TextBoxData *textBoxData = &(layoutData->text_box_data);

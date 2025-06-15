@@ -54,14 +54,7 @@ GetLayout(LayoutData *layoutData) {
                 } break;
                 case TAB_NEW_TOURNAMENT:
                 {
-                    // Clay internally tracks the scroll containers offset, and Clay_GetScrollOffset returns the x,y offset of the currently open element
-                    CLAY({ .clip = { .horizontal = true, .childOffset = Clay_GetScrollOffset() } }) {
-                        CLAY_TEXT(CLAY_STRING("kkkkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjdfjkdjfkdljflkdsjdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjkdfjkdjfkdljflkdsjdfjkdjfkdljflkdsj"), CLAY_TEXT_CONFIG({
-                            .fontId = FONT_ID_BODY_16,
-                            .fontSize = 24,
-                            .textColor = white
-                        }));
-                    }
+                    LayoutTextBoxV2(layoutData);
                 } break;
             }
         }
@@ -74,6 +67,10 @@ GetLayout(LayoutData *layoutData) {
         Clay_ElementId playerTextBoxId = Clay_GetElementId(CLAY_STRING("PlayerTextBox"));
         Clay_ElementData playerTextBoxElementData = Clay_GetElementData(playerTextBoxId);
         Clay_BoundingBox playerTextBoxBoundingBox = playerTextBoxElementData.boundingBox;
+
+        Clay_ElementId textContainerId = Clay_GetElementId(CLAY_STRING("TextContainer"));
+        Clay_ElementData textContainerElementData = Clay_GetElementData(textContainerId);
+        Clay_BoundingBox textContainerBoundingBox = textContainerElementData.boundingBox;
 
         Clay_ElementId floatingLabelId = Clay_GetElementId(CLAY_STRING("FloatingLabel"));
         Clay_ElementData floatingLabelElementData = Clay_GetElementData(floatingLabelId);
@@ -202,6 +199,22 @@ main(void) {
         .scrollOffset = 0
     };
 
+    u16 strLenMax = 255;
+    String strOutput = {.len = 0, .str = arena_push(&arena_permanent, strLenMax)};
+    String strUser = {.len = 0, .str = arena_push(&arena_permanent, strLenMax)};
+    TextBoxDataV2 textBoxDataV2 = {
+        .strLenMax = strLenMax,
+        .cursorFrequency = 40,
+        .strLabel = string_from_cstring_lit("Enter player name"),
+        .strOutput = strOutput,
+        .strUser = strUser,
+        .backspaceHeld = false,
+        .backspaceRepeatDelay = 0.4f,
+        .backspaceRepeatRate = 0.03f,
+        .font = fonts[FONT_ID_BODY_16],
+        .fontSize = 16
+    };
+
     LayoutData layout_data = {
         .arena_frame = &arena_frame,
         .arena_permanent = &arena_permanent,
@@ -210,6 +223,7 @@ main(void) {
         .name_state = &name_state,
         .name_chunk_state = &name_chunk_state,
         .text_box_data = text_box_data,
+        .textBoxDataV2 = textBoxDataV2
     };
 
     SetTargetFPS(60);
@@ -219,7 +233,17 @@ main(void) {
         Vector2 mousePosition = GetMousePosition();
         Vector2 scrollDelta = GetMouseWheelMoveV();
         Clay_SetPointerState((Clay_Vector2) { mousePosition.x, mousePosition.y }, IsMouseButtonDown(0));
-        Clay_UpdateScrollContainers(true, (Clay_Vector2) { scrollDelta.x, scrollDelta.y }, GetFrameTime());
+
+        bool personalScroll = (
+            layout_data.text_box_data.someKeyPressed ||
+            (layout_data.text_box_data.textBoxDataState == HIGHLIGHT_STATE && IsMouseButtonDown(0))
+        );
+        if (personalScroll) {
+            Clay_UpdateScrollContainers(false, (Clay_Vector2) { 0, 0 }, GetFrameTime());
+        }
+        else {
+            Clay_UpdateScrollContainers(true, (Clay_Vector2) { scrollDelta.x, scrollDelta.y }, GetFrameTime());
+        }
 
         Clay_RenderCommandArray renderCommands = GetLayout(&layout_data);
 

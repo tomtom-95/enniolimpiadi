@@ -65,6 +65,14 @@ string_cmp(String s1, String s2) {
     return s1.len == s2.len && (memcmp(s1.str, s2.str, s1.len) == 0); 
 }
 
+// TODO: better name
+// write into a previously allocated string
+void
+string_write(String *str, char *cstring) {
+    str->len = cstring_len(cstring) - 1;
+    memcpy(str->str, cstring, str->len);
+}
+
 StringNode *
 string_list_push(Arena *arena, StringList *list, String str) {
     StringNode **node = &(list->head);

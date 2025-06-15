@@ -331,11 +331,6 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
                         break;
                     }
                     case CUSTOM_LAYOUT_TEXTBOX: {
-                        // BeginScissorMode(
-                        //     (int)roundf(boundingBox.x), (int)roundf(boundingBox.y),
-                        //     (int)roundf(boundingBox.width), (int)roundf(boundingBox.height)
-                        // );
-
                         TextBoxData textBoxData = layout_data.text_box_data;
                         Font fontToUse = fonts[textBoxData.font_id];
 
@@ -376,13 +371,17 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
                             );
                         }
 
-                        // textBoxData.scrollOffset = 10;
-                        // DrawTextEx(
-                        //     fontToUse, str, (Vector2){boundingBox.x - textBoxData.scrollOffset, boundingBox.y},
-                        //     (float)textBoxData.fontSize, 0, CLAY_COLOR_TO_RAYLIB_COLOR(white)
-                        // );
+                        break;
+                    }
+                    case CUSTOM_LAYOUT_TEXTBOX_V2: {
+                        TextBoxDataV2 textBoxDataV2 = layout_data.textBoxDataV2;
 
-                        // EndScissorMode();
+                        if ((textBoxDataV2.frameCounter / textBoxDataV2.cursorFrequency) % 2 == 0) {
+                            DrawRectangle(
+                                (int)(boundingBox.x + textBoxDataV2.cursorPos.x), (int)boundingBox.y,
+                                1, textBoxDataV2.fontSize, CLAY_COLOR_TO_RAYLIB_COLOR(WHITE)
+                            );
+                        }
 
                         break;
                     }
