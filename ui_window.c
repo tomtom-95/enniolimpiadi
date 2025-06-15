@@ -156,6 +156,8 @@ HelperTextBoxV2(LayoutData *layoutData) {
     Clay_ElementId textBoxV2Id = Clay_GetElementId(CLAY_STRING("TextBoxV2"));
     Clay_ElementData textBoxV2ElementData = Clay_GetElementData(textBoxV2Id);
 
+    assert(textBoxDataV2->cursorIdx <= textBoxDataV2->strUser.len);
+
     if (Clay_PointerOver(textBoxV2Id)) {
         SetMouseCursor(MOUSE_CURSOR_IBEAM);
     }
@@ -219,6 +221,13 @@ HelperTextBoxV2(LayoutData *layoutData) {
             textBoxDataV2->backspaceHeld = false;
             textBoxDataV2->backspaceTimer = 0.0f;
         }
+
+        char strCursor[textBoxDataV2->strLenMax];
+        memcpy(strCursor, textBoxDataV2->strUser.str, textBoxDataV2->cursorIdx);
+        strCursor[textBoxDataV2->cursorIdx] = '\0';
+        textBoxDataV2->cursorPos =  MeasureTextEx(
+            textBoxDataV2->font, strCursor, textBoxDataV2->fontSize, 0
+        );
 
         string_cpy(&textBoxDataV2->strOutput, &textBoxDataV2->strUser);
     }

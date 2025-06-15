@@ -58,24 +58,28 @@ HandleTextBoxV2Interaction(Clay_ElementId elementId, Clay_PointerData pointerDat
     TextBoxDataV2 *textBoxDataV2 = &layoutData->textBoxDataV2;
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         layoutData->last_element_clicked = elementId;
+        textBoxDataV2->frameCounter = 0;
 
         Clay_ElementId textContainerV2Id = Clay_GetElementId(CLAY_STRING("TextContainerV2"));
         Clay_ElementData textContainerV2Data = Clay_GetElementData(textContainerV2Id);
 
-        int cursorIdx = 0;
-        float subStringLen = 0;
+        u16 cursorIdx = 0;
         char subString[textBoxDataV2->strUser.len];
+        subString[cursorIdx] = '\0';
+        float subStringLen = 0;
+        float characterLen = MeasureTextEx(textBoxDataV2->font, "A", textBoxDataV2->fontSize, 0).x;
+
         float delta = pointerData.position.x - textContainerV2Data.boundingBox.x;
-        while (subStringLen < delta && cursorIdx < textBoxDataV2->strUser.len) {
+
+        while (delta - subStringLen > characterLen / 2 && cursorIdx < textBoxDataV2->strUser.len) {
+            ++cursorIdx;
+
             memcpy(subString, textBoxDataV2->strUser.str, cursorIdx);
             subString[cursorIdx] = '\0';
 
-            subStringLen = MeasureTextEx(
-                textBoxDataV2->font, subString, textBoxDataV2->fontSize, 0
-            ).x;
-
-            ++cursorIdx;
+            subStringLen = MeasureTextEx(textBoxDataV2->font, subString, textBoxDataV2->fontSize, 0).x;
         }
+
         layoutData->textBoxDataV2.cursorIdx = cursorIdx;
     }
 }

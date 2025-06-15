@@ -205,6 +205,7 @@ main(void) {
     TextBoxDataV2 textBoxDataV2 = {
         .strLenMax = strLenMax,
         .cursorFrequency = 40,
+        .frameCounter = 40,
         .strLabel = string_from_cstring_lit("Enter player name"),
         .strOutput = strOutput,
         .strUser = strUser,
