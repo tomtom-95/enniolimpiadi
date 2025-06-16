@@ -9,6 +9,9 @@
 
 #define ArrayCount(a) (sizeof(a) / sizeof((a)[0]))
 
+#define Min(A,B) (((A)<(B))?(A):(B))
+#define Max(A,B) (((A)>(B))?(A):(B))
+
 typedef uint8_t  u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
@@ -19,15 +22,5 @@ typedef int32_t  s32;
 typedef int64_t  s64;
 typedef float    f32;
 typedef double   f64;
-
-static inline u64
-getmax(u64 a, u64 b) {
-    return a > b ? a : b;
-}
-
-static inline u64
-getmin(u64 a, u64 b) {
-    return a > b ? b : a;
-}
 
 #endif // UTILS_C

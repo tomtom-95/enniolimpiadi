@@ -215,9 +215,7 @@ main(void) {
         .backspaceRepeatDelay = 0.4f,
         .backspaceRepeatRate = 0.03f,
         .font = fonts[FONT_ID_BODY_16],
-        .fontSize = 16,
-        .trackpadHeld = false,
-        .trackpadDelay = 0.4f
+        .fontSize = 16
     };
 
     ////////////////////////////////////////////////////////////////

@@ -376,15 +376,17 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
                     case CUSTOM_LAYOUT_TEXTBOX_V2: {
                         TextBoxDataV2 textBoxDataV2 = layout_data.textBoxDataV2;
 
-                        if ((textBoxDataV2.frameCounter / textBoxDataV2.cursorFrequency) % 2 == 0) {
-                            DrawRectangle(
-                                (int)(boundingBox.x + textBoxDataV2.cursorPos.x), (int)boundingBox.y,
-                                1, textBoxDataV2.fontSize, CLAY_COLOR_TO_RAYLIB_COLOR(WHITE)
-                            );
+                        if (textBoxDataV2.cursorIdx == textBoxDataV2.highlightIdx) {
+                            if ((textBoxDataV2.frameCounter / textBoxDataV2.cursorFrequency) % 2 == 0) {
+                                DrawRectangle(
+                                    (int)(boundingBox.x + textBoxDataV2.cursorPos.x), (int)boundingBox.y,
+                                    1, textBoxDataV2.fontSize, CLAY_COLOR_TO_RAYLIB_COLOR(WHITE)
+                                );
+                            }
                         }
 
-                        int start = getmin(textBoxDataV2.cursorPos.x, textBoxDataV2.highlightPos.x);
-                        int end = getmax(textBoxDataV2.cursorPos.x, textBoxDataV2.highlightPos.x);
+                        int start = Min(textBoxDataV2.cursorPos.x, textBoxDataV2.highlightPos.x);
+                        int end = Max(textBoxDataV2.cursorPos.x, textBoxDataV2.highlightPos.x);
                         int delta = end - start;
                         DrawRectangle(
                             (int)(boundingBox.x + start), (int)(boundingBox.y),

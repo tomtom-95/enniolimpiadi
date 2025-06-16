@@ -84,36 +84,22 @@ HandleTextBoxV2Interaction(Clay_ElementId elementId, Clay_PointerData pointerDat
         textBoxDataV2->highlightIdx = textBoxDataV2->cursorIdx;
     }
     else if (pointerData.state == CLAY_POINTER_DATA_PRESSED) {
-        float delta = GetFrameTime();
-        textBoxDataV2->trackpadTimer -= delta;
+        u16 highlightIdx = 0;
+        float subStringLen = 0;
+        char subString[textBoxDataV2->strUser.len];
+        float characterLen = MeasureTextEx(textBoxDataV2->font, "A", textBoxDataV2->fontSize, 0).x;
 
-        // Handle highlighting
-        if (!textBoxDataV2->trackpadHeld) {
-            textBoxDataV2->trackpadTimer = textBoxDataV2->trackpadDelay;
-            textBoxDataV2->trackpadHeld = true;
+        float delta = pointerData.position.x - textContainerV2Data.boundingBox.x;
+        while (delta - subStringLen > characterLen / 2 && highlightIdx < textBoxDataV2->strUser.len) {
+            ++highlightIdx;
+
+            memcpy(subString, textBoxDataV2->strUser.str, highlightIdx);
+            subString[highlightIdx] = '\0';
+
+            subStringLen = MeasureTextEx(textBoxDataV2->font, subString, textBoxDataV2->fontSize, 0).x;
         }
-        else if (textBoxDataV2->trackpadTimer <= 0.0f) {
-            u16 highlightIdx = 0;
-            float subStringLen = 0;
-            char subString[textBoxDataV2->strUser.len];
-            float characterLen = MeasureTextEx(textBoxDataV2->font, "A", textBoxDataV2->fontSize, 0).x;
 
-            float delta = pointerData.position.x - textContainerV2Data.boundingBox.x;
-            while (delta - subStringLen > characterLen / 2 && highlightIdx < textBoxDataV2->strUser.len) {
-                ++highlightIdx;
-
-                memcpy(subString, textBoxDataV2->strUser.str, highlightIdx);
-                subString[highlightIdx] = '\0';
-
-                subStringLen = MeasureTextEx(textBoxDataV2->font, subString, textBoxDataV2->fontSize, 0).x;
-            }
-
-            layoutData->textBoxDataV2.highlightIdx = highlightIdx;
-        }
-    }
-    else if (pointerData.state == CLAY_POINTER_DATA_RELEASED_THIS_FRAME) {
-        textBoxDataV2->trackpadHeld = false;
-        textBoxDataV2->trackpadTimer = 0.0f;
+        layoutData->textBoxDataV2.highlightIdx = highlightIdx;
     }
 }
 

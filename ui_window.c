@@ -154,33 +154,50 @@ HandleUserWriting(LayoutData *layoutData) {
 void
 TextBoxV2Write(LayoutData *layoutData, int key) {
     TextBoxDataV2 *textBoxDataV2 = &(layoutData->textBoxDataV2);
+    String *strUser = &textBoxDataV2->strUser;
 
-    int start = getmin(textBoxDataV2->cursorIdx, textBoxDataV2->highlightIdx);
-    int end = getmax(textBoxDataV2->cursorIdx, textBoxDataV2->highlightIdx);
+    u16 *cursorIdx = &(textBoxDataV2->cursorIdx);
+    u16 *highlightIdx = &(textBoxDataV2->highlightIdx);
 
-    u8 *p_start = textBoxDataV2->strUser.str + start;
-    u8 *p_end = textBoxDataV2->strUser.str + end;
-    memmove(p_start + 1, p_end, textBoxDataV2->strUser.len - end);
+    u16 start = Min(*cursorIdx, *highlightIdx);
+    u16 end = Max(*cursorIdx, *highlightIdx);
 
-    textBoxDataV2->strUser.str[start] = (u8)key;
-    textBoxDataV2->strUser.len = textBoxDataV2->strUser.len + start - end + 1;
+    u8 *p_start = strUser->str + start;
+    u8 *p_end = strUser->str + end;
+    memmove(p_start + 1, p_end, strUser->len - end);
 
-    textBoxDataV2->cursorIdx = start + 1;
-    textBoxDataV2->highlightIdx = textBoxDataV2->cursorIdx;
+    strUser->str[start] = (u8)key;
+    strUser->len = strUser->len + start - end + 1;
+
+    *cursorIdx = start + 1;
+    *highlightIdx = textBoxDataV2->cursorIdx;
 }
 
 void
 TextBoxV2Delete(LayoutData *layoutData) {
-    // TODO: handle highlight case, similar to TextBoxV2Write
     TextBoxDataV2 *textBoxDataV2 = &(layoutData->textBoxDataV2);
+    String *strUser = &textBoxDataV2->strUser;
 
-    textBoxDataV2->cursorIdx--;
-    u8 *p_cursor = textBoxDataV2->strUser.str + textBoxDataV2->cursorIdx;
-    memmove(p_cursor, p_cursor + 1, textBoxDataV2->strUser.len - textBoxDataV2->cursorIdx - 1);
-    textBoxDataV2->strUser.len--;
-    textBoxDataV2->strUser.str[textBoxDataV2->strUser.len] = '\0';
+    u16 *cursorIdx = &(textBoxDataV2->cursorIdx);
+    u16 *highlightIdx = &(textBoxDataV2->highlightIdx);
 
-    textBoxDataV2->highlightIdx = textBoxDataV2->cursorIdx;
+    u16 start = Min(*cursorIdx, *highlightIdx);
+    u16 end = Max(*cursorIdx, *highlightIdx);
+
+    if (start == end && start > 0) {
+        --start;
+    }
+
+    if (start != end) {
+        u8 *p_start = strUser->str + start;
+        u8 *p_end = strUser->str + end;
+
+        memmove(p_start, p_end, strUser->len - end);
+        strUser->len -= (end - start);
+    }
+
+    *cursorIdx = start;
+    *highlightIdx = start;
 }
 
 void
@@ -221,16 +238,12 @@ HelperTextBoxV2(LayoutData *layoutData) {
             textBoxDataV2->backspaceTimer -= delta;
 
             if (!textBoxDataV2->backspaceHeld) {
-                if (textBoxDataV2->cursorIdx > 0) {
-                    TextBoxV2Delete(layoutData);
-                }
+                TextBoxV2Delete(layoutData);
                 textBoxDataV2->backspaceTimer = textBoxDataV2->backspaceRepeatDelay;
                 textBoxDataV2->backspaceHeld = true;
             }
             else if (textBoxDataV2->backspaceTimer <= 0.0f) {
-                if (textBoxDataV2->cursorIdx > 0) {
-                    TextBoxV2Delete(layoutData);
-                }
+                TextBoxV2Delete(layoutData);
                 textBoxDataV2->backspaceTimer = textBoxDataV2->backspaceRepeatRate;
             }
         }

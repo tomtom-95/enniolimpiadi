@@ -65,9 +65,9 @@ typedef struct {
     float backspaceRepeatRate;
     Font font;
     int fontSize;
-    bool trackpadHeld;
-    float trackpadDelay;
-    float trackpadTimer;
+    // bool trackpadHeld;
+    // float trackpadDelay;
+    // float trackpadTimer;
 } TextBoxDataV2;
 
 typedef struct {
