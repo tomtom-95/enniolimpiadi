@@ -56,12 +56,13 @@ void
 HandleTextBoxV2Interaction(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t data) {
     LayoutData *layoutData = (LayoutData *)data;
     TextBoxDataV2 *textBoxDataV2 = &layoutData->textBoxDataV2;
+
+    Clay_ElementId textContainerV2Id = Clay_GetElementId(CLAY_STRING("TextContainerV2"));
+    Clay_ElementData textContainerV2Data = Clay_GetElementData(textContainerV2Id);
+
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         layoutData->last_element_clicked = elementId;
         textBoxDataV2->frameCounter = 0;
-
-        Clay_ElementId textContainerV2Id = Clay_GetElementId(CLAY_STRING("TextContainerV2"));
-        Clay_ElementData textContainerV2Data = Clay_GetElementData(textContainerV2Id);
 
         // Calculate cursorIdx on user click based on clicked position
         u16 cursorIdx = 0;
@@ -80,6 +81,39 @@ HandleTextBoxV2Interaction(Clay_ElementId elementId, Clay_PointerData pointerDat
         }
 
         layoutData->textBoxDataV2.cursorIdx = cursorIdx;
+        textBoxDataV2->highlightIdx = textBoxDataV2->cursorIdx;
+    }
+    else if (pointerData.state == CLAY_POINTER_DATA_PRESSED) {
+        float delta = GetFrameTime();
+        textBoxDataV2->trackpadTimer -= delta;
+
+        // Handle highlighting
+        if (!textBoxDataV2->trackpadHeld) {
+            textBoxDataV2->trackpadTimer = textBoxDataV2->trackpadDelay;
+            textBoxDataV2->trackpadHeld = true;
+        }
+        else if (textBoxDataV2->trackpadTimer <= 0.0f) {
+            u16 highlightIdx = 0;
+            float subStringLen = 0;
+            char subString[textBoxDataV2->strUser.len];
+            float characterLen = MeasureTextEx(textBoxDataV2->font, "A", textBoxDataV2->fontSize, 0).x;
+
+            float delta = pointerData.position.x - textContainerV2Data.boundingBox.x;
+            while (delta - subStringLen > characterLen / 2 && highlightIdx < textBoxDataV2->strUser.len) {
+                ++highlightIdx;
+
+                memcpy(subString, textBoxDataV2->strUser.str, highlightIdx);
+                subString[highlightIdx] = '\0';
+
+                subStringLen = MeasureTextEx(textBoxDataV2->font, subString, textBoxDataV2->fontSize, 0).x;
+            }
+
+            layoutData->textBoxDataV2.highlightIdx = highlightIdx;
+        }
+    }
+    else if (pointerData.state == CLAY_POINTER_DATA_RELEASED_THIS_FRAME) {
+        textBoxDataV2->trackpadHeld = false;
+        textBoxDataV2->trackpadTimer = 0.0f;
     }
 }
 

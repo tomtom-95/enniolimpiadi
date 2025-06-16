@@ -383,6 +383,14 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
                             );
                         }
 
+                        int start = getmin(textBoxDataV2.cursorPos.x, textBoxDataV2.highlightPos.x);
+                        int end = getmax(textBoxDataV2.cursorPos.x, textBoxDataV2.highlightPos.x);
+                        int delta = end - start;
+                        DrawRectangle(
+                            (int)(boundingBox.x + start), (int)(boundingBox.y),
+                            delta, textBoxDataV2.fontSize, BLACK
+                        );
+
                         break;
                     }
                     default: break;

@@ -50,9 +50,11 @@ typedef struct {
     u16 strLenMax;
     u16 widthBorder;
     u16 cursorIdx;
+    u16 highlightIdx;
     u16 cursorFrequency;
     u64 frameCounter;
     Vector2 cursorPos;
+    Vector2 highlightPos;
     String strOutput;
     String strUser;
     String strLabel;
@@ -63,6 +65,9 @@ typedef struct {
     float backspaceRepeatRate;
     Font font;
     int fontSize;
+    bool trackpadHeld;
+    float trackpadDelay;
+    float trackpadTimer;
 } TextBoxDataV2;
 
 typedef struct {

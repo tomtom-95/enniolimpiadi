@@ -199,6 +199,8 @@ main(void) {
         .scrollOffset = 0
     };
 
+    ////////////////////////////////////////////////////////////////
+    // textBoxDataV2 initialization
     u16 strLenMax = 255;
     String strOutput = {.len = 0, .str = arena_push(&arena_permanent, strLenMax)};
     String strUser = {.len = 0, .str = arena_push(&arena_permanent, strLenMax)};
@@ -213,9 +215,13 @@ main(void) {
         .backspaceRepeatDelay = 0.4f,
         .backspaceRepeatRate = 0.03f,
         .font = fonts[FONT_ID_BODY_16],
-        .fontSize = 16
+        .fontSize = 16,
+        .trackpadHeld = false,
+        .trackpadDelay = 0.4f
     };
 
+    ////////////////////////////////////////////////////////////////
+    // layout_data initialization
     LayoutData layout_data = {
         .arena_frame = &arena_frame,
         .arena_permanent = &arena_permanent,
@@ -234,17 +240,7 @@ main(void) {
         Vector2 mousePosition = GetMousePosition();
         Vector2 scrollDelta = GetMouseWheelMoveV();
         Clay_SetPointerState((Clay_Vector2) { mousePosition.x, mousePosition.y }, IsMouseButtonDown(0));
-
-        bool personalScroll = (
-            layout_data.text_box_data.someKeyPressed ||
-            (layout_data.text_box_data.textBoxDataState == HIGHLIGHT_STATE && IsMouseButtonDown(0))
-        );
-        if (personalScroll) {
-            Clay_UpdateScrollContainers(false, (Clay_Vector2) { 0, 0 }, GetFrameTime());
-        }
-        else {
-            Clay_UpdateScrollContainers(true, (Clay_Vector2) { scrollDelta.x, scrollDelta.y }, GetFrameTime());
-        }
+        Clay_UpdateScrollContainers(true, (Clay_Vector2) { scrollDelta.x, scrollDelta.y }, GetFrameTime());
 
         Clay_RenderCommandArray renderCommands = GetLayout(&layout_data);
 

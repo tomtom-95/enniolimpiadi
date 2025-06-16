@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 
+#include "utils.h"
 #include "arena.c"
 #include "string.c"
 #include "registration.c"
@@ -151,6 +152,38 @@ HandleUserWriting(LayoutData *layoutData) {
 }
 
 void
+TextBoxV2Write(LayoutData *layoutData, int key) {
+    TextBoxDataV2 *textBoxDataV2 = &(layoutData->textBoxDataV2);
+
+    int start = getmin(textBoxDataV2->cursorIdx, textBoxDataV2->highlightIdx);
+    int end = getmax(textBoxDataV2->cursorIdx, textBoxDataV2->highlightIdx);
+
+    u8 *p_start = textBoxDataV2->strUser.str + start;
+    u8 *p_end = textBoxDataV2->strUser.str + end;
+    memmove(p_start + 1, p_end, textBoxDataV2->strUser.len - end);
+
+    textBoxDataV2->strUser.str[start] = (u8)key;
+    textBoxDataV2->strUser.len = textBoxDataV2->strUser.len + start - end + 1;
+
+    textBoxDataV2->cursorIdx = start + 1;
+    textBoxDataV2->highlightIdx = textBoxDataV2->cursorIdx;
+}
+
+void
+TextBoxV2Delete(LayoutData *layoutData) {
+    // TODO: handle highlight case, similar to TextBoxV2Write
+    TextBoxDataV2 *textBoxDataV2 = &(layoutData->textBoxDataV2);
+
+    textBoxDataV2->cursorIdx--;
+    u8 *p_cursor = textBoxDataV2->strUser.str + textBoxDataV2->cursorIdx;
+    memmove(p_cursor, p_cursor + 1, textBoxDataV2->strUser.len - textBoxDataV2->cursorIdx - 1);
+    textBoxDataV2->strUser.len--;
+    textBoxDataV2->strUser.str[textBoxDataV2->strUser.len] = '\0';
+
+    textBoxDataV2->highlightIdx = textBoxDataV2->cursorIdx;
+}
+
+void
 HelperTextBoxV2(LayoutData *layoutData) {
     TextBoxDataV2 *textBoxDataV2 = &(layoutData->textBoxDataV2);
     Clay_ElementId textBoxV2Id = Clay_GetElementId(CLAY_STRING("TextBoxV2"));
@@ -174,17 +207,9 @@ HelperTextBoxV2(LayoutData *layoutData) {
         int key = GetCharPressed();
         while (key > 0) {
             textBoxDataV2->frameCounter = 0;
-
-            u8 *p_cursor = textBoxDataV2->strUser.str + textBoxDataV2->cursorIdx;
-            memmove(p_cursor + 1, p_cursor, textBoxDataV2->strUser.len - textBoxDataV2->cursorIdx);
-
-            // NOTE: Only allow keys in range [32..125]
             if ((key >= 32) && (key <= 125) && (textBoxDataV2->strUser.len < textBoxDataV2->strLenMax)) {
-                textBoxDataV2->strUser.str[(textBoxDataV2->cursorIdx)++] = (u8)key;
-                ++textBoxDataV2->strUser.len;
+                TextBoxV2Write(layoutData, key);
             }
-
-            // Check next character in the queue
             key = GetCharPressed();
         }
 
@@ -197,22 +222,14 @@ HelperTextBoxV2(LayoutData *layoutData) {
 
             if (!textBoxDataV2->backspaceHeld) {
                 if (textBoxDataV2->cursorIdx > 0) {
-                    textBoxDataV2->cursorIdx--;
-                    u8 *p_cursor = textBoxDataV2->strUser.str + textBoxDataV2->cursorIdx;
-                    memmove(p_cursor, p_cursor + 1, textBoxDataV2->strUser.len - textBoxDataV2->cursorIdx - 1);
-                    textBoxDataV2->strUser.len--;
-                    textBoxDataV2->strUser.str[textBoxDataV2->strUser.len] = '\0';
+                    TextBoxV2Delete(layoutData);
                 }
                 textBoxDataV2->backspaceTimer = textBoxDataV2->backspaceRepeatDelay;
                 textBoxDataV2->backspaceHeld = true;
             }
             else if (textBoxDataV2->backspaceTimer <= 0.0f) {
                 if (textBoxDataV2->cursorIdx > 0) {
-                    textBoxDataV2->cursorIdx--;
-                    u8 *p_cursor = textBoxDataV2->strUser.str + textBoxDataV2->cursorIdx;
-                    memmove(p_cursor, p_cursor + 1, textBoxDataV2->strUser.len - textBoxDataV2->cursorIdx - 1);
-                    textBoxDataV2->strUser.len--;
-                    textBoxDataV2->strUser.str[textBoxDataV2->strUser.len] = '\0';
+                    TextBoxV2Delete(layoutData);
                 }
                 textBoxDataV2->backspaceTimer = textBoxDataV2->backspaceRepeatRate;
             }
@@ -222,11 +239,20 @@ HelperTextBoxV2(LayoutData *layoutData) {
             textBoxDataV2->backspaceTimer = 0.0f;
         }
 
+        // Measure cursor position in pixel
         char strCursor[textBoxDataV2->strLenMax];
         memcpy(strCursor, textBoxDataV2->strUser.str, textBoxDataV2->cursorIdx);
         strCursor[textBoxDataV2->cursorIdx] = '\0';
         textBoxDataV2->cursorPos =  MeasureTextEx(
             textBoxDataV2->font, strCursor, textBoxDataV2->fontSize, 0
+        );
+
+        // Measure highlight position in pixel
+        char strHighlight[textBoxDataV2->strLenMax];
+        memcpy(strHighlight, textBoxDataV2->strUser.str, textBoxDataV2->highlightIdx);
+        strHighlight[textBoxDataV2->highlightIdx] = '\0';
+        textBoxDataV2->highlightPos =  MeasureTextEx(
+            textBoxDataV2->font, strHighlight, textBoxDataV2->fontSize, 0
         );
 
         string_cpy(&textBoxDataV2->strOutput, &textBoxDataV2->strUser);
