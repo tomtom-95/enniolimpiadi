@@ -84,6 +84,8 @@ HandleTextBoxV2Interaction(Clay_ElementId elementId, Clay_PointerData pointerDat
         textBoxDataV2->highlightIdx = textBoxDataV2->cursorIdx;
     }
     else if (pointerData.state == CLAY_POINTER_DATA_PRESSED) {
+        textBoxDataV2->trackpadHeld = true;
+
         u16 highlightIdx = 0;
         float subStringLen = 0;
         char subString[textBoxDataV2->strUser.len];

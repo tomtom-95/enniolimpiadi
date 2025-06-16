@@ -53,21 +53,19 @@ typedef struct {
     u16 highlightIdx;
     u16 cursorFrequency;
     u64 frameCounter;
+    int fontSize;
+    float backspaceTimer;
+    float backspaceRepeatDelay;
+    float backspaceRepeatRate;
+    bool backspaceHeld;
+    bool trackpadHeld;
+    Font font;
     Vector2 cursorPos;
     Vector2 highlightPos;
     String strOutput;
     String strUser;
     String strLabel;
     Clay_Color colorBorder;
-    float backspaceTimer;
-    bool backspaceHeld;
-    float backspaceRepeatDelay;
-    float backspaceRepeatRate;
-    Font font;
-    int fontSize;
-    // bool trackpadHeld;
-    // float trackpadDelay;
-    // float trackpadTimer;
 } TextBoxDataV2;
 
 typedef struct {

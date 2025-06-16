@@ -226,8 +226,9 @@ HelperTextBoxV2(LayoutData *layoutData) {
             textBoxDataV2->frameCounter = 0;
             if ((key >= 32) && (key <= 125) && (textBoxDataV2->strUser.len < textBoxDataV2->strLenMax)) {
                 TextBoxV2Write(layoutData, key);
+                key = GetCharPressed();
+
             }
-            key = GetCharPressed();
         }
 
         // Handle continuous backspace
@@ -267,6 +268,34 @@ HelperTextBoxV2(LayoutData *layoutData) {
         textBoxDataV2->highlightPos =  MeasureTextEx(
             textBoxDataV2->font, strHighlight, textBoxDataV2->fontSize, 0
         );
+
+        ///////////////////////////////////////////////////////////
+        // Handle scrolling
+        // TODO: this is very temporary
+        Clay_ScrollContainerData scrollData = Clay_GetScrollContainerData(CLAY_ID("TextWrapperV2"));
+        if (scrollData.found && scrollData.scrollPosition) {
+            float *cursorPosX = &(textBoxDataV2->cursorPos.x);
+            float currentScrollX = scrollData.scrollPosition->x;
+            float scrollAreaWidth = scrollData.scrollContainerDimensions.width;
+
+            // TODO: make cursor visible
+            // Check if cursor is out of view to the right
+            if (*cursorPosX > currentScrollX + scrollAreaWidth) {
+                float newScrollX = *cursorPosX - scrollAreaWidth;
+                *scrollData.scrollPosition = (Clay_Vector2){ .x = -newScrollX, .y = 0 };
+                --(*cursorPosX); // Bad hack
+            }
+
+            // // Check if cursor is out of view to the left
+            // else if (cursorPosX < currentScrollX) {
+            //     float newScrollX = cursorPosX;
+            //     if (newScrollX < 0) {
+            //         newScrollX = 0;
+            //     }
+            //     *scrollData.scrollPosition = (Clay_Vector2){ .x = -newScrollX, .y = 0 };
+            // }
+        }
+        //////////////////////////////////////////////////////////
 
         string_cpy(&textBoxDataV2->strOutput, &textBoxDataV2->strUser);
     }

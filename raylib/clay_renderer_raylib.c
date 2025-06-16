@@ -384,14 +384,15 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
                                 );
                             }
                         }
-
-                        int start = Min(textBoxDataV2.cursorPos.x, textBoxDataV2.highlightPos.x);
-                        int end = Max(textBoxDataV2.cursorPos.x, textBoxDataV2.highlightPos.x);
-                        int delta = end - start;
-                        DrawRectangle(
-                            (int)(boundingBox.x + start), (int)(boundingBox.y),
-                            delta, textBoxDataV2.fontSize, BLACK
-                        );
+                        else {
+                            int start = Min(textBoxDataV2.cursorPos.x, textBoxDataV2.highlightPos.x);
+                            int end = Max(textBoxDataV2.cursorPos.x, textBoxDataV2.highlightPos.x);
+                            int delta = end - start;
+                            DrawRectangle(
+                                (int)(boundingBox.x + start), (int)(boundingBox.y),
+                                delta, textBoxDataV2.fontSize, BLACK
+                            );
+                        }
 
                         break;
                     }
