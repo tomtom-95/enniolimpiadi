@@ -152,6 +152,30 @@ HandleUserWriting(LayoutData *layoutData) {
 }
 
 void
+UpdateCursorPos(LayoutData *layoutData) {
+    TextBoxDataV2 *textBoxDataV2 = &(layoutData->textBoxDataV2);
+
+    char strCursor[textBoxDataV2->strLenMax];
+    memcpy(strCursor, textBoxDataV2->strUser.str, textBoxDataV2->cursorIdx);
+    strCursor[textBoxDataV2->cursorIdx] = '\0';
+    textBoxDataV2->cursorPos =  MeasureTextEx(
+        textBoxDataV2->font, strCursor, textBoxDataV2->fontSize, 0
+    );
+}
+
+void
+UpdateHighlightPos(LayoutData *layoutData) {
+    TextBoxDataV2 *textBoxDataV2 = &(layoutData->textBoxDataV2);
+
+    char strHighlight[textBoxDataV2->strLenMax];
+    memcpy(strHighlight, textBoxDataV2->strUser.str, textBoxDataV2->highlightIdx);
+    strHighlight[textBoxDataV2->highlightIdx] = '\0';
+    textBoxDataV2->highlightPos =  MeasureTextEx(
+        textBoxDataV2->font, strHighlight, textBoxDataV2->fontSize, 0
+    );
+}
+
+void
 TextBoxV2Write(LayoutData *layoutData, int key) {
     TextBoxDataV2 *textBoxDataV2 = &(layoutData->textBoxDataV2);
     String *strUser = &textBoxDataV2->strUser;
@@ -200,6 +224,7 @@ TextBoxV2Delete(LayoutData *layoutData) {
     *highlightIdx = start;
 }
 
+
 void
 HelperTextBoxV2(LayoutData *layoutData) {
     TextBoxDataV2 *textBoxDataV2 = &(layoutData->textBoxDataV2);
@@ -219,20 +244,22 @@ HelperTextBoxV2(LayoutData *layoutData) {
         textBoxDataV2->colorBorder = gray_light;
         textBoxDataV2->widthBorder = 3;
         ++textBoxDataV2->frameCounter;
+        textBoxDataV2->keyPressedThisFrame = false;
 
         // Handle user writing
         int key = GetCharPressed();
         while (key > 0) {
             textBoxDataV2->frameCounter = 0;
             if ((key >= 32) && (key <= 125) && (textBoxDataV2->strUser.len < textBoxDataV2->strLenMax)) {
+                textBoxDataV2->keyPressedThisFrame = true;
                 TextBoxV2Write(layoutData, key);
                 key = GetCharPressed();
-
             }
         }
 
         // Handle continuous backspace
         if (IsKeyDown(KEY_BACKSPACE)) {
+            textBoxDataV2->keyPressedThisFrame = true;
             textBoxDataV2->frameCounter = 0;
 
             float delta = GetFrameTime();
@@ -253,49 +280,17 @@ HelperTextBoxV2(LayoutData *layoutData) {
             textBoxDataV2->backspaceTimer = 0.0f;
         }
 
-        // Measure cursor position in pixel
-        char strCursor[textBoxDataV2->strLenMax];
-        memcpy(strCursor, textBoxDataV2->strUser.str, textBoxDataV2->cursorIdx);
-        strCursor[textBoxDataV2->cursorIdx] = '\0';
-        textBoxDataV2->cursorPos =  MeasureTextEx(
-            textBoxDataV2->font, strCursor, textBoxDataV2->fontSize, 0
-        );
-
-        // Measure highlight position in pixel
-        char strHighlight[textBoxDataV2->strLenMax];
-        memcpy(strHighlight, textBoxDataV2->strUser.str, textBoxDataV2->highlightIdx);
-        strHighlight[textBoxDataV2->highlightIdx] = '\0';
-        textBoxDataV2->highlightPos =  MeasureTextEx(
-            textBoxDataV2->font, strHighlight, textBoxDataV2->fontSize, 0
-        );
-
-        ///////////////////////////////////////////////////////////
-        // Handle scrolling
-        // TODO: this is very temporary
-        Clay_ScrollContainerData scrollData = Clay_GetScrollContainerData(CLAY_ID("TextWrapperV2"));
-        if (scrollData.found && scrollData.scrollPosition) {
-            float *cursorPosX = &(textBoxDataV2->cursorPos.x);
-            float currentScrollX = scrollData.scrollPosition->x;
-            float scrollAreaWidth = scrollData.scrollContainerDimensions.width;
-
-            // TODO: make cursor visible
-            // Check if cursor is out of view to the right
-            if (*cursorPosX > currentScrollX + scrollAreaWidth) {
-                float newScrollX = *cursorPosX - scrollAreaWidth;
-                *scrollData.scrollPosition = (Clay_Vector2){ .x = -newScrollX, .y = 0 };
-                --(*cursorPosX); // Bad hack
-            }
-
-            // // Check if cursor is out of view to the left
-            // else if (cursorPosX < currentScrollX) {
-            //     float newScrollX = cursorPosX;
-            //     if (newScrollX < 0) {
-            //         newScrollX = 0;
-            //     }
-            //     *scrollData.scrollPosition = (Clay_Vector2){ .x = -newScrollX, .y = 0 };
-            // }
+        if (IsKeyDown(KEY_LEFT)) {
+            // TODO: similar implementation to KEY_BACKSPACE
         }
-        //////////////////////////////////////////////////////////
+
+        if (IsKeyDown(KEY_RIGHT)) {
+            // TODO: similar implementation to KEY_BACKSPACE
+        }
+
+
+        UpdateCursorPos(layoutData);
+        UpdateHighlightPos(layoutData);
 
         string_cpy(&textBoxDataV2->strOutput, &textBoxDataV2->strUser);
     }

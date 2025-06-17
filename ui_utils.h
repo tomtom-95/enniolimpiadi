@@ -59,6 +59,7 @@ typedef struct {
     float backspaceRepeatRate;
     bool backspaceHeld;
     bool trackpadHeld;
+    bool keyPressedThisFrame;
     Font font;
     Vector2 cursorPos;
     Vector2 highlightPos;

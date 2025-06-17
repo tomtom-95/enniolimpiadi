@@ -238,13 +238,7 @@ main(void) {
         Vector2 mousePosition = GetMousePosition();
         Vector2 scrollDelta = GetMouseWheelMoveV();
         Clay_SetPointerState((Clay_Vector2) { mousePosition.x, mousePosition.y }, IsMouseButtonDown(0));
-
-        if (layout_data.textBoxDataV2.trackpadHeld) {
-            Clay_UpdateScrollContainers(false, (Clay_Vector2) { scrollDelta.x, scrollDelta.y }, GetFrameTime());
-        }
-        else {
-            Clay_UpdateScrollContainers(true, (Clay_Vector2) { scrollDelta.x, scrollDelta.y }, GetFrameTime());
-        }
+        Clay_UpdateScrollContainers(false, (Clay_Vector2) { scrollDelta.x, scrollDelta.y }, GetFrameTime());
 
         Clay_RenderCommandArray renderCommands = GetLayout(&layout_data);
 
