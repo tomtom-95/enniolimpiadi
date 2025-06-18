@@ -84,7 +84,7 @@ HandleTextBoxV2Interaction(Clay_ElementId elementId, Clay_PointerData pointerDat
         textBoxDataV2->highlightIdx = textBoxDataV2->cursorIdx;
     }
     else if (pointerData.state == CLAY_POINTER_DATA_PRESSED) {
-        textBoxDataV2->trackpadHeld = true;
+        textBoxDataV2->isTrackpadHeld = true;
 
         u16 highlightIdx = 0;
         float subStringLen = 0;
@@ -141,7 +141,7 @@ HandlePlayerTextBoxInteraction(Clay_ElementId elementId, Clay_PointerData pointe
 
         u32 mousePositionIndex = (u32)(delta / characterWidthPixels);
         if (mousePositionIndex > textBoxData->str.len) {
-            textBoxData->cursor_position = textBoxData->str.len;
+            textBoxData->cursor_position = (u32)(textBoxData->str.len);
         }
         else {
             textBoxData->cursor_position = mousePositionIndex;

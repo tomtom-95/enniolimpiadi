@@ -48,10 +48,10 @@ GetLayout(LayoutData *layoutData) {
                 {
                     LayoutTournamentsWindow(layoutData);
                 } break;
-                case TAB_NEW_PLAYER:
-                {
-                    LayoutAddPlayerWindow(layoutData);
-                } break;
+                // case TAB_NEW_PLAYER:
+                // {
+                //     LayoutAddPlayerWindow(layoutData);
+                // } break;
                 case TAB_NEW_TOURNAMENT:
                 {
                     LayoutTextBoxV2(layoutData);
@@ -211,9 +211,9 @@ main(void) {
         .strLabel = string_from_cstring_lit("Enter player name"),
         .strOutput = strOutput,
         .strUser = strUser,
-        .backspaceHeld = false,
-        .backspaceRepeatDelay = 0.4f,
-        .backspaceRepeatRate = 0.03f,
+        .keyRepeatDelay = 0.4f,
+        .keyRepeatRate = 0.03f,
+        .isKeyHeld = false,
         .font = fonts[FONT_ID_BODY_16],
         .fontSize = 16
     };
@@ -239,6 +239,14 @@ main(void) {
         Vector2 scrollDelta = GetMouseWheelMoveV();
         Clay_SetPointerState((Clay_Vector2) { mousePosition.x, mousePosition.y }, IsMouseButtonDown(0));
         Clay_UpdateScrollContainers(false, (Clay_Vector2) { scrollDelta.x, scrollDelta.y }, GetFrameTime());
+
+        Clay_ElementId textBoxV2Id = Clay_GetElementId(CLAY_STRING("TextBoxV2"));
+        if (Clay_PointerOver(textBoxV2Id)) {
+            SetMouseCursor(MOUSE_CURSOR_IBEAM);
+        }
+        else {
+            SetMouseCursor(MOUSE_CURSOR_ARROW);
+        }
 
         Clay_RenderCommandArray renderCommands = GetLayout(&layout_data);
 

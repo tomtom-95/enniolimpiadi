@@ -377,25 +377,22 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
                         TextBoxDataV2 textBoxDataV2 = layout_data.textBoxDataV2;
                         Clay_ScrollContainerData scrollData = Clay_GetScrollContainerData(CLAY_ID("TextWrapperV2"));
 
-                        if (textBoxDataV2.keyPressedThisFrame) {
+                        float cursorPosX = textBoxDataV2.cursorPos.x;
+                        float currentScrollX = -scrollData.scrollPosition->x;
+                        float scrollAreaWidth = scrollData.scrollContainerDimensions.width;
+                        if (textBoxDataV2.isKeyPressedThisFrame) {
                             if (scrollData.found && scrollData.scrollPosition) {
-                                float cursorPosX = textBoxDataV2.cursorPos.x;
-                                float currentScrollX = -scrollData.scrollPosition->x;
-                                float scrollAreaWidth = scrollData.scrollContainerDimensions.width;
-
                                 if (cursorPosX > currentScrollX + scrollAreaWidth) {
-                                    float newScrollX = cursorPosX - scrollAreaWidth;
-                                    *scrollData.scrollPosition = (Clay_Vector2){ .x = -newScrollX, .y = 0 };
+                                    scrollData.scrollPosition->x = scrollAreaWidth - cursorPosX;
                                 }
                                 else if (cursorPosX < currentScrollX) {
-                                    *scrollData.scrollPosition = (Clay_Vector2){ .x = -cursorPosX, .y = 0 };
+                                    scrollData.scrollPosition->x = -cursorPosX;
                                 }
                             }
                         }
-
                         if (textBoxDataV2.cursorIdx == textBoxDataV2.highlightIdx) {
                             if ((textBoxDataV2.frameCounter / textBoxDataV2.cursorFrequency) % 2 == 0) {
-                                if (textBoxDataV2.cursorPos.x > 0) { // Bad hack because I do not understand scrolling
+                                if (cursorPosX >= currentScrollX + scrollAreaWidth) {
                                     DrawRectangle(
                                         (int)(boundingBox.x + textBoxDataV2.cursorPos.x - 1), (int)boundingBox.y,
                                         1, textBoxDataV2.fontSize, CLAY_COLOR_TO_RAYLIB_COLOR(WHITE)
@@ -410,8 +407,8 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
                             }
                         }
                         else {
-                            int start = Min(textBoxDataV2.cursorPos.x, textBoxDataV2.highlightPos.x);
-                            int end = Max(textBoxDataV2.cursorPos.x, textBoxDataV2.highlightPos.x);
+                            int start = (int)Min(textBoxDataV2.cursorPos.x, textBoxDataV2.highlightPos.x);
+                            int end = (int)Max(textBoxDataV2.cursorPos.x, textBoxDataV2.highlightPos.x);
                             int delta = end - start;
                             DrawRectangle(
                                 (int)(boundingBox.x + start), (int)(boundingBox.y),
