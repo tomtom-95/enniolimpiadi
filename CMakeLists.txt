@@ -19,11 +19,13 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(raylib)
 
 add_executable(enniolimpiadi main.c)
+add_executable(bugtest bugtest.c)
 
 target_compile_options(enniolimpiadi PUBLIC)
 target_include_directories(enniolimpiadi PUBLIC .)
 
 target_link_libraries(enniolimpiadi PUBLIC raylib)
+target_link_libraries(bugtest PUBLIC raylib)
 
 if(MSVC)
   set(CMAKE_C_FLAGS_DEBUG "/D CLAY_DEBUG")
@@ -37,8 +39,16 @@ target_compile_options(enniolimpiadi PRIVATE
   -Wconversion
   -pedantic
 )
-  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+target_compile_options(bugtest PRIVATE
+    -fcolor-diagnostics
+    -fansi-escape-codes
+    -std=c99
+    -Wall
+    -Wconversion
+    -pedantic
+)
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 endif()
 
 add_custom_command(
@@ -47,3 +57,11 @@ add_custom_command(
   ${CMAKE_CURRENT_SOURCE_DIR}/resources
   ${CMAKE_CURRENT_BINARY_DIR}/resources
 )
+add_custom_command(
+  TARGET bugtest POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+  ${CMAKE_CURRENT_SOURCE_DIR}/resources
+  ${CMAKE_CURRENT_BINARY_DIR}/resources
+)
+
+

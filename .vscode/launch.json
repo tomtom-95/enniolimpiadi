@@ -3,21 +3,27 @@
   "configurations": [
       {
           "name": "Debug Enniolimpiadi",
-          "type": "lldb",  // Changed from "cppdbg" to "lldb"
+          "type": "lldb",
           "request": "launch",
           "program": "${workspaceFolder}/build/enniolimpiadi",
           "args": [],
-          "cwd": "${workspaceFolder}/build",
-          "preLaunchTask": "CMake: build",
+          "cwd": "${workspaceFolder}",
+      },
+      {
+        "name": "Debug Test Flicker",
+        "type": "lldb",
+        "request": "launch",
+        "program": "${workspaceFolder}/build/bugtest",
+        "args": [],
+        "cwd": "${workspaceFolder}/build",
       },
       {
           "name": "Debug Tests",
-          "type": "lldb",  // Changed from "cppdbg" to "lldb"
+          "type": "lldb",
           "request": "launch",
-          "program": "${workspaceFolder}/tests/build/${fileBasenameNoExtension}",
+          "program": "${workspaceFolder}/build/${fileBasenameNoExtension}",
           "args": [],
-          "cwd": "${workspaceFolder}/tests/build",
-          "preLaunchTask": "testbuild",
+          "cwd": "${workspaceFolder}/build"
       }
   ]
 } 

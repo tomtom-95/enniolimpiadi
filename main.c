@@ -48,10 +48,10 @@ GetLayout(LayoutData *layoutData) {
                 {
                     LayoutTournamentsWindow(layoutData);
                 } break;
-                // case TAB_NEW_PLAYER:
-                // {
-                //     LayoutAddPlayerWindow(layoutData);
-                // } break;
+                case TAB_NEW_PLAYER:
+                {
+                    LayoutTextBoxV2(layoutData);
+                } break;
                 case TAB_NEW_TOURNAMENT:
                 {
                     LayoutTextBoxV2(layoutData);
@@ -124,7 +124,6 @@ GetLayout(LayoutData *layoutData) {
                     .offset = {10, textBoxData->floatingLabelYOffset}
                 }
             }) {
-                Clay_OnHover(HandleFloatingLabelInteraction, (intptr_t)layoutData);
                 CLAY_TEXT(CLAY_STRING("Enter new player name"), CLAY_TEXT_CONFIG({
                     .fontId = FONT_ID_BODY_16, .fontSize = (u16)fontSize, .textColor = white
                 }));
@@ -220,7 +219,7 @@ main(void) {
 
     ////////////////////////////////////////////////////////////////
     // layout_data initialization
-    LayoutData layout_data = {
+    LayoutData layoutData = {
         .arena_frame = &arena_frame,
         .arena_permanent = &arena_permanent,
         .player_map = player_map,
@@ -248,11 +247,13 @@ main(void) {
             SetMouseCursor(MOUSE_CURSOR_ARROW);
         }
 
-        Clay_RenderCommandArray renderCommands = GetLayout(&layout_data);
+        HelperTextBoxV2(&layoutData);
+
+        Clay_RenderCommandArray renderCommands = GetLayout(&layoutData);
 
         BeginDrawing();
         ClearBackground(BLACK);
-        Clay_Raylib_Render(renderCommands, fonts, layout_data);
+        Clay_Raylib_Render(renderCommands, fonts, layoutData);
         EndDrawing();
     }
 
