@@ -144,8 +144,8 @@ int main(void) {
         Clay_SetPointerState((Clay_Vector2) { mousePosition.x, mousePosition.y }, IsMouseButtonDown(0));
         Clay_UpdateScrollContainers(false, (Clay_Vector2) { scrollDelta.x, scrollDelta.y }, GetFrameTime());
 
-        Clay_ElementId textBoxV2Id = Clay_GetElementId(CLAY_STRING("TextBoxV2"));
-        if (Clay_PointerOver(textBoxV2Id)) {
+        Clay_ElementId textBoxId = Clay_GetElementId(CLAY_STRING("TextBox"));
+        if (Clay_PointerOver(textBoxId)) {
             SetMouseCursor(MOUSE_CURSOR_IBEAM);
         }
         else {
@@ -175,7 +175,7 @@ int main(void) {
                 u16 widthBorder = 3;
 
                 CLAY({
-                    .id = CLAY_ID("TextBoxV2"),
+                    .id = CLAY_ID("TextBox"),
                     .backgroundColor = blue,
                     .cornerRadius = CLAY_CORNER_RADIUS(6),
                     .border = {

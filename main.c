@@ -50,83 +50,12 @@ GetLayout(LayoutData *layoutData) {
                 } break;
                 case TAB_NEW_PLAYER:
                 {
-                    LayoutTextBoxV2(layoutData);
+                    LayoutTextBox(layoutData);
                 } break;
                 case TAB_NEW_TOURNAMENT:
                 {
-                    LayoutTextBoxV2(layoutData);
+                    LayoutTextBox(layoutData);
                 } break;
-            }
-        }
-    }
-
-    // Layout of floating element with animation
-    if (layoutData->tab == TAB_NEW_PLAYER) {
-        TextBoxData *textBoxData = &(layoutData->text_box_data);
-
-        Clay_ElementId playerTextBoxId = Clay_GetElementId(CLAY_STRING("PlayerTextBox"));
-        Clay_ElementData playerTextBoxElementData = Clay_GetElementData(playerTextBoxId);
-        Clay_BoundingBox playerTextBoxBoundingBox = playerTextBoxElementData.boundingBox;
-
-        Clay_ElementId textContainerId = Clay_GetElementId(CLAY_STRING("TextContainer"));
-        Clay_ElementData textContainerElementData = Clay_GetElementData(textContainerId);
-        Clay_BoundingBox textContainerBoundingBox = textContainerElementData.boundingBox;
-
-        Clay_ElementId floatingLabelId = Clay_GetElementId(CLAY_STRING("FloatingLabel"));
-        Clay_ElementData floatingLabelElementData = Clay_GetElementData(floatingLabelId);
-        Clay_BoundingBox floatingLabelBoundingBox = floatingLabelElementData.boundingBox;
-
-        s32 fontSize = textBoxData->fontSize;
-
-        // PlayerTextBox has actually been rendered
-        // This code will run starting from the second time that the textbox is rendered
-        if (playerTextBoxBoundingBox.x != 0) { 
-            // FloatingLabel has not been rendered yet: set his position to be
-            // the middle of the text box without any transition
-            if (floatingLabelBoundingBox.x == 0) {
-                textBoxData->floatingLabelYOffset = (playerTextBoxBoundingBox.height - fontSize) / 2;
-            }
-            else {
-                bool isTextBoxClicked = (
-                    layoutData->last_element_clicked.id == playerTextBoxId.id ||
-                    layoutData->last_element_clicked.id == floatingLabelId.id
-                );
-                if (isTextBoxClicked) {
-                    float yOffset = -(fontSize / 2);
-                    if (textBoxData->floatingLabelYOffset > yOffset) {
-                        textBoxData->floatingLabelYOffset -= 2;
-                    }
-                }
-                else {
-                    if (textBoxData->str.len == 0) {
-                        float yOffset = (playerTextBoxBoundingBox.height - fontSize) / 2;
-                        if (textBoxData->floatingLabelYOffset < yOffset) {
-                            textBoxData->floatingLabelYOffset += 2;
-                        }
-                    }
-                }
-            }
-            CLAY({
-                .id = CLAY_ID("FloatingLabel"),
-                .backgroundColor = gray,
-                .cornerRadius = CLAY_CORNER_RADIUS(6),
-                .layout = {
-                    .sizing = {.width = CLAY_SIZING_FIT(0), .height = CLAY_SIZING_FIT(0)},
-                    .padding = { .left = 5, .right = 5, .top = 0, .bottom = 0 }
-                },
-                .floating = {
-                    .parentId = playerTextBoxId.id,
-                    .attachTo = CLAY_ATTACH_TO_ELEMENT_WITH_ID,
-                    .attachPoints = {
-                        .element = CLAY_ATTACH_POINT_LEFT_TOP,
-                        .parent = CLAY_ATTACH_POINT_LEFT_TOP
-                    },
-                    .offset = {10, textBoxData->floatingLabelYOffset}
-                }
-            }) {
-                CLAY_TEXT(CLAY_STRING("Enter new player name"), CLAY_TEXT_CONFIG({
-                    .fontId = FONT_ID_BODY_16, .fontSize = (u16)fontSize, .textColor = white
-                }));
             }
         }
     }
@@ -187,23 +116,12 @@ main(void) {
     player_enroll(&name_state, &name_chunk_state, player_map, riccardo, machiavelli);
     player_rename(player_map, &name_chunk_state, riccardo, newriccardo);
 
-    u32 max_str_len = 256;
-    TextBoxData text_box_data = {
-        .font_id = FONT_ID_BODY_16,
-        .cursor_position = 0,
-        .max_str_len = max_str_len,
-        .fontSize = 16,
-        .str.len = 0,
-        .str.str = arena_push(&arena_permanent, max_str_len),
-        .scrollOffset = 0
-    };
-
     ////////////////////////////////////////////////////////////////
-    // textBoxDataV2 initialization
+    // textBoxData initialization
     u16 strLenMax = 255;
     String strOutput = {.len = 0, .str = arena_push(&arena_permanent, strLenMax)};
     String strUser = {.len = 0, .str = arena_push(&arena_permanent, strLenMax)};
-    TextBoxDataV2 textBoxDataV2 = {
+    TextBoxData textBoxData = {
         .strLenMax = strLenMax,
         .cursorFrequency = 40,
         .frameCounter = 40,
@@ -218,7 +136,7 @@ main(void) {
     };
 
     ////////////////////////////////////////////////////////////////
-    // layout_data initialization
+    // layoutData initialization
     LayoutData layoutData = {
         .arena_frame = &arena_frame,
         .arena_permanent = &arena_permanent,
@@ -226,8 +144,7 @@ main(void) {
         .player_state = &player_state,
         .name_state = &name_state,
         .name_chunk_state = &name_chunk_state,
-        .text_box_data = text_box_data,
-        .textBoxDataV2 = textBoxDataV2
+        .textBoxData = textBoxData
     };
 
     SetTargetFPS(60);
@@ -239,15 +156,15 @@ main(void) {
         Clay_SetPointerState((Clay_Vector2) { mousePosition.x, mousePosition.y }, IsMouseButtonDown(0));
         Clay_UpdateScrollContainers(false, (Clay_Vector2) { scrollDelta.x, scrollDelta.y }, GetFrameTime());
 
-        Clay_ElementId textBoxV2Id = Clay_GetElementId(CLAY_STRING("TextBoxV2"));
-        if (Clay_PointerOver(textBoxV2Id)) {
+        Clay_ElementId textBoxId = Clay_GetElementId(CLAY_STRING("TextBox"));
+        if (Clay_PointerOver(textBoxId)) {
             SetMouseCursor(MOUSE_CURSOR_IBEAM);
         }
         else {
             SetMouseCursor(MOUSE_CURSOR_ARROW);
         }
 
-        HelperTextBoxV2(&layoutData);
+        HelperTextBox(&layoutData);
 
         Clay_RenderCommandArray renderCommands = GetLayout(&layoutData);
 

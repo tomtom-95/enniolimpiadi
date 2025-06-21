@@ -331,56 +331,13 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
                         break;
                     }
                     case CUSTOM_LAYOUT_TEXTBOX: {
-                        TextBoxData textBoxData = layout_data.text_box_data;
-                        Font fontToUse = fonts[textBoxData.font_id];
+                        TextBoxData textBoxData = layout_data.textBoxData;
+                        Clay_ScrollContainerData scrollData = Clay_GetScrollContainerData(CLAY_ID("TextWrapper"));
 
-                        char str[textBoxData.str.len + 1];
-                        memcpy(str, textBoxData.str.str, textBoxData.str.len);
-                        str[textBoxData.str.len] = '\0';
-
-                        char strCursor[textBoxData.cursor_position + 1];
-                        memcpy(strCursor, textBoxData.str.str, textBoxData.cursor_position);
-                        strCursor[textBoxData.cursor_position] = '\0';
-                        Vector2 textCursorMeasure = MeasureTextEx(fontToUse, strCursor, (float)textBoxData.fontSize, 0);
-
-                        if (layout_data.text_box_data.textBoxDataState == CLICK_STATE) {
-                            if ((layout_data.text_box_data.frame_counter / 40) % 2 == 0) {
-                                DrawRectangle(
-                                    (int)(boundingBox.x + textCursorMeasure.x), (int)boundingBox.y,
-                                    1, textBoxData.fontSize, CLAY_COLOR_TO_RAYLIB_COLOR(WHITE)
-                                );
-                            }
-                        }
-                        else if (layout_data.text_box_data.textBoxDataState == HIGHLIGHT_STATE) {
-                            assert(textBoxData.highlight_end >= textBoxData.highlight_start);
-                            int lenHighlight = (int)(textBoxData.highlight_end - textBoxData.highlight_start);
-
-                            char strHighlight[lenHighlight + 1];
-                            memcpy(strHighlight, &textBoxData.str.str[textBoxData.highlight_start], lenHighlight);
-                            strHighlight[lenHighlight] = '\0';
-                            Vector2 textHighlightWidthMeasure = MeasureTextEx(fontToUse, strHighlight, textBoxData.fontSize, 0);
-
-                            char strPrefix[textBoxData.highlight_start + 1];
-                            memcpy(strPrefix, textBoxData.str.str, textBoxData.highlight_start);
-                            strPrefix[textBoxData.highlight_start] = '\0';
-                            Vector2 prefixWidthMeasure = MeasureTextEx(fontToUse, strPrefix, textBoxData.fontSize, 0);
-
-                            DrawRectangle(
-                                (int)(boundingBox.x + prefixWidthMeasure.x), (int)(boundingBox.y),
-                                (int)textHighlightWidthMeasure.x, textBoxData.fontSize, BLACK
-                            );
-                        }
-
-                        break;
-                    }
-                    case CUSTOM_LAYOUT_TEXTBOX_V2: {
-                        TextBoxDataV2 textBoxDataV2 = layout_data.textBoxDataV2;
-                        Clay_ScrollContainerData scrollData = Clay_GetScrollContainerData(CLAY_ID("TextWrapperV2"));
-
-                        float cursorPosX = textBoxDataV2.cursorPos.x;
+                        float cursorPosX = textBoxData.cursorPos.x;
                         float currentScrollX = -scrollData.scrollPosition->x;
                         float scrollAreaWidth = scrollData.scrollContainerDimensions.width;
-                        if (textBoxDataV2.isKeyPressedThisFrame) {
+                        if (textBoxData.isKeyPressedThisFrame) {
                             if (scrollData.found && scrollData.scrollPosition) {
                                 if (cursorPosX > currentScrollX + scrollAreaWidth) {
                                     scrollData.scrollPosition->x = scrollAreaWidth - cursorPosX;
@@ -390,29 +347,29 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
                                 }
                             }
                         }
-                        if (textBoxDataV2.cursorIdx == textBoxDataV2.highlightIdx) {
-                            if ((textBoxDataV2.frameCounter / textBoxDataV2.cursorFrequency) % 2 == 0) {
+                        if (textBoxData.cursorIdx == textBoxData.highlightIdx) {
+                            if ((textBoxData.frameCounter / textBoxData.cursorFrequency) % 2 == 0) {
                                 if (cursorPosX >= currentScrollX + scrollAreaWidth) {
                                     DrawRectangle(
-                                        (int)(boundingBox.x + textBoxDataV2.cursorPos.x - 1), (int)boundingBox.y,
-                                        1, textBoxDataV2.fontSize, CLAY_COLOR_TO_RAYLIB_COLOR(WHITE)
+                                        (int)(boundingBox.x + textBoxData.cursorPos.x - 1), (int)boundingBox.y,
+                                        1, textBoxData.fontSize, CLAY_COLOR_TO_RAYLIB_COLOR(WHITE)
                                     );
                                 }
                                 else {
                                     DrawRectangle(
-                                        (int)(boundingBox.x + textBoxDataV2.cursorPos.x), (int)boundingBox.y,
-                                        1, textBoxDataV2.fontSize, CLAY_COLOR_TO_RAYLIB_COLOR(WHITE)
+                                        (int)(boundingBox.x + textBoxData.cursorPos.x), (int)boundingBox.y,
+                                        1, textBoxData.fontSize, CLAY_COLOR_TO_RAYLIB_COLOR(WHITE)
                                     );
                                 }
                             }
                         }
                         else {
-                            int start = (int)Min(textBoxDataV2.cursorPos.x, textBoxDataV2.highlightPos.x);
-                            int end = (int)Max(textBoxDataV2.cursorPos.x, textBoxDataV2.highlightPos.x);
+                            int start = (int)Min(textBoxData.cursorPos.x, textBoxData.highlightPos.x);
+                            int end = (int)Max(textBoxData.cursorPos.x, textBoxData.highlightPos.x);
                             int delta = end - start;
                             DrawRectangle(
                                 (int)(boundingBox.x + start), (int)(boundingBox.y),
-                                delta, textBoxDataV2.fontSize, BLACK
+                                delta, textBoxData.fontSize, BLACK
                             );
                         }
 

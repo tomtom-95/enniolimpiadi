@@ -14,35 +14,35 @@
 
 void
 UpdateCursorPos(LayoutData *layoutData) {
-    TextBoxDataV2 *textBoxDataV2 = &(layoutData->textBoxDataV2);
+    TextBoxData *textBoxData = &(layoutData->textBoxData);
 
-    char strCursor[textBoxDataV2->strLenMax];
-    memcpy(strCursor, textBoxDataV2->strUser.str, textBoxDataV2->cursorIdx);
-    strCursor[textBoxDataV2->cursorIdx] = '\0';
-    textBoxDataV2->cursorPos = MeasureTextEx(
-        textBoxDataV2->font, strCursor, textBoxDataV2->fontSize, 0
+    char strCursor[textBoxData->strLenMax];
+    memcpy(strCursor, textBoxData->strUser.str, textBoxData->cursorIdx);
+    strCursor[textBoxData->cursorIdx] = '\0';
+    textBoxData->cursorPos = MeasureTextEx(
+        textBoxData->font, strCursor, textBoxData->fontSize, 0
     );
 }
 
 void
 UpdateHighlightPos(LayoutData *layoutData) {
-    TextBoxDataV2 *textBoxDataV2 = &(layoutData->textBoxDataV2);
+    TextBoxData *textBoxData = &(layoutData->textBoxData);
 
-    char strHighlight[textBoxDataV2->strLenMax];
-    memcpy(strHighlight, textBoxDataV2->strUser.str, textBoxDataV2->highlightIdx);
-    strHighlight[textBoxDataV2->highlightIdx] = '\0';
-    textBoxDataV2->highlightPos = MeasureTextEx(
-        textBoxDataV2->font, strHighlight, textBoxDataV2->fontSize, 0
+    char strHighlight[textBoxData->strLenMax];
+    memcpy(strHighlight, textBoxData->strUser.str, textBoxData->highlightIdx);
+    strHighlight[textBoxData->highlightIdx] = '\0';
+    textBoxData->highlightPos = MeasureTextEx(
+        textBoxData->font, strHighlight, textBoxData->fontSize, 0
     );
 }
 
 void
-TextBoxV2Write(LayoutData *layoutData, int key) {
-    TextBoxDataV2 *textBoxDataV2 = &(layoutData->textBoxDataV2);
-    String *strUser = &textBoxDataV2->strUser;
+TextBoxWrite(LayoutData *layoutData, int key) {
+    TextBoxData *textBoxData = &(layoutData->textBoxData);
+    String *strUser = &textBoxData->strUser;
 
-    u16 *cursorIdx = &(textBoxDataV2->cursorIdx);
-    u16 *highlightIdx = &(textBoxDataV2->highlightIdx);
+    u16 *cursorIdx = &(textBoxData->cursorIdx);
+    u16 *highlightIdx = &(textBoxData->highlightIdx);
 
     u16 start = Min(*cursorIdx, *highlightIdx);
     u16 end = Max(*cursorIdx, *highlightIdx);
@@ -55,16 +55,16 @@ TextBoxV2Write(LayoutData *layoutData, int key) {
     strUser->len = strUser->len + start - end + 1;
 
     *cursorIdx = start + 1;
-    *highlightIdx = textBoxDataV2->cursorIdx;
+    *highlightIdx = textBoxData->cursorIdx;
 }
 
 void
-TextBoxV2Delete(LayoutData *layoutData) {
-    TextBoxDataV2 *textBoxDataV2 = &(layoutData->textBoxDataV2);
-    String *strUser = &textBoxDataV2->strUser;
+TextBoxDelete(LayoutData *layoutData) {
+    TextBoxData *textBoxData = &(layoutData->textBoxData);
+    String *strUser = &textBoxData->strUser;
 
-    u16 *cursorIdx = &(textBoxDataV2->cursorIdx);
-    u16 *highlightIdx = &(textBoxDataV2->highlightIdx);
+    u16 *cursorIdx = &(textBoxData->cursorIdx);
+    u16 *highlightIdx = &(textBoxData->highlightIdx);
 
     u16 start = Min(*cursorIdx, *highlightIdx);
     u16 end = Max(*cursorIdx, *highlightIdx);
@@ -86,31 +86,31 @@ TextBoxV2Delete(LayoutData *layoutData) {
 }
 
 u8 *
-TextBoxV2Copy(LayoutData *layoutData) {
-    TextBoxDataV2 *textBoxDataV2 = &(layoutData->textBoxDataV2);
+TextBoxCopy(LayoutData *layoutData) {
+    TextBoxData *textBoxData = &(layoutData->textBoxData);
 
-    u16 *cursorIdx = &(textBoxDataV2->cursorIdx);
-    u16 *highlightIdx = &(textBoxDataV2->highlightIdx);
+    u16 *cursorIdx = &(textBoxData->cursorIdx);
+    u16 *highlightIdx = &(textBoxData->highlightIdx);
 
     u16 start = Min(*cursorIdx, *highlightIdx);
     u16 end = Max(*cursorIdx, *highlightIdx);
 
     u8 *selectedText = arena_push(layoutData->arena_frame, end - start + 1);
-    memcpy(selectedText, textBoxDataV2->strUser.str + start, end - start);
+    memcpy(selectedText, textBoxData->strUser.str + start, end - start);
     selectedText[end - start] = '\0';
 
     return selectedText;
 }
 
 void
-TextBoxV2Paste(LayoutData *layoutData, u8 *clipboardText) {
+TextBoxPaste(LayoutData *layoutData, u8 *clipboardText) {
     s16 textLen = (s16)(cstring_len(clipboardText) - 1);
 
-    TextBoxDataV2 *textBoxDataV2 = &(layoutData->textBoxDataV2);
-    String *strUser = &textBoxDataV2->strUser;
+    TextBoxData *textBoxData = &(layoutData->textBoxData);
+    String *strUser = &textBoxData->strUser;
 
-    u16 *cursorIdx = &(textBoxDataV2->cursorIdx);
-    u16 *highlightIdx = &(textBoxDataV2->highlightIdx);
+    u16 *cursorIdx = &(textBoxData->cursorIdx);
+    u16 *highlightIdx = &(textBoxData->highlightIdx);
 
     s16 start = (s16)Min(*cursorIdx, *highlightIdx);
     s16 end = (s16)Max(*cursorIdx, *highlightIdx);
@@ -119,19 +119,19 @@ TextBoxV2Paste(LayoutData *layoutData, u8 *clipboardText) {
     u8 *p_end = strUser->str + end;
 
     s16 delta = textLen - end + start;
-    memmove(p_end + delta, p_end, textBoxDataV2->strUser.len - end);
+    memmove(p_end + delta, p_end, textBoxData->strUser.len - end);
     memcpy(p_start, clipboardText, textLen);
 
-    textBoxDataV2->strUser.len += delta;
-    textBoxDataV2->cursorIdx = end + delta;
-    textBoxDataV2->highlightIdx = end + delta;
+    textBoxData->strUser.len += delta;
+    textBoxData->cursorIdx = end + delta;
+    textBoxData->highlightIdx = end + delta;
 }
 
 
 void
-TextBoxV2MoveCursorLeft(TextBoxDataV2 *textBoxDataV2) {
-    u16 *cursorIdx = &(textBoxDataV2->cursorIdx);
-    u16 *highlightIdx = &(textBoxDataV2->highlightIdx);
+TextBoxMoveCursorLeft(TextBoxData *textBoxData) {
+    u16 *cursorIdx = &(textBoxData->cursorIdx);
+    u16 *highlightIdx = &(textBoxData->highlightIdx);
     if (*cursorIdx == *highlightIdx && *cursorIdx > 0) {
         --(*cursorIdx);
         --(*highlightIdx);
@@ -144,10 +144,10 @@ TextBoxV2MoveCursorLeft(TextBoxDataV2 *textBoxDataV2) {
 }
 
 void
-TextBoxV2MoveCursorRight(TextBoxDataV2 *textBoxDataV2) {
-    u16 *cursorIdx = &(textBoxDataV2->cursorIdx);
-    u16 *highlightIdx = &(textBoxDataV2->highlightIdx);
-    if (*cursorIdx == *highlightIdx && *cursorIdx < textBoxDataV2->strUser.len) {
+TextBoxMoveCursorRight(TextBoxData *textBoxData) {
+    u16 *cursorIdx = &(textBoxData->cursorIdx);
+    u16 *highlightIdx = &(textBoxData->highlightIdx);
+    if (*cursorIdx == *highlightIdx && *cursorIdx < textBoxData->strUser.len) {
         ++(*cursorIdx);
         ++(*highlightIdx);
     }
@@ -159,25 +159,25 @@ TextBoxV2MoveCursorRight(TextBoxDataV2 *textBoxDataV2) {
 }
 
 void
-HelperTextBoxV2(LayoutData *layoutData) {
-    TextBoxDataV2 *textBoxDataV2 = &(layoutData->textBoxDataV2);
-    Clay_ElementId textBoxV2Id = Clay_GetElementId(CLAY_STRING("TextBoxV2"));
+HelperTextBox(LayoutData *layoutData) {
+    TextBoxData *textBoxData = &(layoutData->textBoxData);
+    Clay_ElementId textBoxId = Clay_GetElementId(CLAY_STRING("TextBox"));
 
-    assert(textBoxDataV2->cursorIdx <= textBoxDataV2->strUser.len);
+    assert(textBoxData->cursorIdx <= textBoxData->strUser.len);
 
-    if (layoutData->last_element_clicked.id == textBoxV2Id.id) {
-        textBoxDataV2->colorBorder = gray_light;
-        textBoxDataV2->widthBorder = 3;
-        ++textBoxDataV2->frameCounter;
-        textBoxDataV2->isKeyPressedThisFrame = false;
+    if (layoutData->last_element_clicked.id == textBoxId.id) {
+        textBoxData->colorBorder = gray_light;
+        textBoxData->widthBorder = 3;
+        ++textBoxData->frameCounter;
+        textBoxData->isKeyPressedThisFrame = false;
 
         // Handle user writing
         int key = GetCharPressed();
         while (key > 0) {
-            textBoxDataV2->frameCounter = 0;
-            if ((key >= 32) && (key <= 125) && (textBoxDataV2->strUser.len < textBoxDataV2->strLenMax)) {
-                textBoxDataV2->isKeyPressedThisFrame = true;
-                TextBoxV2Write(layoutData, key);
+            textBoxData->frameCounter = 0;
+            if ((key >= 32) && (key <= 125) && (textBoxData->strUser.len < textBoxData->strLenMax)) {
+                textBoxData->isKeyPressedThisFrame = true;
+                TextBoxWrite(layoutData, key);
                 key = GetCharPressed();
             }
         }
@@ -189,17 +189,17 @@ HelperTextBoxV2(LayoutData *layoutData) {
         bool isPasteCombo = (isCtrlDown || isCmdDown) && IsKeyPressed(KEY_V);
 
         if (isCopyCombo) {
-            textBoxDataV2->isKeyPressedThisFrame = true;
-            u8* selectedText = TextBoxV2Copy(layoutData);
+            textBoxData->isKeyPressedThisFrame = true;
+            u8* selectedText = TextBoxCopy(layoutData);
             SetClipboardText(selectedText);
         }
 
         if (isPasteCombo) {
-            textBoxDataV2->isKeyPressedThisFrame = true;
+            textBoxData->isKeyPressedThisFrame = true;
             const char *clipboardText = GetClipboardText();
             if (clipboardText) {
                 // TODO: check implementation
-                TextBoxV2Paste(layoutData, clipboardText);
+                TextBoxPaste(layoutData, clipboardText);
             }
         }
 
@@ -211,78 +211,78 @@ HelperTextBoxV2(LayoutData *layoutData) {
             else if (IsKeyDown(KEY_LEFT))  currentKey = KEY_LEFT;
             else if (IsKeyDown(KEY_RIGHT)) currentKey = KEY_RIGHT;
 
-            if (!textBoxDataV2->isKeyHeld || textBoxDataV2->keyHeld != currentKey) {
+            if (!textBoxData->isKeyHeld || textBoxData->keyHeld != currentKey) {
                 // New key press or key changed
-                textBoxDataV2->keyHeld = currentKey;
-                textBoxDataV2->keyRepeatTimer = textBoxDataV2->keyRepeatDelay;
-                textBoxDataV2->isKeyHeld = true;
+                textBoxData->keyHeld = currentKey;
+                textBoxData->keyRepeatTimer = textBoxData->keyRepeatDelay;
+                textBoxData->isKeyHeld = true;
 
                 // Immediate action
                 if (currentKey == KEY_BACKSPACE) {
-                    TextBoxV2Delete(layoutData);
+                    TextBoxDelete(layoutData);
                 }
                 else if (currentKey == KEY_LEFT) {
-                    TextBoxV2MoveCursorLeft(textBoxDataV2);
+                    TextBoxMoveCursorLeft(textBoxData);
                 }
                 else if (currentKey == KEY_RIGHT) {
-                    TextBoxV2MoveCursorRight(textBoxDataV2);
+                    TextBoxMoveCursorRight(textBoxData);
                 }
             }
             else {
                 // Handle repeat
-                textBoxDataV2->keyRepeatTimer -= GetFrameTime();
-                if (textBoxDataV2->keyRepeatTimer <= 0.0f) {
-                    if (textBoxDataV2->keyHeld == KEY_BACKSPACE) {
-                        TextBoxV2Delete(layoutData);
+                textBoxData->keyRepeatTimer -= GetFrameTime();
+                if (textBoxData->keyRepeatTimer <= 0.0f) {
+                    if (textBoxData->keyHeld == KEY_BACKSPACE) {
+                        TextBoxDelete(layoutData);
                     }
-                    else if (textBoxDataV2->keyHeld == KEY_LEFT) {
-                        TextBoxV2MoveCursorLeft(textBoxDataV2);
+                    else if (textBoxData->keyHeld == KEY_LEFT) {
+                        TextBoxMoveCursorLeft(textBoxData);
                     }
-                    else if (textBoxDataV2->keyHeld == KEY_RIGHT) {
-                        TextBoxV2MoveCursorRight(textBoxDataV2);
+                    else if (textBoxData->keyHeld == KEY_RIGHT) {
+                        TextBoxMoveCursorRight(textBoxData);
                     }
-                    textBoxDataV2->keyRepeatTimer = textBoxDataV2->keyRepeatRate;
+                    textBoxData->keyRepeatTimer = textBoxData->keyRepeatRate;
                 }
             }
 
-            textBoxDataV2->isKeyPressedThisFrame = true;
-            textBoxDataV2->frameCounter = 0;
+            textBoxData->isKeyPressedThisFrame = true;
+            textBoxData->frameCounter = 0;
         }
         else {
-            textBoxDataV2->isKeyHeld = false;
-            textBoxDataV2->keyHeld = 0;
-            textBoxDataV2->keyRepeatTimer = 0.0f;
+            textBoxData->isKeyHeld = false;
+            textBoxData->keyHeld = 0;
+            textBoxData->keyRepeatTimer = 0.0f;
         }
 
         UpdateCursorPos(layoutData);
         UpdateHighlightPos(layoutData);
 
-        string_cpy(&textBoxDataV2->strOutput, &textBoxDataV2->strUser);
+        string_cpy(&textBoxData->strOutput, &textBoxData->strUser);
     }
     else {
-        textBoxDataV2->colorBorder = blue;
-        textBoxDataV2->widthBorder = 1;
-        textBoxDataV2->frameCounter = textBoxDataV2->cursorFrequency;
+        textBoxData->colorBorder = blue;
+        textBoxData->widthBorder = 1;
+        textBoxData->frameCounter = textBoxData->cursorFrequency;
 
-        if (textBoxDataV2->strUser.len == 0) {
-            string_cpy(&textBoxDataV2->strOutput, &textBoxDataV2->strLabel);
+        if (textBoxData->strUser.len == 0) {
+            string_cpy(&textBoxData->strOutput, &textBoxData->strLabel);
         }
     }
 }
 
 void
-LayoutTextBoxV2(LayoutData *layoutData) {
-    TextBoxDataV2 *textBoxDataV2 = &(layoutData->textBoxDataV2);
-    Clay_Color colorBorder = textBoxDataV2->colorBorder;
-    u16 widthBorder = textBoxDataV2->widthBorder;
+LayoutTextBox(LayoutData *layoutData) {
+    TextBoxData *textBoxData = &(layoutData->textBoxData);
+    Clay_Color colorBorder = textBoxData->colorBorder;
+    u16 widthBorder = textBoxData->widthBorder;
 
     CustomLayoutElement *customLayoutElement = (
         arena_push(layoutData->arena_frame, sizeof(CustomLayoutElement))
     );
-    *customLayoutElement = (CustomLayoutElement) { .type = CUSTOM_LAYOUT_TEXTBOX_V2 };
+    *customLayoutElement = (CustomLayoutElement) { .type = CUSTOM_LAYOUT_TEXTBOX };
 
     CLAY({
-        .id = CLAY_ID("TextBoxV2"),
+        .id = CLAY_ID("TextBox"),
         .backgroundColor = gray,
         .cornerRadius = CLAY_CORNER_RADIUS(6),
         .border = {
@@ -294,19 +294,19 @@ LayoutTextBoxV2(LayoutData *layoutData) {
             .padding = CLAY_PADDING_ALL(12)
         }
     }) {
-        Clay_OnHover(HandleTextBoxV2Interaction, (intptr_t)layoutData);
+        Clay_OnHover(HandleTextBoxInteraction, (intptr_t)layoutData);
         CLAY({
-            .id = CLAY_ID("TextWrapperV2"),
+            .id = CLAY_ID("TextWrapper"),
             .layout = { .sizing = layoutExpand },
             .clip = { .horizontal = true, .childOffset = Clay_GetScrollOffset() }
         }) {
             CLAY({
-                .id = CLAY_ID("TextContainerV2"),
+                .id = CLAY_ID("TextContainer"),
                 .layout = { .sizing = layoutExpand },
                 .custom = { .customData = customLayoutElement }
             }) {
                 CLAY_TEXT(
-                    Clay_String_from_String(textBoxDataV2->strOutput), CLAY_TEXT_CONFIG({
+                    Clay_String_from_String(textBoxData->strOutput), CLAY_TEXT_CONFIG({
                     .fontId = FONT_ID_BODY_16,
                     .fontSize = 16,
                     .textColor = white
