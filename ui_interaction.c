@@ -107,14 +107,16 @@ HandleAddPlayerButtonInteraction(Clay_ElementId elementId, Clay_PointerData poin
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         layoutData->last_element_clicked = elementId;
 
-        String dst = {
-            .str = arena_push(layoutData->arena_frame, textBoxData.strUser.len),
-            .len = textBoxData.strUser.len
-        };
-        string_cpy(&dst, &textBoxData.strUser); 
-        string_strip(&dst);
+        String str = push_string_cpy(layoutData->arena_frame, textBoxData.strUser);
+        string_strip(&str);
 
-        player_create(layoutData->name_chunk_state, layoutData->player_state, layoutData->player_map, dst);
+        Player *player = player_find(layoutData->player_map, layoutData->name_chunk_state, str);
+        if (player) {
+            log_error("Player alread registered");
+        }
+        else {
+            player_create(layoutData->name_chunk_state, layoutData->player_state, layoutData->player_map, str);
+        }
     }
 }
 
@@ -134,8 +136,7 @@ HandlePlayerSelection(Clay_ElementId element_id, Clay_PointerData pointer_data, 
     }
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
-        // TODO
-        // open a menu of stuff that can be done
+        // TODO: open a menu of stuff that can be done
         // for now use it just for deleting
         String tmp = {
             .str = arena_push(layoutData->arena_frame, element_id.stringId.length),

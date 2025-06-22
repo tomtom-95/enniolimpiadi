@@ -52,7 +52,7 @@ tournament_map_init(Arena *arena, u64 bucket_count);
 u64
 hash_string(String str);
 
-void
+Player *
 player_create(
     NameChunkState *name_chunk_state, PlayerState *player_state,
     PlayerMap *player_map, String str_player_name
@@ -96,10 +96,14 @@ Tournament *
 tournament_find(TournamentMap *tournament_map, NameChunkState *name_chunk_state, String str_tournament_name);
 
 void
-player_rename(PlayerMap *player_map, NameChunkState *name_chunk_state, String str_oldname, String str_newname);
+player_rename(
+    Arena *arena,
+    PlayerMap *player_map, TournamentMap *tournament_map, NameChunkState *name_chunk_state,
+    String str_oldname, String str_newname
+);
 
-StringList 
-list_tournaments(Arena *arena, PlayerMap *player_map);
+StringList
+list_tournaments(Arena *arena, TournamentMap *tournament_map);
 
 ///////////////////////////////////////////////////////////////
 // Implementation
@@ -107,7 +111,7 @@ list_tournaments(Arena *arena, PlayerMap *player_map);
 PlayerMap *
 player_map_init(Arena *arena, u64 bucket_count) {
     PlayerMap *player_map = arena_push(arena, sizeof(PlayerMap));
-    player_map->players = arena_push(arena, sizeof(Player *)*bucket_count);
+    player_map->players = arena_push(arena, sizeof(Player *) * bucket_count);
     player_map->bucket_count = bucket_count;
     return player_map;
 }
@@ -124,14 +128,12 @@ u64
 hash_string(String str) {
     u64 hash = 5381;
     for (u64 i = 0; i < str.len; ++i) {
-        hash = (
-            ((hash << 5) + hash) + (u64)((str.str)[i])
-        );
+        hash = ((hash << 5) + hash) + (u64)((str.str)[i]);
     }
     return hash;
 }
 
-void
+Player *
 player_create(
     NameChunkState *name_chunk_state, PlayerState *player_state,
     PlayerMap *player_map, String str_player_name
@@ -139,15 +141,11 @@ player_create(
     u64 bucket_num = hash_string(str_player_name) % player_map->bucket_count;
     Player **player = &(player_map->players[bucket_num]);
     Name player_name = name_save(name_chunk_state, str_player_name);
+
     while (*player) {
-        if (name_cmp((*player)->player_name, player_name)) {
-            name_delete(name_chunk_state, &player_name);
-            return;
-        }
-        else {
-            player = &((*player)->next);
-        }
+        player = &((*player)->next);
     }
+
     *player = player_state->first_free;
     if (*player) {
         player_state->first_free = player_state->first_free->next;
@@ -155,9 +153,12 @@ player_create(
     else {
         *player = arena_push(player_state->arena, sizeof(Player)); 
     }
+
     (*player)->player_name = player_name;
     (*player)->tournament_names.head = NULL;
     (*player)->next = NULL;
+
+    return *player;
 }
 
 Tournament *
@@ -216,7 +217,6 @@ player_delete(
             to_remove->next = player_state->first_free;
             player_state->first_free = to_remove;
 
-            name_delete(name_chunk_state, &(to_remove->player_name));
             namelist_delete(name_state, name_chunk_state, &(to_remove->tournament_names));
             break;
         }
@@ -243,7 +243,6 @@ tournament_delete(
             *tournament = (*tournament)->next;
             to_remove->next = tournament_state->first_free;
             tournament_state->first_free = to_remove;
-            name_delete(name_chunk_state, &(to_remove->tournament_name));
 
             Temp temp = temp_begin(arena);
             Name *player_name = to_remove->player_names.head;
@@ -354,40 +353,50 @@ tournament_find(
 
 void
 player_rename(
-    PlayerMap *player_map, NameChunkState *name_chunk_state,
+    Arena *arena,
+    PlayerMap *player_map, TournamentMap *tournament_map, NameChunkState *name_chunk_state,
     String str_oldname, String str_newname
 ) {
+    Name oldname = name_save(name_chunk_state, str_oldname);
+    Name newname = name_save(name_chunk_state, str_newname);
+
     Player *player = player_find(player_map, name_chunk_state, str_oldname);
     assert(player);
+
     name_delete(name_chunk_state, &(player->player_name));
-    Name newname = name_save(name_chunk_state, str_newname);
     player->player_name = newname;
+
+    Name *tournament_name = player->tournament_names.head;
+    while (tournament_name) {
+        Temp temp = temp_begin(arena);
+        String str_tournament_name = name_to_string(temp.arena, *tournament_name);
+        Tournament *tournament = tournament_find(tournament_map, name_chunk_state, str_tournament_name);
+
+        Name *player_name = tournament->player_names.head;
+        while (!name_cmp(oldname, *player_name)) {
+            player_name = player_name->next;
+        }
+        *player_name = newname;
+        tournament_name = tournament_name->next;
+        temp_end(temp);
+    }
+
+    name_delete(name_chunk_state, &oldname);
 }
 
 StringList
-list_tournaments(Arena *arena, PlayerMap *player_map) {
+list_tournaments(Arena *arena, TournamentMap *tournament_map) {
     StringList string_list = {0};
-    StringNode **node = &(string_list.head);
-    for (u64 bucket = 0; bucket < player_map->bucket_count; ++bucket) {
-        Player **player = player_map->players + bucket;
-        while (*player) {
-            Name *tournament = ((*player)->tournament_names).head;
-            while (tournament) {
-                String str = name_to_string(arena, *tournament);
-                if (!string_list_find(&string_list, str)) {
-                    // string_list_push(arena, &string_list, str);
-                    *node = arena_push(arena, sizeof(StringNode));
-                    (*node)->str = str;
-                    ++(string_list.len);
-                    node = &((*node)->next);
-                }
-                tournament = tournament->next;
-            }
-            player = &((*player)->next);
+    StringNode **node = &string_list.head;
+    for (u64 idx = 0; idx < tournament_map->bucket_count; ++idx) {
+        Tournament *tournament  = tournament_map->tournaments[idx]; 
+        while (tournament) {
+            String str_tournament_name = name_to_string(arena, tournament->tournament_name);
+            string_list_push(arena, &string_list, str_tournament_name);
+            tournament = tournament->next;
         }
     }
     return string_list;
 }
-
 
 #endif // REGISTRATION_V2_C

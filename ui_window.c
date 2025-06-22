@@ -373,10 +373,7 @@ LayoutPlayersWindow(LayoutData *data) {
 
 void
 LayoutTournamentsWindow(LayoutData *data) {
-    StringList string_list = list_tournaments(
-        data->arena_frame,
-        data->player_map
-    );
+    StringList string_list = list_tournaments(data->arena_frame, data->tournament_map);
     StringNode *node = string_list.head;
     while (node) {
         Clay_String tournament_string = {

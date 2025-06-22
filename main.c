@@ -120,7 +120,7 @@ main(void) {
     player_enroll(&name_state, &name_chunk_state, player_map, tournament_map, &tournament_state, riccardo, machiavelli);
     player_enroll(&name_state, &name_chunk_state, player_map, tournament_map, &tournament_state, giulio, ping_pong);
 
-    player_rename(player_map, &name_chunk_state, riccardo, newriccardo);
+    player_rename(&arena_permanent, player_map, tournament_map, &name_chunk_state, riccardo, newriccardo);
 
     player_enroll(&name_state, &name_chunk_state, player_map, tournament_map, &tournament_state, newriccardo, ping_pong);
 

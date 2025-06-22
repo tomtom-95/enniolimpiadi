@@ -62,6 +62,14 @@ string_cpy(String *dst, String *src) {
 }
 
 String
+push_string_cpy(Arena *arena, String src) {
+    String dst = { .str = arena_push(arena, src.len), .len = src.len };
+    string_cpy(&dst, &src); 
+    return dst;
+}
+
+
+String
 string_cat(Arena *arena, String s1, String s2) {
     u64 len = s1.len + s2.len;
     String str = {.str = arena_push(arena, len), .len = len};
