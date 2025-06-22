@@ -15,10 +15,12 @@ PKG_FLAGS=$(pkg-config --cflags --libs raylib)
 show_help() {
     echo "Usage: $0 [main|bugtest|clean]"
     echo
-    echo "  main       Compile main.c -> $OUT"
-    echo "  bugtest    Compile bugtest.c -> $OUT_BUGTEST"
-    echo "  testnames  Compile tests/test_names.c -> tests/build/test_names"
-    echo "  clean      Remove the build directory"
+    echo "  main             Compile main.c -> $OUT"
+    echo "  bugtest          Compile bugtest.c -> $OUT_BUGTEST"
+    echo "  testnames        Compile tests/test_names.c -> build/test_names"
+    echo "  teststring       Compile tests/test_string.c -> build/test_string"
+    echo "  testregistration Compile tests/test_registration.c -> build/test_registration"
+    echo "  clean            Remove the build directory"
     echo
 }
 
@@ -56,6 +58,14 @@ case "$1" in
     testnames)
         echo "Compiling tests/test_names.c -> $OUT_DIR/test_names"
         clang $CFLAGS ./tests/test_names.c -o $OUT_DIR/test_names
+        ;;
+    teststring)
+        echo "Compiling tests/test_string.c -> $OUT_DIR/test_string"
+        clang $CFLAGS ./tests/test_string.c -o $OUT_DIR/test_string
+        ;;
+    testregistration)
+        echo "Compiling tests/test_registration.c -> $OUT_DIR/test_registration"
+        clang $CFLAGS ./tests/test_registration.c -o $OUT_DIR/test_registration
         ;;
     *)
         echo "❌ Unknown command: $1"

@@ -109,12 +109,7 @@ name_cmp(Name name1, Name name2) {
 }
 
 void
-namelist_append_right(
-    NameState *name_state,
-    NameChunkState *name_chunk_state,
-    NameList *namelist,
-    String string
-) {
+namelist_append_right(NameState *name_state, NameChunkState *name_chunk_state, NameList *namelist, String string) {
     Name name = name_save(name_chunk_state, string);
 
     Name **node = &(namelist->head);
@@ -134,11 +129,7 @@ namelist_append_right(
 }
 
 void
-namelist_pop_right(
-    NameState *name_state,
-    NameChunkState *name_chunk_state,
-    NameList *namelist
-) {
+namelist_pop_right(NameState *name_state, NameChunkState *name_chunk_state, NameList *namelist) {
     Name **node = &(namelist->head);
     if (*node) {
         while ((*node)->next) {
@@ -153,12 +144,7 @@ namelist_pop_right(
 }
 
 void
-namelist_pop(
-    NameState *name_state,
-    NameChunkState *name_chunk_state,
-    NameList *namelist,
-    String str
-) {
+namelist_pop(NameState *name_state, NameChunkState *name_chunk_state, NameList *namelist, String str) {
     Name name = name_save(name_chunk_state, str);
     Name **node = &(namelist->head);
     while (*node) {
@@ -177,11 +163,7 @@ namelist_pop(
 }
 
 void
-namelist_delete(
-    NameState *name_state,
-    NameChunkState *name_chunk_state,
-    NameList *namelist
-) {
+namelist_delete(NameState *name_state, NameChunkState *name_chunk_state, NameList *namelist) {
     Name *node = namelist->head;
     while (node) {
         Name *to_remove = node;

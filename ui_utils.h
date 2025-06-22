@@ -43,6 +43,7 @@ typedef struct {
     Arena *arena_frame;
     Arena *arena_permanent;
     PlayerMap *player_map;
+    TournamentMap *tournament_map;
     PlayerState *player_state;
     NameState *name_state;
     NameChunkState *name_chunk_state;

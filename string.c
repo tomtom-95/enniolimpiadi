@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 #include <string.h>
+#include <ctype.h>
+#include <assert.h>
 
 #include "utils.c"
 #include "arena.c"
@@ -45,6 +47,14 @@ string_from_cstring(u8 *cstring) {
     return (String){.str = cstring, .len = cstring_len(cstring) - 1};
 }
 
+u8 *
+cstring_from_string(Arena *arena, String string) {
+    u8 *cstring = arena_push(arena, string.len + 1);
+    memcpy(cstring, string.str, string.len);
+    cstring[string.len] = '\0';
+    return cstring;
+}
+
 void
 string_cpy(String *dst, String *src) {
     memcpy(dst->str, src->str, src->len);
@@ -60,6 +70,27 @@ string_cat(Arena *arena, String s1, String s2) {
     return str;
 }
 
+void
+string_strip(String *str) {
+    if (str->len == 0) {
+        return;
+    }
+
+    u64 i, j;
+    for (i = 0; i < str->len; ++i) {
+        if (!isspace(str->str[i])) {
+            break;
+        }
+    }
+    for (j = str->len - 1;  j > i; --j) {
+        if (!isspace(str->str[j])) {
+            break;
+        }
+    }
+    str->str = str->str + i;
+    str->len = j - i + 1;
+}
+
 bool
 string_cmp(String s1, String s2) {
     return s1.len == s2.len && (memcmp(s1.str, s2.str, s1.len) == 0); 
@@ -73,6 +104,7 @@ string_write(String *str, char *cstring) {
     memcpy(str->str, cstring, str->len);
 }
 
+
 StringNode *
 string_list_push(Arena *arena, StringList *list, String str) {
     StringNode **node = &(list->head);
@@ -84,6 +116,7 @@ string_list_push(Arena *arena, StringList *list, String str) {
     ++(list->len);
     return *node;
 }
+
 
 StringNode *
 string_list_find(StringList *list, String str) {

@@ -350,11 +350,22 @@ LayoutPlayersWindow(LayoutData *data) {
                 .length = (s32)player_string.len,
                 .chars = (const char *)(player_string.str),
             };
-            CLAY_TEXT(clay_player_string, CLAY_TEXT_CONFIG({
-                .fontId = FONT_ID_BODY_16,
-                .fontSize = 24,
-                .textColor = white
-            }));
+            CLAY({
+                .id = CLAY_SID(clay_player_string),
+                .layout = {
+                    .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_FIT(40) },
+                    .padding = CLAY_PADDING_ALL(12)
+                },
+                .backgroundColor = Clay_Hovered() ? gray_lighter : gray_light,
+                .cornerRadius = CLAY_CORNER_RADIUS(5)
+            }) {
+                Clay_OnHover(HandlePlayerSelection, (intptr_t)data);
+                CLAY_TEXT(clay_player_string, CLAY_TEXT_CONFIG({
+                    .fontId = FONT_ID_BODY_16,
+                    .fontSize = 24,
+                    .textColor = white
+                }));
+            }
             player = &((*player)->next);
         }
     }

@@ -59,15 +59,18 @@ HandleTextBoxInteraction(Clay_ElementId elementId, Clay_PointerData pointerData,
 
     u16 cursorIdx = 0;
     u16 highlightIdx = 0;
-    float subStringLen = 0;
-    char *subString = arena_push(layoutData->arena_frame, textBoxData->strUser.len + 1);
-    float characterLen = MeasureTextEx(textBoxData->font, "A", textBoxData->fontSize, 0).x;
 
+    char *subString = arena_push(layoutData->arena_frame, textBoxData->strUser.len + 1);
+
+    float delta;
+    float subStringLen = 0;
+    float characterLen = MeasureTextEx(textBoxData->font, "A", textBoxData->fontSize, 0).x;
+    
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         layoutData->last_element_clicked = elementId;
         textBoxData->frameCounter = 0;
 
-        float delta = pointerData.position.x - textContainerData.boundingBox.x;
+        delta = pointerData.position.x - textContainerData.boundingBox.x;
         while (delta - subStringLen > characterLen / 2 && cursorIdx < textBoxData->strUser.len) {
             ++cursorIdx;
 
@@ -83,7 +86,7 @@ HandleTextBoxInteraction(Clay_ElementId elementId, Clay_PointerData pointerData,
     else if (pointerData.state == CLAY_POINTER_DATA_PRESSED) {
         textBoxData->isTrackpadHeld = true;
 
-        float delta = pointerData.position.x - textContainerData.boundingBox.x;
+        delta = pointerData.position.x - textContainerData.boundingBox.x;
         while (delta - subStringLen > characterLen / 2 && highlightIdx < textBoxData->strUser.len) {
             ++highlightIdx;
 
@@ -100,12 +103,18 @@ HandleTextBoxInteraction(Clay_ElementId elementId, Clay_PointerData pointerData,
 void
 HandleAddPlayerButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t data) {
     LayoutData *layoutData = (LayoutData *)data;
+    TextBoxData textBoxData = layoutData->textBoxData;
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         layoutData->last_element_clicked = elementId;
-        player_create(
-            layoutData->name_chunk_state, layoutData->player_state, layoutData->player_map,
-            layoutData->textBoxData.strUser
-        );
+
+        String dst = {
+            .str = arena_push(layoutData->arena_frame, textBoxData.strUser.len),
+            .len = textBoxData.strUser.len
+        };
+        string_cpy(&dst, &textBoxData.strUser); 
+        string_strip(&dst);
+
+        player_create(layoutData->name_chunk_state, layoutData->player_state, layoutData->player_map, dst);
     }
 }
 
@@ -114,6 +123,32 @@ HandleMainWindowInteraction(Clay_ElementId element_id, Clay_PointerData pointer_
     LayoutData *user_data = (LayoutData *)data;
     if (pointer_data.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         user_data->last_element_clicked = element_id;
+    }
+}
+
+void
+HandlePlayerSelection(Clay_ElementId element_id, Clay_PointerData pointer_data, intptr_t data) {
+    LayoutData *layoutData = (LayoutData *)data;
+    if (pointer_data.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        layoutData->last_element_clicked = element_id;
+    }
+
+    if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+        // TODO
+        // open a menu of stuff that can be done
+        // for now use it just for deleting
+        String tmp = {
+            .str = arena_push(layoutData->arena_frame, element_id.stringId.length),
+            .len = element_id.stringId.length
+        };
+        memcpy(tmp.str, element_id.stringId.chars, element_id.stringId.length);
+        tmp.len = element_id.stringId.length;
+
+        player_delete(
+            layoutData->arena_permanent,
+            layoutData->name_state, layoutData->name_chunk_state,
+            layoutData->player_state, layoutData->player_map, layoutData->tournament_map, tmp
+        );
     }
 }
 

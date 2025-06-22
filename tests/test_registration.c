@@ -26,12 +26,15 @@ int main(void) {
     String machiavelli = string_from_cstring_lit("Machiavelli");
 
     PlayerMap *player_map = player_map_init(&arena, 1);
+
     player_create(&name_chunk_state, &player_state, player_map, riccardo);
     player_create(&name_chunk_state, &player_state, player_map, giulio);
     player_create(&name_chunk_state, &player_state, player_map, mario);
     player_create(&name_chunk_state, &player_state, player_map, riccardo);
+
     player_enroll(&name_state, &name_chunk_state, player_map, riccardo, ping_pong);
     player_enroll(&name_state, &name_chunk_state, player_map, riccardo, machiavelli);
+
     player_withdraw(&name_state, &name_chunk_state, player_map, riccardo, ping_pong);
     player_rename(player_map, &name_chunk_state, riccardo, newriccardo);
 }

@@ -99,6 +99,7 @@ main(void) {
     NameState name_state = {.arena = &arena_permanent, .first_free = NULL};
     NameChunkState name_chunk_state = {.arena = &arena_permanent, .first_free = NULL};
     PlayerState player_state = {.arena = &arena_permanent, .first_free = NULL};
+    TournamentState tournament_state = {.arena = &arena_permanent, .first_free = NULL};
 
     String giulio = string_from_cstring_lit("Giulio");
     String riccardo = string_from_cstring_lit("Riccardo");
@@ -109,12 +110,19 @@ main(void) {
     String machiavelli = string_from_cstring_lit("Machiavelli");
 
     PlayerMap *player_map = player_map_init(&arena_permanent, 1);
+    TournamentMap *tournament_map = tournament_map_init(&arena_permanent, 1);
+
     player_create(&name_chunk_state, &player_state, player_map, riccardo);
     player_create(&name_chunk_state, &player_state, player_map, giulio);
     player_create(&name_chunk_state, &player_state, player_map, mario);
-    player_enroll(&name_state, &name_chunk_state, player_map, riccardo, ping_pong);
-    player_enroll(&name_state, &name_chunk_state, player_map, riccardo, machiavelli);
+
+    player_enroll(&name_state, &name_chunk_state, player_map, tournament_map, &tournament_state, riccardo, ping_pong);
+    player_enroll(&name_state, &name_chunk_state, player_map, tournament_map, &tournament_state, riccardo, machiavelli);
+    player_enroll(&name_state, &name_chunk_state, player_map, tournament_map, &tournament_state, giulio, ping_pong);
+
     player_rename(player_map, &name_chunk_state, riccardo, newriccardo);
+
+    player_enroll(&name_state, &name_chunk_state, player_map, tournament_map, &tournament_state, newriccardo, ping_pong);
 
     ////////////////////////////////////////////////////////////////
     // textBoxData initialization
@@ -141,6 +149,7 @@ main(void) {
         .arena_frame = &arena_frame,
         .arena_permanent = &arena_permanent,
         .player_map = player_map,
+        .tournament_map = tournament_map,
         .player_state = &player_state,
         .name_state = &name_state,
         .name_chunk_state = &name_chunk_state,
