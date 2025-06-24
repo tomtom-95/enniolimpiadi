@@ -107,7 +107,7 @@ string_cmp(String s1, String s2) {
 // TODO: better name
 // write into a previously allocated string
 void
-string_write(String *str, char *cstring) {
+string_write(String *str, u8 *cstring) {
     str->len = cstring_len(cstring) - 1;
     memcpy(str->str, cstring, str->len);
 }

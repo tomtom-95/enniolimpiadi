@@ -16,12 +16,11 @@
 // TODO: proper align on push and pop
 Arena *
 arena_alloc(u64 size) {
-    Arena *arena = malloc(sizeof(Arena));
+    Arena *arena = malloc(sizeof(Arena) + size);
     assert(arena);
 
+    arena->base = sizeof(Arena);
     arena->pos  = 0;
-    arena->data = malloc(size);
-    assert(arena->data);
     arena->size = size;
 
     return arena;
@@ -36,18 +35,17 @@ ctx_init(Ctx *ctx) {
     ctx_local = ctx;
 }
 
-
 void
 arena_dealloc(Arena *arena) {
-    free(arena->data);
-    arena->data = NULL;
+    free(arena);
+    arena = NULL;
 }
 
 void *
 arena_push(Arena *arena, u64 size) {
     // TODO: this must become a proper handling
     assert(arena->pos + size <= arena->size);
-    void *result = arena->data + arena->pos;
+    void *result = (u8 *)arena + arena->base + arena->pos;
     arena->pos += size;
     memset(result, 0, size);
     return result;
@@ -66,7 +64,7 @@ arena_clear(Arena *arena) {
 
 Temp
 temp_begin(Arena *arena) {
-    return (Temp){.arena = arena, .pos = arena->pos};
+    return (Temp){ .arena = arena, .pos = arena->pos };
 }
 
 void

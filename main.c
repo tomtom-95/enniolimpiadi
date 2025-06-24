@@ -12,8 +12,6 @@
 #include "registration.c"
 #include "names.c"
 
-// TODO: how do I distinguish cleary between temp and permanent arena?
-
 void HandleClayErrors(Clay_ErrorData errorData) {
     printf("%s", errorData.errorText.chars);
 }
@@ -95,6 +93,7 @@ main(void) {
     SetTextureFilter(fonts[FONT_ID_BODY_16].texture, TEXTURE_FILTER_BILINEAR);
     Clay_SetMeasureTextFunction(Raylib_MeasureText, fonts);
 
+    Ctx *ctx = 0;
     ctx_init(ctx);
 
     Arena *arena_permanent = arena_alloc(MegaByte(1));
@@ -120,13 +119,26 @@ main(void) {
     player_create(&name_chunk_state, &player_state, player_map, giulio);
     player_create(&name_chunk_state, &player_state, player_map, mario);
 
-    player_enroll(arena_permanent, &name_state, &name_chunk_state, player_map, tournament_map, &tournament_state, riccardo, ping_pong);
-    player_enroll(arena_permanent, &name_state, &name_chunk_state, player_map, tournament_map, &tournament_state, riccardo, machiavelli);
-    player_enroll(arena_permanent, &name_state, &name_chunk_state, player_map, tournament_map, &tournament_state, giulio, ping_pong);
-
-    player_rename(arena_permanent, player_map, tournament_map, &name_chunk_state, riccardo, newriccardo);
-
-    player_enroll(arena_permanent, &name_state, &name_chunk_state, player_map, tournament_map, &tournament_state, newriccardo, ping_pong);
+    player_enroll(
+        arena_permanent, &name_state, &name_chunk_state, player_map,
+        tournament_map, &tournament_state, riccardo, ping_pong
+    );
+    player_enroll(
+        arena_permanent, &name_state, &name_chunk_state, player_map,
+        tournament_map, &tournament_state, riccardo, machiavelli
+    );
+    player_enroll(
+        arena_permanent, &name_state, &name_chunk_state, player_map,
+        tournament_map, &tournament_state, giulio, ping_pong
+    );
+    player_rename(
+        arena_permanent, player_map, tournament_map,
+        &name_chunk_state, riccardo, newriccardo
+    );
+    player_enroll(
+        arena_permanent, &name_state, &name_chunk_state, player_map,
+        tournament_map, &tournament_state, newriccardo, ping_pong
+    );
 
     ////////////////////////////////////////////////////////////////
     // textBoxData initialization

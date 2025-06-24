@@ -5,7 +5,7 @@
 
 typedef struct Arena Arena;
 struct Arena {
-    u8 *data;
+    u64 base;
     u64 pos;
     u64 size;
 };
@@ -14,7 +14,6 @@ typedef struct Ctx Ctx;
 struct Ctx {
     Arena *arenas[2];
 };
-
 
 typedef struct Temp Temp;
 struct Temp {

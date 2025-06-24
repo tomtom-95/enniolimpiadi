@@ -9,9 +9,9 @@
 int main(void) {
     log_set_level(TMLOG_DEBUG);
 
-    Arena arena = arena_alloc(KiloByte(1));
-    NameChunkState name_chunk_state = {.arena = &arena, .first_free = NULL};
-    NameState name_state = {.arena = &arena, .first_free = NULL};
+    Arena *arena = arena_alloc(KiloByte(1));
+    NameChunkState name_chunk_state = {.arena = arena, .first_free = NULL};
+    NameState name_state = {.arena = arena, .first_free = NULL};
 
     String str1 = string_from_cstring_lit(
         "Hellooooooooooooooooooooooooooooooooooooooooooooooooooooo"

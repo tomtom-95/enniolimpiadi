@@ -12,10 +12,10 @@
 int main(void) {
     log_set_level(TMLOG_DEBUG);
 
-    Arena arena = arena_alloc(KiloByte(1));
-    NameState name_state = {.arena = &arena, .first_free = NULL};
-    NameChunkState name_chunk_state = {.arena = &arena, .first_free = NULL};
-    PlayerState player_state = {.arena = &arena, .first_free = NULL};
+    Arena *arena = arena_alloc(KiloByte(1));
+    NameState name_state = {.arena = arena, .first_free = NULL};
+    NameChunkState name_chunk_state = {.arena = arena, .first_free = NULL};
+    PlayerState player_state = {.arena = arena, .first_free = NULL};
 
     String giulio = string_from_cstring_lit("Giulio");
     String riccardo = string_from_cstring_lit("Riccardo");
@@ -31,6 +31,7 @@ int main(void) {
     player_create(&name_chunk_state, &player_state, player_map, giulio);
     player_create(&name_chunk_state, &player_state, player_map, mario);
     player_create(&name_chunk_state, &player_state, player_map, riccardo);
+
 
     player_enroll(&name_state, &name_chunk_state, player_map, riccardo, ping_pong);
     player_enroll(&name_state, &name_chunk_state, player_map, riccardo, machiavelli);
