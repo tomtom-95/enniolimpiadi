@@ -11,33 +11,31 @@
 #include "log.c"
 #include "utils.c"
 
-typedef struct Arena Arena;
-struct Arena {
-    u8 *data;
-    u64 pos;
-    u64 size;
-};
-
-typedef struct Temp Temp;
-struct Temp {
-    Arena *arena;
-    u64 pos;
-};
+#include "arena.h"
 
 // TODO: proper align on push and pop
-Arena
+Arena *
 arena_alloc(u64 size) {
-    Arena arena = {0};
+    Arena *arena = malloc(sizeof(Arena));
+    assert(arena);
 
-    u8 *data = malloc(size);
-    assert(data);
-
-    arena.pos  = 0;
-    arena.data = data;
-    arena.size = size;
+    arena->pos  = 0;
+    arena->data = malloc(size);
+    assert(arena->data);
+    arena->size = size;
 
     return arena;
 }
+
+void
+ctx_init(Ctx *ctx) {
+    Arena **arena_ptr = ctx->arenas;
+    for (u64 i = 0; i < ArrayCount(ctx->arenas); ++i, arena_ptr += 1) {
+        *arena_ptr = arena_alloc(MegaByte(64));
+    }
+    ctx_local = ctx;
+}
+
 
 void
 arena_dealloc(Arena *arena) {
@@ -57,8 +55,8 @@ arena_push(Arena *arena, u64 size) {
 
 void
 arena_pop(Arena *arena, u64 size) {
-    assert(arena->pos > arena->size);
-    arena->pos -= arena->size;
+    assert(arena->pos >= size);
+    arena->pos -= size;
 }
 
 void
@@ -74,6 +72,32 @@ temp_begin(Arena *arena) {
 void
 temp_end(Temp temp) {
     temp.arena->pos = temp.pos;
+}
+
+Temp
+scratch_get(Arena **conflicts, u64 count) {
+    Arena *result = 0;
+    Arena **arena_ptr = ctx_local->arenas;
+    for (u64 i = 0; i < ArrayCount(ctx_local->arenas); ++i, ++arena_ptr) {
+        bool has_conflict = false;
+        Arena **conflict_ptr = conflicts;
+        for (u64 j = 0; j < count; ++j, ++conflict_ptr) {
+            if (*arena_ptr == *conflict_ptr) {
+                has_conflict = true;
+                break;
+            }
+        }
+        if (!has_conflict) {
+            result = *arena_ptr;
+            break;
+        }
+    }
+    return temp_begin(result);
+}
+
+void
+scratch_release(Temp temp) {
+    temp_end(temp);
 }
 
 #endif // ARENA_C

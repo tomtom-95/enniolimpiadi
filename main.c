@@ -12,6 +12,8 @@
 #include "registration.c"
 #include "names.c"
 
+// TODO: how do I distinguish cleary between temp and permanent arena?
+
 void HandleClayErrors(Clay_ErrorData errorData) {
     printf("%s", errorData.errorText.chars);
 }
@@ -93,13 +95,15 @@ main(void) {
     SetTextureFilter(fonts[FONT_ID_BODY_16].texture, TEXTURE_FILTER_BILINEAR);
     Clay_SetMeasureTextFunction(Raylib_MeasureText, fonts);
 
-    Arena arena_permanent = arena_alloc(MegaByte(1));
-    Arena arena_frame = arena_alloc(MegaByte(1));
+    ctx_init(ctx);
 
-    NameState name_state = {.arena = &arena_permanent, .first_free = NULL};
-    NameChunkState name_chunk_state = {.arena = &arena_permanent, .first_free = NULL};
-    PlayerState player_state = {.arena = &arena_permanent, .first_free = NULL};
-    TournamentState tournament_state = {.arena = &arena_permanent, .first_free = NULL};
+    Arena *arena_permanent = arena_alloc(MegaByte(1));
+    Arena *arena_frame = arena_alloc(MegaByte(1));
+
+    NameState name_state = { .arena = arena_permanent, .first_free = NULL };
+    NameChunkState name_chunk_state = {.arena = arena_permanent, .first_free = NULL};
+    PlayerState player_state = {.arena = arena_permanent, .first_free = NULL};
+    TournamentState tournament_state = {.arena = arena_permanent, .first_free = NULL};
 
     String giulio = string_from_cstring_lit("Giulio");
     String riccardo = string_from_cstring_lit("Riccardo");
@@ -109,26 +113,26 @@ main(void) {
     String ping_pong = string_from_cstring_lit("Ping Pong");
     String machiavelli = string_from_cstring_lit("Machiavelli");
 
-    PlayerMap *player_map = player_map_init(&arena_permanent, 1);
-    TournamentMap *tournament_map = tournament_map_init(&arena_permanent, 1);
+    PlayerMap *player_map = player_map_init(arena_permanent, 1);
+    TournamentMap *tournament_map = tournament_map_init(arena_permanent, 1);
 
     player_create(&name_chunk_state, &player_state, player_map, riccardo);
     player_create(&name_chunk_state, &player_state, player_map, giulio);
     player_create(&name_chunk_state, &player_state, player_map, mario);
 
-    player_enroll(&name_state, &name_chunk_state, player_map, tournament_map, &tournament_state, riccardo, ping_pong);
-    player_enroll(&name_state, &name_chunk_state, player_map, tournament_map, &tournament_state, riccardo, machiavelli);
-    player_enroll(&name_state, &name_chunk_state, player_map, tournament_map, &tournament_state, giulio, ping_pong);
+    player_enroll(arena_permanent, &name_state, &name_chunk_state, player_map, tournament_map, &tournament_state, riccardo, ping_pong);
+    player_enroll(arena_permanent, &name_state, &name_chunk_state, player_map, tournament_map, &tournament_state, riccardo, machiavelli);
+    player_enroll(arena_permanent, &name_state, &name_chunk_state, player_map, tournament_map, &tournament_state, giulio, ping_pong);
 
-    player_rename(&arena_permanent, player_map, tournament_map, &name_chunk_state, riccardo, newriccardo);
+    player_rename(arena_permanent, player_map, tournament_map, &name_chunk_state, riccardo, newriccardo);
 
-    player_enroll(&name_state, &name_chunk_state, player_map, tournament_map, &tournament_state, newriccardo, ping_pong);
+    player_enroll(arena_permanent, &name_state, &name_chunk_state, player_map, tournament_map, &tournament_state, newriccardo, ping_pong);
 
     ////////////////////////////////////////////////////////////////
     // textBoxData initialization
     u16 strLenMax = 255;
-    String strOutput = {.len = 0, .str = arena_push(&arena_permanent, strLenMax)};
-    String strUser = {.len = 0, .str = arena_push(&arena_permanent, strLenMax)};
+    String strOutput = {.len = 0, .str = arena_push(arena_permanent, strLenMax)};
+    String strUser = {.len = 0, .str = arena_push(arena_permanent, strLenMax)};
     TextBoxData textBoxData = {
         .strLenMax = strLenMax,
         .cursorFrequency = 40,
@@ -146,8 +150,8 @@ main(void) {
     ////////////////////////////////////////////////////////////////
     // layoutData initialization
     LayoutData layoutData = {
-        .arena_frame = &arena_frame,
-        .arena_permanent = &arena_permanent,
+        .arena_frame = arena_frame,
+        .arena_permanent = arena_permanent,
         .player_map = player_map,
         .tournament_map = tournament_map,
         .player_state = &player_state,

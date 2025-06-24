@@ -344,7 +344,7 @@ LayoutPlayersWindow(LayoutData *data) {
     for (int j = 0; j < data->player_map->bucket_count; j++) {
         Player **player = data->player_map->players + j;
         while (*player) {
-            String player_string = name_to_string(data->arena_frame, (*player)->player_name);
+            String player_string = push_string_from_name(data->arena_frame, (*player)->player_name);
             Clay_String clay_player_string = {
                 .isStaticallyAllocated = false,
                 .length = (s32)player_string.len,

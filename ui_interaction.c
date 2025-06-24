@@ -110,7 +110,7 @@ HandleAddPlayerButtonInteraction(Clay_ElementId elementId, Clay_PointerData poin
         String str = push_string_cpy(layoutData->arena_frame, textBoxData.strUser);
         string_strip(&str);
 
-        Player *player = player_find(layoutData->player_map, layoutData->name_chunk_state, str);
+        Player *player = player_find(layoutData->arena_frame, layoutData->player_map, layoutData->name_chunk_state, str);
         if (player) {
             log_error("Player alread registered");
         }

@@ -38,7 +38,7 @@ struct NameState {
 };
 
 Name
-name_save(NameChunkState *name_chunk_state, String str) {
+push_name_from_string(NameChunkState *name_chunk_state, String str) {
     u64 bytes_left = str.len;
     u64 needed_chunks = (str.len + NAME_CHUNK_PAYLOAD_SIZE - 1) / NAME_CHUNK_PAYLOAD_SIZE;
 
@@ -62,7 +62,7 @@ name_save(NameChunkState *name_chunk_state, String str) {
 }
 
 String
-name_to_string(Arena *arena, Name name) {
+push_string_from_name(Arena *arena, Name name) {
     u64 bytes_left = name.len;
     String str = {.len = bytes_left, .str = arena_push(arena, bytes_left)};
     NameChunk *name_chunk = name.head;
@@ -110,7 +110,7 @@ name_cmp(Name name1, Name name2) {
 
 void
 namelist_append_right(NameState *name_state, NameChunkState *name_chunk_state, NameList *namelist, String string) {
-    Name name = name_save(name_chunk_state, string);
+    Name name = push_name_from_string(name_chunk_state, string);
 
     Name **node = &(namelist->head);
     while (*node) {
@@ -145,7 +145,7 @@ namelist_pop_right(NameState *name_state, NameChunkState *name_chunk_state, Name
 
 void
 namelist_pop(NameState *name_state, NameChunkState *name_chunk_state, NameList *namelist, String str) {
-    Name name = name_save(name_chunk_state, str);
+    Name name = push_name_from_string(name_chunk_state, str);
     Name **node = &(namelist->head);
     while (*node) {
         if (name_cmp(**node, name)) {

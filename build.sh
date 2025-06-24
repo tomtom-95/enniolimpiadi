@@ -20,6 +20,7 @@ show_help() {
     echo "  testnames        Compile tests/test_names.c -> build/test_names"
     echo "  teststring       Compile tests/test_string.c -> build/test_string"
     echo "  testregistration Compile tests/test_registration.c -> build/test_registration"
+    echo "  testarena        Compile tests/test_arena.c -> build/test_arena"
     echo "  clean            Remove the build directory"
     echo
 }
@@ -66,6 +67,10 @@ case "$1" in
     testregistration)
         echo "Compiling tests/test_registration.c -> $OUT_DIR/test_registration"
         clang $CFLAGS ./tests/test_registration.c -o $OUT_DIR/test_registration
+        ;;
+    testarena)
+        echo "Compiling tests/test_arena.c -> $OUT_DIR/test_arena"
+        clang $CFLAGS ./tests/test_arena.c -o $OUT_DIR/test_arena
         ;;
     *)
         echo "❌ Unknown command: $1"
