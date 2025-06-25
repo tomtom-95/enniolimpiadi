@@ -33,10 +33,9 @@ hash_string(String str) {
 
 
 Player *
-player_create(
-    NameChunkState *name_chunk_state, PlayerState *player_state,
-    PlayerMap *player_map, String str_player_name
-) {
+player_create(PlayerMap *player_map, String str_player_name,
+    PlayerState *player_state, NameState *name_state, NameChunkState *name_chunk_state)
+{
     u64 bucket_num = hash_string(str_player_name) % player_map->bucket_count;
     Player **player = &(player_map->players[bucket_num]);
 
@@ -52,19 +51,16 @@ player_create(
         *player = arena_push(player_state->arena, sizeof(Player)); 
     }
 
-    Name player_name = push_name_from_string(name_chunk_state, str_player_name);
+    Name *player_name = name_alloc(str_player_name, name_state, name_chunk_state);
+    memset(player, 0, sizeof(Player));
     (*player)->player_name = player_name;
-    (*player)->tournament_names.head = NULL;
-    (*player)->next = NULL;
-
     return *player;
 }
 
 Tournament *
-tournament_create(
-    NameChunkState *name_chunk_state, TournamentState *tournament_state,
-    TournamentMap *tournament_map, String str_tournament_name
-) {
+tournament_create(NameChunkState *name_chunk_state, TournamentState *tournament_state,
+    TournamentMap *tournament_map, String str_tournament_name)
+{
     u64 bucket_num = hash_string(str_tournament_name) % tournament_map->bucket_count;
     Tournament **tournament = &(tournament_map->tournaments[bucket_num]);
 
@@ -89,11 +85,9 @@ tournament_create(
 }
 
 void
-player_delete(
-    Arena *arena,
-    NameState *name_state, NameChunkState *name_chunk_state, PlayerState *player_state,
-    PlayerMap *player_map, TournamentMap *tournament_map, String str_player_name
-) {
+player_delete(NameState *name_state, NameChunkState *name_chunk_state, PlayerState *player_state,
+    PlayerMap *player_map, TournamentMap *tournament_map, String str_player_name)
+{
     u64 bucket_num = hash_string(str_player_name) % player_map->bucket_count;
 
     Player **player = &(player_map->players[bucket_num]);
@@ -107,7 +101,7 @@ player_delete(
             Name *tournament_name = player_to_remove->tournament_names.head;
             while (tournament_name) {
                 String str_tournament_name = push_string_from_name(temp.arena, *tournament_name);
-                Tournament *tournament = tournament_find(arena, tournament_map, str_tournament_name);
+                Tournament *tournament = tournament_find(tournament_map, str_tournament_name);
                 namelist_pop(name_state, name_chunk_state, &tournament->player_names, str_player_name);
                 tournament_name = tournament_name->next;
             }

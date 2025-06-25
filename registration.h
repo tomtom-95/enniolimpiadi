@@ -7,7 +7,7 @@
 
 typedef struct Player Player;
 struct Player {
-    Name player_name;
+    Name *player_name;
     NameList tournament_names;
     Player *next;
 };

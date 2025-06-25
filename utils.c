@@ -28,4 +28,6 @@ typedef double   f64;
 #define Min(A,B) (((A)<(B))?(A):(B))
 #define Max(A,B) (((A)>(B))?(A):(B))
 
+#define ContainerOf(ptr, type, member) ((type *)((char *)(ptr) - offsetof(type, member)))
+
 #endif // UTILS_C
