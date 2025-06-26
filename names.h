@@ -57,4 +57,6 @@ void namelist_pop_by_string(NameList *name_list, String string, NameState *name_
 void namelist_pop_left(NameList *name_list, NameState *name_state, NameChunkState *name_chunk_state);
 void namelist_pop_right(NameList *name_list, NameState *name_state, NameChunkState *name_chunk_state);
 
+void namelist_delete_all(NameList *name_list, NameState *name_state, NameChunkState *name_chunk_state);
+
 #endif // NAMES_H

@@ -26,7 +26,7 @@ struct PlayerMap {
 
 typedef struct Tournament Tournament;
 struct Tournament {
-    Name tournament_name;
+    Name *tournament_name;
     NameList player_names;
     Tournament *next;
 };

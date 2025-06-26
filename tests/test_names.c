@@ -4,7 +4,7 @@
 
 #include "../log.c"
 #include "../string.c"
-#include "../names_v3.c"
+#include "../names.c"
 
 void
 test_namelist_append_right(void) {
@@ -136,7 +136,27 @@ test_namelist_find_non_existent_element(void) {
     Name *name_to_delete = namelist_find(&name_list, str0);
 }
 
+void
+test_namelist_delete_all(void) {
+    Arena *arena = arena_alloc(KiloByte(1));
+
+    Ctx ctx = {0};
+    ctx_init(&ctx);
+
+    NameState name_state = {.arena = arena, .first_free = NULL};
+    NameChunkState name_chunk_state = {.arena = arena, .first_free = NULL};
+
+    NameList name_list = {0};
+
+    String str0 = string_from_cstring_lit("Wrong");
+    String str1 = string_from_cstring_lit("Ciao");
+    namelist_append_right(&name_list, str0, &name_state, &name_chunk_state);
+    namelist_append_right(&name_list, str1, &name_state, &name_chunk_state);
+
+    namelist_delete_all(&name_list, &name_state, &name_chunk_state);
+}
+
 int main(void) {
-    test_namelist_pop_using_string();
+    test_namelist_delete_all();
 }
 

@@ -210,4 +210,13 @@ namelist_pop_by_string(NameList *name_list, String string,
     name_delete(name_to_remove, name_state, name_chunk_state);
 }
 
+void
+namelist_delete_all(NameList *name_list, NameState *name_state,
+    NameChunkState *name_chunk_state)
+{
+    while (name_list->first_name) {
+        namelist_pop_left(name_list, name_state, name_chunk_state);
+    }
+}
+
 #endif // NAMES_C
