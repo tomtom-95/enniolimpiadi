@@ -118,7 +118,8 @@ test_namelist_pop_using_string(void) {
 }
 
 void
-test_namelist_find_non_existent_element(void) {
+test_namelist_find_non_existent_element(void)
+{
     Arena *arena = arena_alloc(KiloByte(1));
 
     Ctx ctx = {0};
@@ -137,7 +138,8 @@ test_namelist_find_non_existent_element(void) {
 }
 
 void
-test_namelist_delete_all(void) {
+test_namelist_delete_all(void)
+{
     Arena *arena = arena_alloc(KiloByte(1));
 
     Ctx ctx = {0};
@@ -156,7 +158,24 @@ test_namelist_delete_all(void) {
     namelist_delete_all(&name_list, &name_state, &name_chunk_state);
 }
 
-int main(void) {
-    test_namelist_delete_all();
+void
+test_namelist_pop_left(void)
+{
+    Arena *arena = arena_alloc(KiloByte(1));
+
+    Ctx ctx = {0};
+    ctx_init(&ctx);
+
+    NameState name_state = {.arena = arena, .first_free = NULL};
+    NameChunkState name_chunk_state = {.arena = arena, .first_free = NULL};
+
+    NameList name_list = {0};
+
+    namelist_pop_left(&name_list, &name_state, &name_chunk_state);
+}
+
+int main(void)
+{
+    test_namelist_pop_left();
 }
 

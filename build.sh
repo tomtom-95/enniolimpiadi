@@ -15,7 +15,7 @@ PKG_FLAGS=$(pkg-config --cflags --libs raylib)
 show_help() {
     echo "Usage: $0 [main|bugtest|clean]"
     echo
-    echo "  main             Compile main.c -> $OUT"
+    echo "  enniolimpiadi    Compile main.c -> $OUT"
     echo "  bugtest          Compile bugtest.c -> $OUT_BUGTEST"
     echo "  testnames        Compile tests/test_names.c -> build/test_names"
     echo "  teststring       Compile tests/test_string.c -> build/test_string"
@@ -48,7 +48,7 @@ fi
 
 # Choose what to compile
 case "$1" in
-    main)
+    enniolimpiadi)
         echo "Compiling $SRC -> $OUT"
         clang $CFLAGS $SRC -o $OUT $PKG_FLAGS
         ;;

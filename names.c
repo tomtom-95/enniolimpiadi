@@ -50,7 +50,8 @@ push_string_from_name(Arena *arena, Name name) {
 }
 
 void
-name_delete(Name *name, NameState *name_state, NameChunkState *name_chunk_state) {
+name_delete(Name *name, NameState *name_state, NameChunkState *name_chunk_state)
+{
     NameChunk **chunk = &name->first_name_chunk;
     while (*chunk) {
         chunk = &((*chunk)->next);
@@ -63,7 +64,8 @@ name_delete(Name *name, NameState *name_state, NameChunkState *name_chunk_state)
 }
 
 bool
-name_cmp(Name *a, Name *b) {
+name_cmp(Name *a, Name *b)
+{
     if (a->len != b->len) {
         return false;
     }
@@ -135,7 +137,8 @@ namelist_find(NameList *name_list, String string) {
 }
 
 void
-namelist_pop_right(NameList *name_list, NameState *name_state, NameChunkState *name_chunk_state) {
+namelist_pop_right(NameList *name_list, NameState *name_state, NameChunkState *name_chunk_state)
+{
     Name **node = &name_list->first_name;
     while (*node != name_list->last_name) {
         node = &((*node)->next);
@@ -149,13 +152,14 @@ namelist_pop_right(NameList *name_list, NameState *name_state, NameChunkState *n
 }
 
 void
-namelist_pop_left(NameList *name_list, NameState *name_state, NameChunkState *name_chunk_state) {
-    if (name_list->first_name == name_list->last_name) {
-        memset(name_list, 0, sizeof(NameList));
-    }
-    else {
-        Name *name_to_remove = name_list->first_name;
+namelist_pop_left(NameList *name_list, NameState *name_state, NameChunkState *name_chunk_state)
+{
+    Name *name_to_remove = name_list->first_name;
+    if (name_list->first_name) {
         name_list->first_name = name_list->first_name->next;
+        if (!name_list->first_name) {
+            name_list->last_name = NULL;
+        }
         name_delete(name_to_remove, name_state, name_chunk_state);
     }
 }

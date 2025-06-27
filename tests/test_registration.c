@@ -10,29 +10,44 @@
 #include "../registration.c"
 
 int main(void) {
-    log_set_level(TMLOG_DEBUG);
+    Ctx ctx = {0};
+    ctx_init(&ctx);
 
-    Arena *arena = arena_alloc(KiloByte(1));
+    Arena *arena_permanent = arena_alloc(MegaByte(1));
 
-    NameState name_state = { .arena = arena, .first_free = NULL };
-    NameChunkState name_chunk_state = { .arena = arena, .first_free = NULL };
-    PlayerState player_state = { .arena = arena, .first_free = NULL };
-    TournamentState tournament_state = { .arena = arena, .first_free = NULL };
-
-    PlayerMap player_map = {0};
-    TournamentMap tournament_map = {0};
+    NameState name_state = { .arena = arena_permanent, .first_free = NULL };
+    NameChunkState name_chunk_state = {.arena = arena_permanent, .first_free = NULL};
+    PlayerState player_state = {.arena = arena_permanent, .first_free = NULL};
+    TournamentState tournament_state = {.arena = arena_permanent, .first_free = NULL};
 
     String giulio = string_from_cstring_lit("Giulio");
     String riccardo = string_from_cstring_lit("Riccardo");
     String mario = string_from_cstring_lit("Mario");
-    String newriccardo = string_from_cstring_lit("New Riccardo");
 
     String ping_pong = string_from_cstring_lit("Ping Pong");
     String machiavelli = string_from_cstring_lit("Machiavelli");
 
-    player_map_init(arena, &player_map, 1);
-    tournament_map_init(arena, &tournament_map, 1);
+    PlayerMap player_map = {0};
+    TournamentMap tournament_map = {0};
+    player_map_init(arena_permanent, &player_map, 1);
+    tournament_map_init(arena_permanent, &tournament_map, 1);
 
-    player_enroll_v2(&player_map, &tournament_map, giulio, ping_pong,
+    player_create(&player_map, riccardo, &player_state, &name_state, &name_chunk_state);
+    player_create(&player_map, giulio, &player_state, &name_state, &name_chunk_state);
+    player_create(&player_map, mario, &player_state, &name_state, &name_chunk_state);
+
+    tournament_create(&tournament_map, ping_pong, &tournament_state, &name_state, &name_chunk_state);
+    tournament_create(&tournament_map, machiavelli, &tournament_state, &name_state, &name_chunk_state);
+
+    player_enroll(&player_map, &tournament_map, riccardo, ping_pong,
+        &player_state, &tournament_state, &name_state, &name_chunk_state);
+
+    player_enroll(&player_map, &tournament_map, giulio, ping_pong,
+        &player_state, &tournament_state, &name_state, &name_chunk_state);
+
+    // player_enroll(&player_map, &tournament_map, riccardo, ping_pong,
+    //     &player_state, &tournament_state, &name_state, &name_chunk_state);
+
+    player_enroll(&player_map, &tournament_map, riccardo, machiavelli,
         &player_state, &tournament_state, &name_state, &name_chunk_state);
 }

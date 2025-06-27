@@ -110,12 +110,13 @@ HandleAddPlayerButtonInteraction(Clay_ElementId elementId, Clay_PointerData poin
         String str = push_string_cpy(layoutData->arena_frame, textBoxData.strUser);
         string_strip(&str);
 
-        Player *player = player_find(layoutData->arena_frame, layoutData->player_map, layoutData->name_chunk_state, str);
+        Player *player = player_find(layoutData->player_map, str);
         if (player) {
             log_error("Player alread registered");
         }
         else {
-            player_create(layoutData->name_chunk_state, layoutData->player_state, layoutData->player_map, str);
+            player_create(layoutData->player_map, str, layoutData->player_state,
+                layoutData->name_state, layoutData->name_chunk_state);
         }
     }
 }
@@ -145,11 +146,8 @@ HandlePlayerSelection(Clay_ElementId element_id, Clay_PointerData pointer_data, 
         memcpy(tmp.str, element_id.stringId.chars, element_id.stringId.length);
         tmp.len = element_id.stringId.length;
 
-        player_delete(
-            layoutData->arena_permanent,
-            layoutData->name_state, layoutData->name_chunk_state,
-            layoutData->player_state, layoutData->player_map, layoutData->tournament_map, tmp
-        );
+        player_delete(layoutData->player_map, layoutData->tournament_map, tmp,
+            layoutData->player_state, layoutData->name_state, layoutData->name_chunk_state);
     }
 }
 
