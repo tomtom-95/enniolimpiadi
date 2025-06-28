@@ -331,8 +331,15 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
                         break;
                     }
                     case CUSTOM_LAYOUT_TEXTBOX: {
-                        TextBoxData textBoxData = layout_data.textBoxData;
-                        Clay_ScrollContainerData scrollData = Clay_GetScrollContainerData(CLAY_ID("TextWrapper"));
+                        TextBoxData textBoxData = *(customElement->customData.textBoxData);
+
+                        Clay_ScrollContainerData scrollData;
+                        if (customElement->textBoxType == ADD_PLAYER_TEXTBOX) {
+                            scrollData = Clay_GetScrollContainerData(CLAY_ID("AddPlayerTextWrapper"));
+                        }
+                        else if (customElement->textBoxType == ADD_TOURNAMENT_TEXTBOX) {
+                            scrollData = Clay_GetScrollContainerData(CLAY_ID("AddTournamentTextWrapper"));
+                        }
 
                         float cursorPosX = textBoxData.cursorPos.x;
                         float currentScrollX = -scrollData.scrollPosition->x;

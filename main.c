@@ -50,11 +50,11 @@ GetLayout(LayoutData *layoutData) {
                 } break;
                 case TAB_NEW_PLAYER:
                 {
-                    LayoutTextBox(layoutData);
+                    LayoutAddPlayerWindow(layoutData);
                 } break;
                 case TAB_NEW_TOURNAMENT:
                 {
-                    LayoutTextBox(layoutData);
+                    LayoutAddTournamentWindow(layoutData);
                 } break;
             }
         }
@@ -136,16 +136,36 @@ main(void) {
 
     ////////////////////////////////////////////////////////////////
     // textBoxData initialization
+
     u16 strLenMax = 255;
-    String strOutput = {.len = 0, .str = arena_push(arena_permanent, strLenMax)};
-    String strUser = {.len = 0, .str = arena_push(arena_permanent, strLenMax)};
-    TextBoxData textBoxData = {
+
+    String playerStrOutput = {.len = 0, .str = arena_push(arena_permanent, strLenMax)};
+    String playerStrUser = {.len = 0, .str = arena_push(arena_permanent, strLenMax)};
+
+    addPlayerTextBoxData = (TextBoxData) {
         .strLenMax = strLenMax,
         .cursorFrequency = 40,
         .frameCounter = 40,
         .strLabel = string_from_cstring_lit("Enter player name"),
-        .strOutput = strOutput,
-        .strUser = strUser,
+        .strOutput = playerStrOutput,
+        .strUser = playerStrUser,
+        .keyRepeatDelay = 0.4f,
+        .keyRepeatRate = 0.03f,
+        .isKeyHeld = false,
+        .font = fonts[FONT_ID_BODY_16],
+        .fontSize = 16
+    };
+
+    String tournamentStrOutput = {.len = 0, .str = arena_push(arena_permanent, strLenMax)};
+    String tournamentStrUser = {.len = 0, .str = arena_push(arena_permanent, strLenMax)};
+
+    addTournamentTextBoxData = (TextBoxData) {
+        .strLenMax = strLenMax,
+        .cursorFrequency = 40,
+        .frameCounter = 40,
+        .strLabel = string_from_cstring_lit("Enter tournament name"),
+        .strOutput = tournamentStrOutput,
+        .strUser = tournamentStrUser,
         .keyRepeatDelay = 0.4f,
         .keyRepeatRate = 0.03f,
         .isKeyHeld = false,
@@ -155,16 +175,22 @@ main(void) {
 
     ////////////////////////////////////////////////////////////////
     // layoutData initialization
-    LayoutData layoutData = {
+
+    layoutData = (LayoutData) {
         .arena_frame = arena_frame,
         .arena_permanent = arena_permanent,
         .player_map = &player_map,
         .tournament_map = &tournament_map,
         .player_state = &player_state,
+        .tournament_state = &tournament_state,
         .name_state = &name_state,
         .name_chunk_state = &name_chunk_state,
-        .textBoxData = textBoxData
+        .addPlayerTextBoxData = addPlayerTextBoxData,
+        .addTournamentTextBoxData = addTournamentTextBoxData
     };
+
+    ////////////////////////////////////////////////////////////////
+    // Main loop
 
     SetTargetFPS(60);
     while (!WindowShouldClose()) {
@@ -175,15 +201,18 @@ main(void) {
         Clay_SetPointerState((Clay_Vector2) { mousePosition.x, mousePosition.y }, IsMouseButtonDown(0));
         Clay_UpdateScrollContainers(false, (Clay_Vector2) { scrollDelta.x, scrollDelta.y }, GetFrameTime());
 
-        Clay_ElementId textBoxId = Clay_GetElementId(CLAY_STRING("TextBox"));
-        if (Clay_PointerOver(textBoxId)) {
+
+        Clay_ElementId addPlayerTextBoxId = Clay_GetElementId(addPlayerTextBoxStr);
+        Clay_ElementId addTournamentTextBoxId = Clay_GetElementId(addTournamentTextBoxStr);
+        if (Clay_PointerOver(addPlayerTextBoxId) || Clay_PointerOver(addTournamentTextBoxId)) {
             SetMouseCursor(MOUSE_CURSOR_IBEAM);
         }
         else {
             SetMouseCursor(MOUSE_CURSOR_ARROW);
         }
 
-        HelperTextBox(&layoutData);
+        HelperTextBox(&layoutData, &layoutData.addPlayerTextBoxData, addPlayerTextBoxStr);
+        HelperTextBox(&layoutData, &layoutData.addTournamentTextBoxData, addTournamentTextBoxStr);
 
         Clay_RenderCommandArray renderCommands = GetLayout(&layoutData);
 

@@ -29,6 +29,7 @@ struct StringList {
 
 #define cstring_lit_len(string) ArrayCount(string)
 #define string_from_cstring_lit(string) string_from_cstring((u8 *)string)
+#define string_from_lit_comp(lit) (String){ (u8 *)(lit), cstring_lit_len(lit) - 1 }
 
 u64
 cstring_len(u8 *cstring) {
@@ -80,11 +81,7 @@ string_cat(Arena *arena, String s1, String s2) {
 
 void
 string_strip(String *str) {
-    if (str->len == 0) {
-        return;
-    }
-
-    u64 i, j;
+    s64 i, j;
     for (i = 0; i < str->len; ++i) {
         if (!isspace(str->str[i])) {
             break;

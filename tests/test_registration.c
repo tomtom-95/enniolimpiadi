@@ -42,12 +42,13 @@ int main(void) {
     player_enroll(&player_map, &tournament_map, riccardo, ping_pong,
         &player_state, &tournament_state, &name_state, &name_chunk_state);
 
-    player_enroll(&player_map, &tournament_map, giulio, ping_pong,
+    player_enroll(&player_map, &tournament_map, riccardo, ping_pong,
         &player_state, &tournament_state, &name_state, &name_chunk_state);
 
-    // player_enroll(&player_map, &tournament_map, riccardo, ping_pong,
+    // player_enroll(&player_map, &tournament_map, giulio, ping_pong,
     //     &player_state, &tournament_state, &name_state, &name_chunk_state);
 
-    player_enroll(&player_map, &tournament_map, riccardo, machiavelli,
-        &player_state, &tournament_state, &name_state, &name_chunk_state);
+
+    // player_enroll(&player_map, &tournament_map, riccardo, machiavelli,
+    //     &player_state, &tournament_state, &name_state, &name_chunk_state);
 }

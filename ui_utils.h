@@ -45,10 +45,16 @@ typedef struct {
     PlayerMap *player_map;
     TournamentMap *tournament_map;
     PlayerState *player_state;
+    TournamentState *tournament_state;
     NameState *name_state;
     NameChunkState *name_chunk_state;
     Tab tab;
-    TextBoxData textBoxData;
+    String feedbackOnAddPlayerButton;
+    String feedbackOnAddTournamentButton;
+    String last_player_clicked;
+    String last_tournament_clicked;
+    TextBoxData addPlayerTextBoxData;
+    TextBoxData addTournamentTextBoxData;
     Clay_ElementId last_element_clicked;
 } LayoutData;
 
@@ -56,6 +62,11 @@ typedef enum {
     CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL,
     CUSTOM_LAYOUT_TEXTBOX
 } CustomLayoutElementType;
+
+typedef enum {
+    ADD_PLAYER_TEXTBOX,
+    ADD_TOURNAMENT_TEXTBOX
+} TextBoxType;
 
 typedef struct {
     Model model;
@@ -66,6 +77,7 @@ typedef struct {
 
 typedef struct {
     CustomLayoutElementType type;
+    TextBoxType textBoxType;
     union {
         CustomLayoutElement_3DModel model;
         TextBoxData *textBoxData;
@@ -100,4 +112,19 @@ Clay_String_from_String(String string) {
     return clay_string;
 }
 
-#endif
+String strFeedbackAddPlayer1 = string_from_lit_comp("Cannot create player without name");
+String strFeedbackAddPlayer2 = string_from_lit_comp("Player already created");
+String strFeedbackAddPlayer3 = string_from_lit_comp("Player successfully created");
+
+String strFeedbackAddTournament1 = string_from_lit_comp("Cannot create tournament without name");
+String strFeedbackAddTournament2 = string_from_lit_comp("Tournament already created");
+String strFeedbackAddTournament3 = string_from_lit_comp("Tournament successfully created");
+
+Clay_String addPlayerTextBoxStr = CLAY_STRING("AddPlayerTextBox");
+Clay_String addTournamentTextBoxStr = CLAY_STRING("AddTournamentTextBox");
+
+TextBoxData addPlayerTextBoxData;
+TextBoxData addTournamentTextBoxData;
+LayoutData layoutData;
+
+#endif // UI_UTILS_H
