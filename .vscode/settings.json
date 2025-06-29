@@ -25,6 +25,7 @@
         "string_view": "c",
         "vector": "c",
         "complex": "c",
-        "cctype": "c"
+        "cctype": "c",
+        "registration.h": "c"
     }
 }

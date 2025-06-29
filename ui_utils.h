@@ -58,6 +58,11 @@ typedef struct {
     Clay_ElementId last_element_clicked;
 } LayoutData;
 
+typedef struct {
+    String str_player;
+    String str_tournament;
+} PlayerTournamentPair;
+
 typedef enum {
     CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL,
     CUSTOM_LAYOUT_TEXTBOX

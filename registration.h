@@ -5,64 +5,62 @@
 #include "names.c"
 #include "string.c"
 
-typedef struct Player Player;
-struct Player {
-    Name *player_name;
-    NameList tournament_names;
-    Player *next;
+typedef struct Registration Registration;
+struct Registration {
+    Name *registration_name;
+    NameList registration_list;
+    Registration *next;
+    void *data;
 };
 
-typedef struct PlayerState PlayerState;
-struct PlayerState {
+typedef struct RegistrationState RegistrationState;
+struct RegistrationState {
     Arena *arena;
-    Player *first_free;
+    Registration *first_free;
 };
 
-typedef struct PlayerMap PlayerMap;
-struct PlayerMap {
+typedef struct RegistrationMap RegistrationMap;
+struct RegistrationMap {
     u64 bucket_count;
-    Player **players;
+    Registration **registrations;
 };
 
-typedef struct Tournament Tournament;
-struct Tournament {
-    Name *tournament_name;
-    NameList player_names;
-    Tournament *next;
-};
+u64
+hash_string(String str);
 
-typedef struct TournamentState TournamentState;
-struct TournamentState {
-    Arena *arena;
-    Tournament *first_free;
-};
+void
+registration_map_init(Arena *arena, RegistrationMap *registration_map, u64 bucket_count);
 
-typedef struct TournamentMap TournamentMap;
-struct TournamentMap {
-    u64 bucket_count;
-    Tournament **tournaments;
-};
+Registration *
+registration_alloc(RegistrationState *registration_state);
 
-u64 hash_string(String str);
+Registration *
+registration_find(RegistrationMap *registration_map, String str);
 
-void player_map_init(Arena *arena, PlayerMap *player_map, u64 bucket_count);
-void tournament_map_init(Arena *arena, TournamentMap *tournament_map, u64 bucket_count);
+Registration *
+registration_create(RegistrationMap *registration_map, String str, RegistrationState *registration_state,
+    NameState *name_state, NameChunkState *name_chunk_state);
 
-Player *player_alloc(PlayerState *player_state);
-Tournament *tournament_alloc(TournamentState *tournament_state);
+void
+registration_delete_(RegistrationMap *primary_map, RegistrationMap *link_map, String str,
+    RegistrationState *registration_state, NameState *name_state, NameChunkState *name_chunk_state);
 
-Player *player_find(PlayerMap *player_map, String str_player_name);
-Tournament *tournament_find(TournamentMap *tournament_map, String str_tournament_name);
+void
+player_delete(RegistrationMap *player_map, RegistrationMap *tournament_map, String player_name,
+    RegistrationState *registration_state, NameState *name_state, NameChunkState *name_chunk_state);
 
-Player *player_create(PlayerMap *player_map, String str_player_name, PlayerState *player_state, NameState *name_state, NameChunkState *name_chunk_state);
-Tournament *tournament_create(TournamentMap *tournament_map, String str_tournament_name, TournamentState *tournament_state, NameState *name_state, NameChunkState *name_chunk_state);
+void
+tournament_delete(RegistrationMap *player_map, RegistrationMap *tournament_map, String tournament_name,
+    RegistrationState *registration_state, NameState *name_state, NameChunkState *name_chunk_state);
 
-void player_delete(PlayerMap *player_map, TournamentMap *tournament_map, String str_player_name, PlayerState *player_state, NameState *name_state, NameChunkState *name_chunk_state);
-void tournament_delete(PlayerMap *player_map, TournamentMap *tournament_map, String str_tournament_name, TournamentState *tournament_state, NameState *name_state, NameChunkState *name_chunk_state);
+void
+player_enroll(RegistrationMap *player_map, RegistrationMap *tournament_map, String str_player_name,
+    String str_tournament_name, NameState *name_state, NameChunkState *name_chunk_state);
 
-void player_enroll(PlayerMap *player_map, TournamentMap *tournament_map, String str_player_name, String str_tournament_name, PlayerState *player_state, TournamentState *tournament_state, NameState *name_state, NameChunkState *name_chunk_state);
-void player_withdraw(PlayerMap *player_map, TournamentMap *tournament_map, String str_player_name, String str_tournament_name, NameState *name_state, NameChunkState *name_chunk_state);
+void
+player_withdraw(RegistrationMap *player_map, RegistrationMap *tournament_map, String str_player_name,
+    String str_tournament_name, NameState *name_state, NameChunkState *name_chunk_state);
 
-StringList list_tournaments(Arena *arena, TournamentMap *tournament_map);
+// StringList list_tournaments(Arena *arena, TournamentMap *tournament_map);
 
 #endif // REGISTRATION_H

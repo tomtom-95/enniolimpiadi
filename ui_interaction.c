@@ -213,8 +213,12 @@ HandlePlayerSelection(Clay_ElementId element_id, Clay_PointerData pointer_data, 
 }
 
 void
-HandleEnrollPlayerInteraction(Clay_ElementId element_id, Clay_PointerData pointer_data, intptr_t data) {
-    // TODO: implement it
+HandleEnrollSelection(Clay_ElementId element_id, Clay_PointerData pointer_data, intptr_t data) {
+    PlayerTournamentPair *pair = (PlayerTournamentPair *)data;
+    if (pointer_data.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        player_enroll(layoutData.player_map, layoutData.tournament_map, pair->str_player, pair->str_tournament,
+            layoutData.player_state, layoutData.tournament_state, layoutData.name_state, layoutData.name_chunk_state);
+    }
 }
 
 void
@@ -233,26 +237,26 @@ HandleDeletePlayerInteraction(Clay_ElementId element_id, Clay_PointerData pointe
 }
 
 void
-HandleTournamentSelection(Clay_ElementId element_id, Clay_PointerData pointer_data, intptr_t data) {
-    // TODO: do the same as in HandlePlayerSelection
+HandleDeleteTournamentInteraction(Clay_ElementId element_id, Clay_PointerData pointer_data, intptr_t data) {
     LayoutData *layoutData = (LayoutData *)data;
     if (pointer_data.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        layoutData->last_element_clicked = element_id;
+        String str_tournament_name = {
+            .str = arena_push(layoutData->arena_frame, layoutData->last_tournament_clicked.len),
+            .len = layoutData->last_tournament_clicked.len
+        };
+        memcpy(str_tournament_name.str, layoutData->last_tournament_clicked.str, layoutData->last_tournament_clicked.len);
+
+        tournament_delete(layoutData->player_map, layoutData->tournament_map, str_tournament_name,
+            layoutData->tournament_state, layoutData->name_state, layoutData->name_chunk_state);
     }
+}
 
-    // if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
-    //     // TODO: open a menu of stuff that can be done
-    //     // for now use it just for deleting
-    //     String str_tournament_name = {
-    //         .str = arena_push(layoutData->arena_frame, element_id.stringId.length),
-    //         .len = element_id.stringId.length
-    //     };
-    //     memcpy(str_tournament_name.str, element_id.stringId.chars, element_id.stringId.length);
-    //     str_tournament_name.len = element_id.stringId.length;
-
-    //     tournament_delete(layoutData->player_map, layoutData->tournament_map, str_tournament_name,
-    //         layoutData->tournament_state, layoutData->name_state, layoutData->name_chunk_state);
-    // }
+void
+HandleTournamentSelection(Clay_ElementId element_id, Clay_PointerData pointer_data, intptr_t data) {
+    String *tournament_string = (String *)data;
+    if (pointer_data.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        layoutData.last_tournament_clicked = *tournament_string;
+    }
 }
 
 #endif

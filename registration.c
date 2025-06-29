@@ -7,17 +7,9 @@
 #include "registration.h"
 
 void
-player_map_init(Arena *arena, PlayerMap *player_map, u64 bucket_count)
-{
-    player_map->players = arena_push(arena, sizeof(Player *) * bucket_count);
-    player_map->bucket_count = bucket_count;
-}
-
-void
-tournament_map_init(Arena *arena, TournamentMap *tournament_map, u64 bucket_count)
-{
-    tournament_map->tournaments = arena_push(arena, sizeof(Tournament *) * bucket_count);
-    tournament_map->bucket_count = bucket_count;
+registration_map_init(Arena *arena, RegistrationMap *registration_map, u64 bucket_count) {
+    registration_map->registrations = arena_push(arena, sizeof(Registration *) * bucket_count);
+    registration_map->bucket_count = bucket_count;
 }
 
 u64
@@ -30,239 +22,146 @@ hash_string(String str)
     return hash;
 }
 
-Player *
-player_alloc(PlayerState *player_state)
+Registration *
+registration_alloc(RegistrationState *registration_state)
 {
-    Player *player = player_state->first_free;
-    if (player) {
-        player_state->first_free = player_state->first_free->next;
+    Registration *registration = registration_state->first_free;
+    if (registration) {
+        registration_state->first_free = registration_state->first_free->next;
     }
     else {
-        player = arena_push(player_state->arena, sizeof(Player)); 
+        registration = arena_push(registration_state->arena, sizeof(Registration));
     }
-    memset(player, 0, sizeof(Player));
+    memset(registration, 0, sizeof(Registration));
 
-    return player;
+    return registration;
 }
 
-Tournament *
-tournament_alloc(TournamentState *tournament_state)
-{
-    Tournament *tournament = tournament_state->first_free;
-    if (tournament) {
-        tournament_state->first_free = tournament_state->first_free->next;
-    }
-    else {
-        tournament = arena_push(tournament_state->arena, sizeof(Tournament));
-    }
-    memset(tournament, 0, sizeof(Tournament));
-
-    return tournament;
-}
-
-Player *
-player_find(PlayerMap *player_map, String str_player_name)
-{
-    u64 player_bucket_num = hash_string(str_player_name) % player_map->bucket_count;
-    Player *player_node = player_map->players[player_bucket_num];
+Registration *
+registration_find(RegistrationMap *registration_map, String str) {
+    u64 bucket_num = hash_string(str) % registration_map->bucket_count;
+    Registration *node = registration_map->registrations[bucket_num];
 
     Temp temp = scratch_get(0, 0); 
 
     NameState name_state = { .arena = temp.arena, .first_free = NULL };
     NameChunkState name_chunk_state = {.arena = temp.arena, .first_free = NULL };
-    Name *player_name = name_alloc(str_player_name, &name_state, &name_chunk_state);
+    Name *name = name_alloc(str, &name_state, &name_chunk_state);
 
-    while (player_node) {
-        if (name_cmp(player_node->player_name, player_name)) {
+    while (node) {
+        if (name_cmp(node->registration_name, name)) {
             break;
         }
-        player_node = player_node->next;
+        node = node->next;
     }
 
     scratch_release(temp);
 
-    return player_node;
+    return node;
 }
 
-Tournament *
-tournament_find(TournamentMap *tournament_map, String str_tournament_name)
-{
-    u64 tournament_bucket_num = hash_string(str_tournament_name) % tournament_map->bucket_count;
-    Tournament *tournament_node = tournament_map->tournaments[tournament_bucket_num];
-
-    Temp temp = scratch_get(0, 0); 
-
-    NameState name_state = { .arena = temp.arena, .first_free = NULL };
-    NameChunkState name_chunk_state = {.arena = temp.arena, .first_free = NULL };
-    Name *tournament_name = name_alloc(str_tournament_name, &name_state, &name_chunk_state);
-
-    while (tournament_node) {
-        if (name_cmp(tournament_node->tournament_name, tournament_name)) {
-            break;
-        }
-        tournament_node = tournament_node->next;
-    }
-
-    scratch_release(temp);
-
-    return tournament_node;
-}
-
-Player *
-player_create(PlayerMap *player_map, String str_player_name, PlayerState *player_state,
+Registration *
+registration_create(RegistrationMap *registration_map, String str, RegistrationState *registration_state,
     NameState *name_state, NameChunkState *name_chunk_state)
 {
-    Player *player = player_find(player_map, str_player_name);
-    assert(!player);
+    Registration *registration = registration_find(registration_map, str);
+    assert(!registration);
 
-    u64 bucket_num = hash_string(str_player_name) % player_map->bucket_count;
-    Player **players = &(player_map->players[bucket_num]);
+    u64 bucket_num = hash_string(str) % registration_map->bucket_count;
+    Registration **registrations = &(registration_map->registrations[bucket_num]);
 
-    Player *newplayer = player_alloc(player_state);
+    Registration *newregistration = registration_alloc(registration_state);
 
-    newplayer->next = *players;
-    *players = newplayer;
+    newregistration->next = *registrations;
+    *registrations = newregistration;
 
-    // maybe I do not like the semantic on name_alloc, it does not just alloc, it also assign the name
-    Name *player_name = name_alloc(str_player_name, name_state, name_chunk_state);
-    newplayer->player_name = player_name;
+    Name *registration_name = name_alloc(str, name_state, name_chunk_state);
+    newregistration->registration_name = registration_name;
 
-    return newplayer;
-}
-
-Tournament *
-tournament_create(TournamentMap *tournament_map, String str_tournament_name, TournamentState *tournament_state,
-    NameState *name_state, NameChunkState *name_chunk_state)
-{
-    Tournament *tournament = tournament_find(tournament_map, str_tournament_name);
-    assert(!tournament);
-
-    u64 bucket_num = hash_string(str_tournament_name) % tournament_map->bucket_count;
-    Tournament **tournaments = &(tournament_map->tournaments[bucket_num]);
-
-    Tournament *newtournament = tournament_alloc(tournament_state);
-
-    newtournament->next = *tournaments;
-    *tournaments = newtournament;
-
-    Name *tournament_name = name_alloc(str_tournament_name, name_state, name_chunk_state);
-    newtournament->tournament_name = tournament_name;
-
-    return newtournament;
+    return newregistration;
 }
 
 void
-player_delete(PlayerMap *player_map, TournamentMap *tournament_map, String str_player_name,
-    PlayerState *player_state, NameState *name_state, NameChunkState *name_chunk_state)
+registration_delete_(RegistrationMap *primary_map, RegistrationMap *link_map, String str,
+    RegistrationState *registration_state, NameState *name_state, NameChunkState *name_chunk_state)
 {
-    u64 bucket_num = hash_string(str_player_name) % player_map->bucket_count;
-    Player **player = &(player_map->players[bucket_num]);
+    u64 bucket_num = hash_string(str) % primary_map->bucket_count;
+    Registration **registration = &(primary_map->registrations[bucket_num]);
 
     Temp temp = scratch_get(0, 0);
 
     NameState temp_name_state = { .arena = temp.arena, .first_free = NULL };
     NameChunkState temp_name_chunk_state = { .arena = temp.arena, .first_free = NULL };
 
-    Name *player_name = name_alloc(str_player_name, &temp_name_state, &temp_name_chunk_state);
-
-    while (*player) {
-        if (name_cmp((*player)->player_name, player_name)) {
+    Name *primary_registration_name = name_alloc(str, &temp_name_state, &temp_name_chunk_state);
+    while (*registration) {
+        if (name_cmp((*registration)->registration_name, primary_registration_name)) {
             break;
         }
         else {
-            player = &((*player)->next);
+            registration = &((*registration)->next);
         }
     }
 
-    Player *player_to_remove = *player;
+    Registration *registration_to_remove = *registration;
 
-    // Remove the player from all the tournaments it was enrolled
-    // TODO: probably can be done in one pass instead of calling namelist_delete outside of the loop
-    Name *tournament_name = player_to_remove->tournament_names.first_name;
-    while (tournament_name) {
-        String str_tournament_name = push_string_from_name(temp.arena, *tournament_name);
-        Tournament *tournament = tournament_find(tournament_map, str_tournament_name);
-        namelist_pop_by_string(&tournament->player_names, str_player_name, name_state, name_chunk_state);
-        tournament_name = tournament_name->next;
+    Name *link_registration_name = registration_to_remove->registration_list.first_name;
+    while (link_registration_name) {
+        String str_link_registration_name = push_string_from_name(temp.arena, *link_registration_name);
+        Registration *link_registration = registration_find(link_map, str_link_registration_name);
+        // namelist_pop_by_string(&link_registration->registration_list,
+        //     str_link_registration_name, name_state, name_chunk_state);
+        namelist_pop_by_string(&link_registration->registration_list, str, name_state, name_chunk_state);
+        link_registration_name = link_registration_name->next;
     }
 
     scratch_release(temp);
 
-    namelist_delete_all(&player_to_remove->tournament_names, name_state, name_chunk_state);
-    name_delete(player_to_remove->player_name, name_state, name_chunk_state);
-    player_to_remove->player_name = NULL; // how much do I need this?
+    namelist_delete_all(&registration_to_remove->registration_list, name_state, name_chunk_state);
+    name_delete(registration_to_remove->registration_name, name_state, name_chunk_state);
+    registration_to_remove->registration_name = NULL; // how much do I need this?
 
-    *player = (*player)->next;
-    player_to_remove->next = player_state->first_free;
-    player_state->first_free = player_to_remove;
+    *registration = (*registration)->next;
+    registration_to_remove->next = registration_state->first_free;
+    registration_state->first_free = registration_to_remove;
 }
 
 void
-tournament_delete(PlayerMap *player_map, TournamentMap *tournament_map, String str_tournament_name,
-    TournamentState *tournament_state, NameState *name_state, NameChunkState *name_chunk_state)
+player_delete(RegistrationMap *player_map, RegistrationMap *tournament_map, String player_name,
+    RegistrationState *player_state, NameState *name_state, NameChunkState *name_chunk_state)
 {
-    u64 bucket_num = hash_string(str_tournament_name) % tournament_map->bucket_count;
-    Tournament **tournament = &(tournament_map->tournaments[bucket_num]);
-
-    Temp temp = scratch_get(0, 0);
-
-    NameState temp_name_state = { .arena = temp.arena, .first_free = NULL };
-    NameChunkState temp_name_chunk_state = { .arena = temp.arena, .first_free = NULL };
-
-    Name *tournament_name = name_alloc(str_tournament_name, &temp_name_state, &temp_name_chunk_state);
-
-    while (*tournament) {
-        if (name_cmp((*tournament)->tournament_name, tournament_name)) {
-            break;
-        }
-        else {
-            tournament = &((*tournament)->next);
-        }
-    }
-
-    Tournament *tournament_to_remove = *tournament;
-    Name *player_name = tournament_to_remove->player_names.first_name;
-    while (player_name) {
-        String str_player_name = push_string_from_name(temp.arena, *player_name);
-        Player *player = player_find(player_map, str_player_name);
-        namelist_pop_by_string(&player->tournament_names, str_tournament_name, name_state, name_chunk_state);
-        player_name = player_name->next;
-    }
-
-    scratch_release(temp);
-
-    namelist_delete_all(&tournament_to_remove->player_names, name_state, name_chunk_state);
-    name_delete(tournament_to_remove->tournament_name, name_state, name_chunk_state);
-    tournament_to_remove->tournament_name = NULL; // how much do I need this?
-
-    *tournament = (*tournament)->next;
-    tournament_to_remove->next = tournament_state->first_free;
-    tournament_state->first_free = tournament_to_remove;
+    registration_delete_(player_map, tournament_map, player_name, player_state, name_state, name_chunk_state);
 }
 
-
 void
-player_enroll(PlayerMap *player_map, TournamentMap *tournament_map, String str_player_name, String str_tournament_name,
-    PlayerState *player_state, TournamentState *tournament_state, NameState *name_state, NameChunkState *name_chunk_state)
+tournament_delete(RegistrationMap *player_map, RegistrationMap *tournament_map, String tournament_name,
+                  RegistrationState *tournament_state, NameState *name_state, NameChunkState *name_chunk_state)
 {
-    Player *player = player_find(player_map, str_player_name);
-    assert(!namelist_find(&player->tournament_names, str_tournament_name));
-
-    Tournament *tournament = tournament_find(tournament_map, str_tournament_name);
-
-    namelist_append_left(&player->tournament_names, str_tournament_name, name_state, name_chunk_state);
-    namelist_append_right(&tournament->player_names, str_player_name, name_state, name_chunk_state);
+    registration_delete_(tournament_map, player_map, tournament_name, tournament_state, name_state, name_chunk_state);
 }
 
 void
-player_withdraw(PlayerMap *player_map, TournamentMap *tournament_map, String str_player_name,
+player_enroll(RegistrationMap *player_map, RegistrationMap *tournament_map, String str_player_name,
     String str_tournament_name, NameState *name_state, NameChunkState *name_chunk_state)
 {
-    Player *player = player_find(player_map, str_player_name);
-    Tournament *tournament = tournament_find(tournament_map, str_tournament_name);
+    Registration *player = registration_find(player_map, str_player_name);
+    assert(!namelist_find(&player->registration_list, str_tournament_name));
 
-    namelist_pop_by_string(&player->tournament_names, str_tournament_name, name_state, name_chunk_state);
-    namelist_pop_by_string(&tournament->player_names, str_player_name, name_state, name_chunk_state);
+    Registration *tournament = registration_find(tournament_map, str_tournament_name);
+
+    namelist_append_left(&player->registration_list, str_tournament_name, name_state, name_chunk_state);
+    namelist_append_right(&tournament->registration_list, str_player_name, name_state, name_chunk_state);
+}
+
+void
+player_withdraw(RegistrationMap *player_map, RegistrationMap *tournament_map, String str_player_name,
+    String str_tournament_name, NameState *name_state, NameChunkState *name_chunk_state)
+{
+    Registration *player = registration_find(player_map, str_player_name);
+    Registration *tournament = registration_find(tournament_map, str_tournament_name);
+
+    namelist_pop_by_string(&player->registration_list, str_tournament_name, name_state, name_chunk_state);
+    namelist_pop_by_string(&tournament->registration_list, str_player_name, name_state, name_chunk_state);
 }
 
 // void
@@ -293,18 +192,18 @@ player_withdraw(PlayerMap *player_map, TournamentMap *tournament_map, String str
 //     temp_end(temp);
 // }
 
-StringList
-list_tournaments(Arena *arena, TournamentMap *tournament_map) {
-    StringList string_list = {0};
-    for (u64 idx = 0; idx < tournament_map->bucket_count; ++idx) {
-        Tournament *tournament = tournament_map->tournaments[idx]; 
-        while (tournament) {
-            String str_tournament_name = push_string_from_name(arena, *(tournament->tournament_name));
-            string_list_push(arena, &string_list, str_tournament_name);
-            tournament = tournament->next;
-        }
-    }
-    return string_list;
-}
+// StringList
+// list_tournaments(Arena *arena, TournamentMap *tournament_map) {
+//     StringList string_list = {0};
+//     for (u64 idx = 0; idx < tournament_map->bucket_count; ++idx) {
+//         Tournament *tournament = tournament_map->tournaments[idx]; 
+//         while (tournament) {
+//             String str_tournament_name = push_string_from_name(arena, *(tournament->tournament_name));
+//             string_list_push(arena, &string_list, str_tournament_name);
+//             tournament = tournament->next;
+//         }
+//     }
+//     return string_list;
+// }
 
 #endif // REGISTRATION_C
