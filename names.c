@@ -16,6 +16,7 @@ name_alloc(String str, NameState *name_state, NameChunkState *name_chunk_state) 
         name = (Name *)arena_push(name_state->arena, sizeof(Name));
     }
     name->len = bytes_left;
+    name->next = NULL; // TODO: study carefully this! when resource are acquired be sure to zero initialize!
 
     NameChunk **chunk = &(name->first_name_chunk);
     for (u64 i = 0; i < needed_chunks; ++i) {
@@ -38,7 +39,7 @@ name_alloc(String str, NameState *name_state, NameChunkState *name_chunk_state) 
 String
 push_string_from_name(Arena *arena, Name name) {
     u64 bytes_left = name.len;
-    String str = {.len = bytes_left, .str = arena_push(arena, bytes_left)};
+    String str = { .len = bytes_left, .str = arena_push(arena, bytes_left) };
     NameChunk *name_chunk = name.first_name_chunk;
     while (bytes_left) {
         u64 bytes_to_copy = Min((u64)NAME_CHUNK_PAYLOAD_SIZE, bytes_left);

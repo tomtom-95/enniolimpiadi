@@ -38,7 +38,8 @@ registration_alloc(RegistrationState *registration_state)
 }
 
 Registration *
-registration_find(RegistrationMap *registration_map, String str) {
+registration_find(RegistrationMap *registration_map, String str)
+{
     u64 bucket_num = hash_string(str) % registration_map->bucket_count;
     Registration *node = registration_map->registrations[bucket_num];
 
@@ -64,21 +65,20 @@ Registration *
 registration_create(RegistrationMap *registration_map, String str, RegistrationState *registration_state,
     NameState *name_state, NameChunkState *name_chunk_state)
 {
-    Registration *registration = registration_find(registration_map, str);
-    assert(!registration);
+    assert(!registration_find(registration_map, str));
 
     u64 bucket_num = hash_string(str) % registration_map->bucket_count;
     Registration **registrations = &(registration_map->registrations[bucket_num]);
 
-    Registration *newregistration = registration_alloc(registration_state);
+    Registration *registration = registration_alloc(registration_state);
 
-    newregistration->next = *registrations;
-    *registrations = newregistration;
+    registration->next = *registrations;
+    *registrations = registration;
 
     Name *registration_name = name_alloc(str, name_state, name_chunk_state);
-    newregistration->registration_name = registration_name;
+    registration->registration_name = registration_name;
 
-    return newregistration;
+    return registration;
 }
 
 void
@@ -109,8 +109,6 @@ registration_delete_(RegistrationMap *primary_map, RegistrationMap *link_map, St
     while (link_registration_name) {
         String str_link_registration_name = push_string_from_name(temp.arena, *link_registration_name);
         Registration *link_registration = registration_find(link_map, str_link_registration_name);
-        // namelist_pop_by_string(&link_registration->registration_list,
-        //     str_link_registration_name, name_state, name_chunk_state);
         namelist_pop_by_string(&link_registration->registration_list, str, name_state, name_chunk_state);
         link_registration_name = link_registration_name->next;
     }
@@ -128,16 +126,16 @@ registration_delete_(RegistrationMap *primary_map, RegistrationMap *link_map, St
 
 void
 player_delete(RegistrationMap *player_map, RegistrationMap *tournament_map, String player_name,
-    RegistrationState *player_state, NameState *name_state, NameChunkState *name_chunk_state)
+    RegistrationState *registration_state, NameState *name_state, NameChunkState *name_chunk_state)
 {
-    registration_delete_(player_map, tournament_map, player_name, player_state, name_state, name_chunk_state);
+    registration_delete_(player_map, tournament_map, player_name, registration_state, name_state, name_chunk_state);
 }
 
 void
 tournament_delete(RegistrationMap *player_map, RegistrationMap *tournament_map, String tournament_name,
-                  RegistrationState *tournament_state, NameState *name_state, NameChunkState *name_chunk_state)
+    RegistrationState *registration_state, NameState *name_state, NameChunkState *name_chunk_state)
 {
-    registration_delete_(tournament_map, player_map, tournament_name, tournament_state, name_state, name_chunk_state);
+    registration_delete_(tournament_map, player_map, tournament_name, registration_state, name_state, name_chunk_state);
 }
 
 void
@@ -164,46 +162,58 @@ player_withdraw(RegistrationMap *player_map, RegistrationMap *tournament_map, St
     namelist_pop_by_string(&tournament->registration_list, str_player_name, name_state, name_chunk_state);
 }
 
-// void
-// player_rename(PlayerMap *player_map, TournamentMap *tournament_map, String str_player_oldname,
-//     String str_player_newname, NameState *name_state, NameChunkState *name_chunk_state)
-// {
-//     Name *newname = name_alloc(str_player_newname, name_state, name_chunk_state);
-// 
-//     Player *player = player_find(player_map, str_player_oldname);
-//     assert(player);
-// 
-//     name_delete(name_chunk_state, &(player->player_name));
-//     player->player_name = newname;
-// 
-//     Temp temp = temp_begin(arena);
-//     Name *tournament_name = player->tournament_names.head;
-//     while (tournament_name) {
-//         String str_tournament_name = push_string_from_name(temp.arena, *tournament_name);
-//         Tournament *tournament = tournament_find(arena, tournament_map, str_tournament_name);
-// 
-//         Name *player_name = tournament->player_names.head;
-//         while (!string_cmp(str_oldname, push_string_from_name(temp.arena, *player_name))) {
-//             player_name = player_name->next;
-//         }
-//         *player_name = newname;
-//         tournament_name = tournament_name->next;
-//     }
-//     temp_end(temp);
-// }
+void
+registration_rename_(RegistrationMap *primary_map, RegistrationMap *link_map, String *oldstr,
+    String *newstr, NameState *name_state, NameChunkState *name_chunk_state)
+{
+    Name *newname = name_alloc(*newstr, name_state, name_chunk_state);
 
-// StringList
-// list_tournaments(Arena *arena, TournamentMap *tournament_map) {
-//     StringList string_list = {0};
-//     for (u64 idx = 0; idx < tournament_map->bucket_count; ++idx) {
-//         Tournament *tournament = tournament_map->tournaments[idx]; 
-//         while (tournament) {
-//             String str_tournament_name = push_string_from_name(arena, *(tournament->tournament_name));
-//             string_list_push(arena, &string_list, str_tournament_name);
-//             tournament = tournament->next;
-//         }
-//     }
-//     return string_list;
-// }
+    Registration *primary_registration = registration_find(primary_map, *oldstr);
+    assert(primary_registration);
+
+    name_delete(primary_registration->registration_name, name_state, name_chunk_state);
+    primary_registration->registration_name = newname;
+
+    Temp temp = scratch_get(0, 0);
+
+    Name *link_registration_name = primary_registration->registration_list.first_name;
+    while (link_registration_name) {
+        String str_link_registration_name = push_string_from_name(temp.arena, *link_registration_name);
+        Registration *link_registration = registration_find(link_map, str_link_registration_name);
+        namelist_pop_by_string(&link_registration->registration_list, *oldstr, name_state, name_chunk_state);
+        namelist_append_left(&link_registration->registration_list, *newstr, name_state, name_chunk_state);
+        link_registration_name = link_registration_name->next;
+    }
+
+    temp_end(temp);
+}
+
+void
+player_rename(RegistrationMap *player_map, RegistrationMap *tournament_map, String *oldstr,
+    String *newstr, NameState *name_state, NameChunkState *name_chunk_state)
+{
+    registration_rename_(player_map, tournament_map, oldstr, newstr, name_state, name_chunk_state);
+}
+
+void
+tournament_rename(RegistrationMap *player_map, RegistrationMap *tournament_map, String *oldstr,
+    String *newstr, NameState *name_state, NameChunkState *name_chunk_state)
+{
+    registration_rename_(tournament_map, player_map, oldstr, newstr, name_state, name_chunk_state);
+}
+
+StringList
+list_registrations(Arena *arena, RegistrationMap *registration_map) {
+    StringList string_list = {0};
+    for (u64 idx = 0; idx < registration_map->bucket_count; ++idx) {
+        Registration *registration = registration_map->registrations[idx]; 
+        while (registration) {
+            String str = push_string_from_name(arena, *(registration->registration_name));
+            string_list_push(arena, &string_list, str);
+            registration = registration->next;
+        }
+    }
+    return string_list;
+}
 
 #endif // REGISTRATION_C

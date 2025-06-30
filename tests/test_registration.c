@@ -20,6 +20,7 @@ int main(void) {
     RegistrationState registration_state = { .arena = arena_permanent, .first_free = NULL };
 
     String giulio = string_from_cstring_lit("Giulio");
+    String newgiulio = string_from_cstring_lit("NewGiulio");
     String riccardo = string_from_cstring_lit("Riccardo");
     String mario = string_from_cstring_lit("Mario");
 
@@ -42,4 +43,5 @@ int main(void) {
     player_enroll(&player_map, &tournament_map, giulio, ping_pong, &name_state, &name_chunk_state);
 
     player_delete(&player_map, &tournament_map, riccardo, &registration_state, &name_state, &name_chunk_state);
+    player_rename(&player_map, &tournament_map, &giulio, &newgiulio, &name_state, &name_chunk_state);
 }
