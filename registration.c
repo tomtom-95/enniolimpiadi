@@ -222,7 +222,7 @@ list_registrations_by_str(Arena *arena, RegistrationMap *registration_map, Strin
     // e.g. when 'registration_map' is the players map and 'str' is a player name
     // the function returs a list of all the tournaments the player is enrolled into
 
-    Temp temp = scratch_get(0, 0);
+    Temp temp = scratch_get(&arena, 1);
 
     NameState temp_name_state = { .arena = temp.arena, .first_free = NULL };
     NameChunkState temp_name_chunk_state = { .arena = temp.arena, .first_free = NULL };
@@ -247,7 +247,7 @@ list_registrations_by_str(Arena *arena, RegistrationMap *registration_map, Strin
 }
 
 StringList
-list_missing_registration_by_str_(Arena *arena, RegistrationMap *primary_map,
+list_missing_registrations_by_str_(Arena *arena, RegistrationMap *primary_map,
     RegistrationMap *link_map, String str)
 {
     // e.g. when str is a player name, list all the tournament the player is NOT enrolled into
@@ -286,7 +286,7 @@ list_missing_tournaments_by_str(Arena *arena, RegistrationMap *player_map,
     RegistrationMap *tournament_map, String str_player_name)
 {
     // list all the tournaments the str_player_name is NOT enrolled into
-    StringList result = list_missing_registration_by_str_(arena, player_map, tournament_map, str_player_name);
+    StringList result = list_missing_registrations_by_str_(arena, player_map, tournament_map, str_player_name);
     return result;
 }
 
@@ -295,7 +295,9 @@ list_missing_players_by_str(Arena *arena, RegistrationMap *player_map,
     RegistrationMap *tournament_map, String str_tournament_name)
 {
     // list all the players that are NOT enrolled into str_tournament_name
-    StringList result = list_missing_registration_by_str_(arena, tournament_map, player_map, str_tournament_name);
+    StringList result = (
+        list_missing_registrations_by_str_(arena, tournament_map, player_map, str_tournament_name)
+    );
     return result;
 }
 

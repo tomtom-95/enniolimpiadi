@@ -122,7 +122,10 @@ LayoutFloatingMenu_(String string, RegistrationMap *primary_map, RegistrationMap
                         .backgroundColor = blue,
                         .cornerRadius = CLAY_CORNER_RADIUS(8)
                     }) {
-                        StringList stringlist = list_registrations_by_str(layoutData.arena_frame, primary_map, string);
+                        StringList stringlist = (
+                            list_missing_registrations_by_str_(layoutData.arena_frame, primary_map, link_map, string)
+                        );
+                        // StringList stringlist = list_registrations_by_str(layoutData.arena_frame, primary_map, string);
                         StringNode *strnode = stringlist.head;
                         while (strnode) {
                             Clay_String clay_str = Clay_String_from_String(strnode->str);
@@ -141,6 +144,7 @@ LayoutFloatingMenu_(String string, RegistrationMap *primary_map, RegistrationMap
                                     .textColor = { 255, 255, 255, 255 }
                                 }));
                             }
+                            strnode = strnode->next;
                         }
                     }
                 }

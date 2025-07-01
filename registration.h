@@ -67,4 +67,16 @@ list_registrations(Arena *arena, RegistrationMap *registration_map);
 StringList
 list_registrations_by_str(Arena *arena, RegistrationMap *registration_map, String str);
 
+StringList
+list_missing_registrations_by_str_(Arena *arena, RegistrationMap *primary_map,
+    RegistrationMap *link_map, String str);
+
+StringList
+list_missing_tournaments_by_str(Arena *arena, RegistrationMap *player_map,
+    RegistrationMap *tournament_map, String str_player_name);
+
+StringList
+list_missing_players_by_str(Arena *arena, RegistrationMap *player_map,
+    RegistrationMap *tournament_map, String str_tournament_name);
+
 #endif // REGISTRATION_H
