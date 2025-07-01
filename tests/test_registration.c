@@ -40,7 +40,7 @@ int main(void) {
     registration_create(&tournament_map, machiavelli, &registration_state, &name_state, &name_chunk_state);
 
     player_enroll(&player_map, &tournament_map, riccardo, ping_pong, &name_state, &name_chunk_state);
-    // player_enroll(&player_map, &tournament_map, giulio, ping_pong, &name_state, &name_chunk_state);
+    player_enroll(&player_map, &tournament_map, giulio, ping_pong, &name_state, &name_chunk_state);
 
     player_delete(&player_map, &tournament_map, riccardo, &registration_state, &name_state, &name_chunk_state);
     player_rename(&player_map, &tournament_map, &giulio, &newgiulio, &name_state, &name_chunk_state);

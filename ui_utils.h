@@ -107,7 +107,8 @@ Clay_Color violet_light = {140, 110, 230, 255};
 Clay_Sizing layoutExpand = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0) };
 
 Clay_String
-Clay_String_from_String(String string) {
+Clay_String_from_String(String string)
+{
     Clay_String clay_string = {
         .isStaticallyAllocated = false,
         .length = (s32)string.len,
@@ -126,6 +127,13 @@ String strFeedbackAddTournament3 = string_from_lit_comp("Tournament successfully
 
 Clay_String addPlayerTextBoxStr = CLAY_STRING("AddPlayerTextBox");
 Clay_String addTournamentTextBoxStr = CLAY_STRING("AddTournamentTextBox");
+
+Clay_String floatingMenuStrId = CLAY_STRING("FloatingMenu");
+Clay_String floatingMenuEnrollStrId = CLAY_STRING("FloatingMenuEnroll");
+Clay_String floatingMenuWithdrawStrId = CLAY_STRING("FloatingMenuWithdraw");
+Clay_String floatingMenuDeleteStrId = CLAY_STRING("FloatingMenuDelete");
+Clay_String floatingMenuEnrollListStrId = CLAY_STRING("FloatingMenuEnrollList");
+Clay_String floatingMenuWithdrawListStrId = CLAY_STRING("FloatingMenuWithdrawList");
 
 LayoutData layoutData;
 

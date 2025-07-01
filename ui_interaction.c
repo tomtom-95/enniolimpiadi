@@ -156,12 +156,12 @@ HandleAddPlayerButtonInteraction(Clay_ElementId elementId, Clay_PointerData poin
             layoutData->feedbackOnAddPlayerButton = strFeedbackAddPlayer1;
         }
         else {
-            Player *player = player_find(layoutData->player_map, str);
+            Registration *player = registration_find(layoutData->player_map, str);
             if (player) {
                 layoutData->feedbackOnAddPlayerButton = strFeedbackAddPlayer2;
             }
             else {
-                player_create(layoutData->player_map, str, layoutData->player_state,
+                registration_create(layoutData->player_map, str, layoutData->registration_state,
                     layoutData->name_state, layoutData->name_chunk_state);
                 layoutData->feedbackOnAddPlayerButton = strFeedbackAddPlayer3;
             }
@@ -182,12 +182,12 @@ HandleAddTournamentButtonInteraction(Clay_ElementId elementId, Clay_PointerData 
             layoutData->feedbackOnAddTournamentButton = strFeedbackAddTournament1;
         }
         else {
-            Tournament *tournament = tournament_find(layoutData->tournament_map, str);
+            Registration *tournament = registration_find(layoutData->tournament_map, str);
             if (tournament) {
                 layoutData->feedbackOnAddTournamentButton = strFeedbackAddTournament2;
             }
             else {
-                tournament_create(layoutData->tournament_map, str, layoutData->tournament_state,
+                registration_create(layoutData->tournament_map, str, layoutData->registration_state,
                     layoutData->name_state, layoutData->name_chunk_state);
                 layoutData->feedbackOnAddTournamentButton = strFeedbackAddTournament3;
             }
@@ -212,14 +212,14 @@ HandlePlayerSelection(Clay_ElementId element_id, Clay_PointerData pointer_data, 
     }
 }
 
-void
-HandleEnrollSelection(Clay_ElementId element_id, Clay_PointerData pointer_data, intptr_t data) {
-    PlayerTournamentPair *pair = (PlayerTournamentPair *)data;
-    if (pointer_data.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        player_enroll(layoutData.player_map, layoutData.tournament_map, pair->str_player, pair->str_tournament,
-            layoutData.player_state, layoutData.tournament_state, layoutData.name_state, layoutData.name_chunk_state);
-    }
-}
+// void
+// HandleEnrollSelection(Clay_ElementId element_id, Clay_PointerData pointer_data, intptr_t data) {
+//     PlayerTournamentPair *pair = (PlayerTournamentPair *)data;
+//     if (pointer_data.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+//         player_enroll(layoutData.player_map, layoutData.tournament_map, pair->str_player, pair->str_tournament,
+//             layoutData.player_state, layoutData.tournament_state, layoutData.name_state, layoutData.name_chunk_state);
+//     }
+// }
 
 void
 HandleDeletePlayerInteraction(Clay_ElementId element_id, Clay_PointerData pointer_data, intptr_t data) {
@@ -232,7 +232,7 @@ HandleDeletePlayerInteraction(Clay_ElementId element_id, Clay_PointerData pointe
         memcpy(str_player_name.str, layoutData->last_player_clicked.str, layoutData->last_player_clicked.len);
 
         player_delete(layoutData->player_map, layoutData->tournament_map, str_player_name,
-            layoutData->player_state, layoutData->name_state, layoutData->name_chunk_state);
+            layoutData->registration_state, layoutData->name_state, layoutData->name_chunk_state);
     }
 }
 
@@ -247,7 +247,7 @@ HandleDeleteTournamentInteraction(Clay_ElementId element_id, Clay_PointerData po
         memcpy(str_tournament_name.str, layoutData->last_tournament_clicked.str, layoutData->last_tournament_clicked.len);
 
         tournament_delete(layoutData->player_map, layoutData->tournament_map, str_tournament_name,
-            layoutData->tournament_state, layoutData->name_state, layoutData->name_chunk_state);
+            layoutData->registration_state, layoutData->name_state, layoutData->name_chunk_state);
     }
 }
 

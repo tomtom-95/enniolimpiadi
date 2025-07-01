@@ -55,15 +55,15 @@ main(void) {
 
     RegistrationMap player_map = {0};
     RegistrationMap tournament_map = {0};
-    player_map_init(arena_permanent, &player_map, 1);
-    tournament_map_init(arena_permanent, &tournament_map, 1);
+    registration_map_init(arena_permanent, &player_map, 1);
+    registration_map_init(arena_permanent, &tournament_map, 1);
 
-    player_create(&player_map, riccardo, &registration_state, &name_state, &name_chunk_state);
-    player_create(&player_map, giulio, &registration_state, &name_state, &name_chunk_state);
-    player_create(&player_map, mario, &registration_state, &name_state, &name_chunk_state);
+    registration_create(&player_map, riccardo, &registration_state, &name_state, &name_chunk_state);
+    registration_create(&player_map, giulio, &registration_state, &name_state, &name_chunk_state);
+    registration_create(&player_map, mario, &registration_state, &name_state, &name_chunk_state);
 
-    tournament_create(&tournament_map, ping_pong, &registration_state, &name_state, &name_chunk_state);
-    tournament_create(&tournament_map, machiavelli, &registration_state, &name_state, &name_chunk_state);
+    registration_create(&tournament_map, ping_pong, &registration_state, &name_state, &name_chunk_state);
+    registration_create(&tournament_map, machiavelli, &registration_state, &name_state, &name_chunk_state);
 
     player_enroll(&player_map, &tournament_map, riccardo, ping_pong, &name_state, &name_chunk_state);
     player_enroll(&player_map, &tournament_map, giulio, ping_pong, &name_state, &name_chunk_state);
@@ -148,7 +148,7 @@ main(void) {
         HelperTextBox(&layoutData.addPlayerTextBoxData, addPlayerTextBoxStr);
         HelperTextBox(&layoutData.addTournamentTextBoxData, addTournamentTextBoxStr);
 
-        Clay_RenderCommandArray renderCommands = GetLayout(&layoutData);
+        Clay_RenderCommandArray renderCommands = GetLayout();
 
         BeginDrawing();
         ClearBackground(BLACK);
