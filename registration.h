@@ -61,6 +61,10 @@ void
 player_withdraw(RegistrationMap *player_map, RegistrationMap *tournament_map, String str_player_name,
     String str_tournament_name, NameState *name_state, NameChunkState *name_chunk_state);
 
-// StringList list_tournaments(Arena *arena, TournamentMap *tournament_map);
+StringList
+list_registrations(Arena *arena, RegistrationMap *registration_map);
+
+StringList
+list_registrations_by_str(Arena *arena, RegistrationMap *registration_map, String str);
 
 #endif // REGISTRATION_H

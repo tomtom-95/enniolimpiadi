@@ -42,10 +42,9 @@ typedef struct {
     float yOffset;
     Arena *arena_frame;
     Arena *arena_permanent;
-    PlayerMap *player_map;
-    TournamentMap *tournament_map;
-    PlayerState *player_state;
-    TournamentState *tournament_state;
+    RegistrationMap *player_map;
+    RegistrationMap *tournament_map;
+    RegistrationState *registration_state;
     NameState *name_state;
     NameChunkState *name_chunk_state;
     Tab tab;
@@ -58,10 +57,10 @@ typedef struct {
     Clay_ElementId last_element_clicked;
 } LayoutData;
 
-typedef struct {
-    String str_player;
-    String str_tournament;
-} PlayerTournamentPair;
+// typedef struct {
+//     String str_player;
+//     String str_tournament;
+// } PlayerTournamentPair;
 
 typedef enum {
     CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL,
@@ -128,8 +127,6 @@ String strFeedbackAddTournament3 = string_from_lit_comp("Tournament successfully
 Clay_String addPlayerTextBoxStr = CLAY_STRING("AddPlayerTextBox");
 Clay_String addTournamentTextBoxStr = CLAY_STRING("AddTournamentTextBox");
 
-TextBoxData addPlayerTextBoxData;
-TextBoxData addTournamentTextBoxData;
 LayoutData layoutData;
 
 #endif // UI_UTILS_H

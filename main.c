@@ -12,64 +12,6 @@
 #include "registration.c"
 #include "names.c"
 
-void HandleClayErrors(Clay_ErrorData errorData) {
-    printf("%s", errorData.errorText.chars);
-}
-
-Clay_RenderCommandArray 
-GetLayout(LayoutData *layoutData) {
-    layoutData->arena_frame->pos = 0;
-
-    Clay_BeginLayout();
-    CLAY({ .id = CLAY_ID("MainWindow"),
-        .backgroundColor = blue,
-        .layout = {
-            .sizing = layoutExpand, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16,
-            .padding = CLAY_PADDING_ALL(16)
-        }
-    }) {
-        Clay_OnHover(HandleMainWindowInteraction, (intptr_t)layoutData);
-        LayoutHeaderBar(layoutData);
-        CLAY({
-            .id = CLAY_ID("MainContent"),
-            .backgroundColor = gray,
-            .layout = {
-                .sizing = layoutExpand, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16,
-                .padding = CLAY_PADDING_ALL(16)
-            },
-            .cornerRadius = CLAY_CORNER_RADIUS(8)
-        }) {
-            switch (layoutData->tab) {
-                case TAB_PLAYERS:
-                {
-                    LayoutPlayersWindow(layoutData);
-                } break;
-                case TAB_TOURNAMENTS:
-                {
-                    LayoutTournamentsWindow(layoutData);
-                } break;
-                case TAB_NEW_PLAYER:
-                {
-                    LayoutAddPlayerWindow(layoutData);
-                } break;
-                case TAB_NEW_TOURNAMENT:
-                {
-                    LayoutAddTournamentWindow(layoutData);
-                } break;
-            }
-        }
-    }
-
-    Clay_RenderCommandArray renderCommands = Clay_EndLayout();
-
-
-    for (int32_t i = 0; i < renderCommands.length; i++) {
-        Clay_RenderCommandArray_Get(&renderCommands, i)->boundingBox.y += layoutData->yOffset;
-    }
-
-    return renderCommands;
-}
-
 int
 main(void) {
     Clay_Raylib_Initialize(
@@ -100,9 +42,8 @@ main(void) {
     Arena *arena_frame = arena_alloc(MegaByte(1));
 
     NameState name_state = { .arena = arena_permanent, .first_free = NULL };
-    NameChunkState name_chunk_state = {.arena = arena_permanent, .first_free = NULL};
-    PlayerState player_state = {.arena = arena_permanent, .first_free = NULL};
-    TournamentState tournament_state = {.arena = arena_permanent, .first_free = NULL};
+    NameChunkState name_chunk_state = { .arena = arena_permanent, .first_free = NULL };
+    RegistrationState registration_state = { .arena = arena_permanent, .first_free = NULL };
 
     String giulio = string_from_cstring_lit("Giulio");
     String riccardo = string_from_cstring_lit("Riccardo");
@@ -112,26 +53,21 @@ main(void) {
     String ping_pong = string_from_cstring_lit("Ping Pong");
     String machiavelli = string_from_cstring_lit("Machiavelli");
 
-    PlayerMap player_map = {0};
-    TournamentMap tournament_map = {0};
+    RegistrationMap player_map = {0};
+    RegistrationMap tournament_map = {0};
     player_map_init(arena_permanent, &player_map, 1);
     tournament_map_init(arena_permanent, &tournament_map, 1);
 
-    player_create(&player_map, riccardo, &player_state, &name_state, &name_chunk_state);
-    player_create(&player_map, giulio, &player_state, &name_state, &name_chunk_state);
-    player_create(&player_map, mario, &player_state, &name_state, &name_chunk_state);
+    player_create(&player_map, riccardo, &registration_state, &name_state, &name_chunk_state);
+    player_create(&player_map, giulio, &registration_state, &name_state, &name_chunk_state);
+    player_create(&player_map, mario, &registration_state, &name_state, &name_chunk_state);
 
-    tournament_create(&tournament_map, ping_pong, &tournament_state, &name_state, &name_chunk_state);
-    tournament_create(&tournament_map, machiavelli, &tournament_state, &name_state, &name_chunk_state);
+    tournament_create(&tournament_map, ping_pong, &registration_state, &name_state, &name_chunk_state);
+    tournament_create(&tournament_map, machiavelli, &registration_state, &name_state, &name_chunk_state);
 
-    player_enroll(&player_map, &tournament_map, riccardo, ping_pong,
-        &player_state, &tournament_state, &name_state, &name_chunk_state);
-
-    player_enroll(&player_map, &tournament_map, giulio, ping_pong,
-        &player_state, &tournament_state, &name_state, &name_chunk_state);
-
-    player_enroll(&player_map, &tournament_map, riccardo, machiavelli,
-        &player_state, &tournament_state, &name_state, &name_chunk_state);
+    player_enroll(&player_map, &tournament_map, riccardo, ping_pong, &name_state, &name_chunk_state);
+    player_enroll(&player_map, &tournament_map, giulio, ping_pong, &name_state, &name_chunk_state);
+    player_enroll(&player_map, &tournament_map, riccardo, machiavelli, &name_state, &name_chunk_state);
 
 
     ////////////////////////////////////////////////////////////////
@@ -142,7 +78,7 @@ main(void) {
     String playerStrOutput = {.len = 0, .str = arena_push(arena_permanent, strLenMax)};
     String playerStrUser = {.len = 0, .str = arena_push(arena_permanent, strLenMax)};
 
-    addPlayerTextBoxData = (TextBoxData) {
+    TextBoxData addPlayerTextBoxData = (TextBoxData) {
         .strLenMax = strLenMax,
         .cursorFrequency = 40,
         .frameCounter = 40,
@@ -159,7 +95,7 @@ main(void) {
     String tournamentStrOutput = {.len = 0, .str = arena_push(arena_permanent, strLenMax)};
     String tournamentStrUser = {.len = 0, .str = arena_push(arena_permanent, strLenMax)};
 
-    addTournamentTextBoxData = (TextBoxData) {
+    TextBoxData addTournamentTextBoxData = (TextBoxData) {
         .strLenMax = strLenMax,
         .cursorFrequency = 40,
         .frameCounter = 40,
@@ -181,8 +117,7 @@ main(void) {
         .arena_permanent = arena_permanent,
         .player_map = &player_map,
         .tournament_map = &tournament_map,
-        .player_state = &player_state,
-        .tournament_state = &tournament_state,
+        .registration_state = &registration_state,
         .name_state = &name_state,
         .name_chunk_state = &name_chunk_state,
         .addPlayerTextBoxData = addPlayerTextBoxData,
@@ -201,7 +136,6 @@ main(void) {
         Clay_SetPointerState((Clay_Vector2) { mousePosition.x, mousePosition.y }, IsMouseButtonDown(0));
         Clay_UpdateScrollContainers(false, (Clay_Vector2) { scrollDelta.x, scrollDelta.y }, GetFrameTime());
 
-
         Clay_ElementId addPlayerTextBoxId = Clay_GetElementId(addPlayerTextBoxStr);
         Clay_ElementId addTournamentTextBoxId = Clay_GetElementId(addTournamentTextBoxStr);
         if (Clay_PointerOver(addPlayerTextBoxId) || Clay_PointerOver(addTournamentTextBoxId)) {
@@ -211,8 +145,8 @@ main(void) {
             SetMouseCursor(MOUSE_CURSOR_ARROW);
         }
 
-        HelperTextBox(&layoutData, &layoutData.addPlayerTextBoxData, addPlayerTextBoxStr);
-        HelperTextBox(&layoutData, &layoutData.addTournamentTextBoxData, addTournamentTextBoxStr);
+        HelperTextBox(&layoutData.addPlayerTextBoxData, addPlayerTextBoxStr);
+        HelperTextBox(&layoutData.addTournamentTextBoxData, addTournamentTextBoxStr);
 
         Clay_RenderCommandArray renderCommands = GetLayout(&layoutData);
 

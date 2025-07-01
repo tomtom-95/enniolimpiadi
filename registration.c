@@ -216,4 +216,87 @@ list_registrations(Arena *arena, RegistrationMap *registration_map) {
     return string_list;
 }
 
+StringList
+list_registrations_by_str(Arena *arena, RegistrationMap *registration_map, String str) {
+    // list all the Registration that str is registered to
+    // e.g. when 'registration_map' is the players map and 'str' is a player name
+    // the function returs a list of all the tournaments the player is enrolled into
+
+    Temp temp = scratch_get(0, 0);
+
+    NameState temp_name_state = { .arena = temp.arena, .first_free = NULL };
+    NameChunkState temp_name_chunk_state = { .arena = temp.arena, .first_free = NULL };
+    Name *name = name_alloc(str, &temp_name_state, &temp_name_chunk_state);
+
+    Registration *registration = registration_find(registration_map, str);
+    while (!name_cmp(registration->registration_name, name)) {
+        registration = registration->next;
+    }
+
+    StringList string_list = {0};
+    Name *linkname = registration->registration_list.first_name;
+    while (linkname) {
+        String linkstr = push_string_from_name(arena, *linkname);
+        string_list_push(arena, &string_list, linkstr);
+        linkname = linkname->next;
+    }
+
+    scratch_release(temp);
+
+    return string_list;
+}
+
+StringList
+list_missing_registration_by_str_(Arena *arena, RegistrationMap *primary_map,
+    RegistrationMap *link_map, String str)
+{
+    // e.g. when str is a player name, list all the tournament the player is NOT enrolled into
+    StringList result = {0};
+    StringList link_registration_all = list_registrations(arena, link_map);
+    StringList link_registration_partial = list_registrations_by_str(arena, primary_map, str); 
+
+    StringNode *linkstr = link_registration_all.head;
+    bool found = false;
+    while (linkstr) {
+        StringNode *linkstrpartial = link_registration_partial.head;
+
+        while (linkstrpartial) {
+            if (string_cmp(linkstr->str, linkstrpartial->str)) {
+                found = true;
+                break;
+            }
+            else {
+                linkstrpartial = linkstrpartial->next;
+            }
+        }
+
+        if (!found) {
+            string_list_push(arena, &result, linkstr->str);
+        }
+
+        found = false;
+        linkstr = linkstr->next;
+    }
+
+    return result;
+}
+
+StringList
+list_missing_tournaments_by_str(Arena *arena, RegistrationMap *player_map,
+    RegistrationMap *tournament_map, String str_player_name)
+{
+    // list all the tournaments the str_player_name is NOT enrolled into
+    StringList result = list_missing_registration_by_str_(arena, player_map, tournament_map, str_player_name);
+    return result;
+}
+
+StringList
+list_missing_players_by_str(Arena *arena, RegistrationMap *player_map,
+    RegistrationMap *tournament_map, String str_tournament_name)
+{
+    // list all the players that are NOT enrolled into str_tournament_name
+    StringList result = list_missing_registration_by_str_(arena, tournament_map, player_map, str_tournament_name);
+    return result;
+}
+
 #endif // REGISTRATION_C

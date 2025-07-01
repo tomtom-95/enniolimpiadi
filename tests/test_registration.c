@@ -40,8 +40,15 @@ int main(void) {
     registration_create(&tournament_map, machiavelli, &registration_state, &name_state, &name_chunk_state);
 
     player_enroll(&player_map, &tournament_map, riccardo, ping_pong, &name_state, &name_chunk_state);
-    player_enroll(&player_map, &tournament_map, giulio, ping_pong, &name_state, &name_chunk_state);
+    // player_enroll(&player_map, &tournament_map, giulio, ping_pong, &name_state, &name_chunk_state);
 
     player_delete(&player_map, &tournament_map, riccardo, &registration_state, &name_state, &name_chunk_state);
     player_rename(&player_map, &tournament_map, &giulio, &newgiulio, &name_state, &name_chunk_state);
+
+    Temp temp = scratch_get(0, 0);
+
+    StringList newgiuliolist = list_missing_tournaments_by_str(temp.arena, &player_map, &tournament_map, newgiulio);
+    StringList missing_players = list_missing_players_by_str(temp.arena, &player_map, &tournament_map, ping_pong);
+
+    scratch_release(temp);
 }
