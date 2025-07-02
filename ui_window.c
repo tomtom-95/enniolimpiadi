@@ -505,6 +505,7 @@ LayoutTournamentsWindow(void) {
             .backgroundColor = Clay_Hovered() ? gray_lighter : gray_light,
             .cornerRadius = CLAY_CORNER_RADIUS(5)
         }) {
+            // NOTE: node is not actually used
             Clay_OnHover(HandleTournamentSelection, (intptr_t)node);
             CLAY({
                 .layout = {
