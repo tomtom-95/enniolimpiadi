@@ -142,13 +142,30 @@ void
 player_enroll(RegistrationMap *player_map, RegistrationMap *tournament_map, String str_player_name,
     String str_tournament_name, NameState *name_state, NameChunkState *name_chunk_state)
 {
-    Registration *player = registration_find(player_map, str_player_name);
-    assert(!namelist_find(&player->registration_list, str_tournament_name));
+    registration_enroll_(player_map, tournament_map, str_player_name,
+        str_tournament_name, name_state, name_chunk_state);
+}
 
-    Registration *tournament = registration_find(tournament_map, str_tournament_name);
+void
+tournament_enroll(RegistrationMap *player_map, RegistrationMap *tournament_map, String str_player_name,
+    String str_tournament_name, NameState *name_state, NameChunkState *name_chunk_state)
+{
+    registration_enroll_(tournament_map, player_map, str_tournament_name,
+        str_player_name, name_state, name_chunk_state);
+}
 
-    namelist_append_left(&player->registration_list, str_tournament_name, name_state, name_chunk_state);
-    namelist_append_right(&tournament->registration_list, str_player_name, name_state, name_chunk_state);
+void
+registration_enroll_(RegistrationMap *primary_map, RegistrationMap *link_map, String primary_str,
+    String link_str, NameState *name_state, NameChunkState *name_chunk_state)
+{
+    Registration *primary_registration = registration_find(primary_map, primary_str);
+    assert(!namelist_find(&primary_registration->registration_list, link_str));
+
+    Registration *link_registration = registration_find(link_map, link_str);
+    assert(link_registration);
+
+    namelist_append_left(&primary_registration->registration_list, link_str, name_state, name_chunk_state);
+    namelist_append_left(&link_registration->registration_list, primary_str, name_state, name_chunk_state);
 }
 
 void
@@ -160,6 +177,17 @@ player_withdraw(RegistrationMap *player_map, RegistrationMap *tournament_map, St
 
     namelist_pop_by_string(&player->registration_list, str_tournament_name, name_state, name_chunk_state);
     namelist_pop_by_string(&tournament->registration_list, str_player_name, name_state, name_chunk_state);
+}
+
+void
+registration_withdraw_(RegistrationMap *primary_map, RegistrationMap *link_map, String primary_str,
+    String link_str, NameState *name_state, NameChunkState *name_chunk_state)
+{
+    Registration *primary_registration = registration_find(primary_map, primary_str);
+    Registration *link_registration = registration_find(link_map, link_str);
+
+    namelist_pop_by_string(&primary_registration->registration_list, link_str, name_state, name_chunk_state);
+    namelist_pop_by_string(&link_registration->registration_list, primary_str, name_state, name_chunk_state);
 }
 
 void

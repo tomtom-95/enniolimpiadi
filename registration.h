@@ -42,8 +42,24 @@ registration_create(RegistrationMap *registration_map, String str, RegistrationS
     NameState *name_state, NameChunkState *name_chunk_state);
 
 void
+registration_enroll_(RegistrationMap *primary_map, RegistrationMap *link_map, String primary_str,
+    String link_str, NameState *name_state, NameChunkState *name_chunk_state);
+
+void
 registration_delete_(RegistrationMap *primary_map, RegistrationMap *link_map, String str,
     RegistrationState *registration_state, NameState *name_state, NameChunkState *name_chunk_state);
+
+void
+registration_withdraw_(RegistrationMap *primary_map, RegistrationMap *link_map, String primary_str,
+    String link_str, NameState *name_state, NameChunkState *name_chunk_state);
+
+void
+player_enroll(RegistrationMap *player_map, RegistrationMap *tournament_map, String str_player_name,
+    String str_tournament_name, NameState *name_state, NameChunkState *name_chunk_state);
+
+void
+player_withdraw(RegistrationMap *player_map, RegistrationMap *tournament_map, String str_player_name,
+    String str_tournament_name, NameState *name_state, NameChunkState *name_chunk_state);
 
 void
 player_delete(RegistrationMap *player_map, RegistrationMap *tournament_map, String player_name,
@@ -54,11 +70,7 @@ tournament_delete(RegistrationMap *player_map, RegistrationMap *tournament_map, 
     RegistrationState *registration_state, NameState *name_state, NameChunkState *name_chunk_state);
 
 void
-player_enroll(RegistrationMap *player_map, RegistrationMap *tournament_map, String str_player_name,
-    String str_tournament_name, NameState *name_state, NameChunkState *name_chunk_state);
-
-void
-player_withdraw(RegistrationMap *player_map, RegistrationMap *tournament_map, String str_player_name,
+tournament_enroll(RegistrationMap *player_map, RegistrationMap *tournament_map, String str_player_name,
     String str_tournament_name, NameState *name_state, NameChunkState *name_chunk_state);
 
 StringList
