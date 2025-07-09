@@ -92,6 +92,7 @@ typedef struct {
 const int FONT_ID_BODY_16 = 0;
 Font fonts[1];
 
+Clay_Color black = {0, 0, 0, 255};
 Clay_Color white = {255, 255, 255, 255};
 
 Clay_Color blue = {33, 31, 41, 255};
@@ -103,6 +104,8 @@ Clay_Color gray_lighter = {160, 160, 160, 255};
 
 Clay_Color violet = {120, 90, 210, 255};
 Clay_Color violet_light = {140, 110, 230, 255};
+
+Clay_Color yellow = {255, 255, 0, 255};
 
 Clay_Sizing layoutExpand = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0) };
 
