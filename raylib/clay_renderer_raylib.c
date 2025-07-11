@@ -1,3 +1,6 @@
+#ifndef CLAY_RENDERER_RAYLIB
+#define CLAY_RENDERER_RAYLIB
+
 #include "raylib.h"
 #include "raymath.h"
 #include "stdint.h"
@@ -27,9 +30,9 @@ Camera Raylib_camera;
 
 // Get a ray trace from the screen position (i.e mouse) within a specific section of the screen
 Ray
-GetScreenToWorldPointWithZDistance(
-    Vector2 position, Camera camera, int screenWidth, int screenHeight, float zDistance
-) {
+GetScreenToWorldPointWithZDistance(Vector2 position, Camera camera,
+    int screenWidth, int screenHeight, float zDistance)
+{
     Ray ray = { 0 };
 
     // Calculate normalized device coordinates
@@ -393,3 +396,5 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
         }
     }
 }
+
+#endif

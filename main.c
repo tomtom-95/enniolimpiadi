@@ -11,6 +11,7 @@
 #include "utils.c"
 #include "registration.c"
 #include "names.c"
+#include "drawing.c"
 
 int
 main(void) {
@@ -48,7 +49,14 @@ main(void) {
     String giulio = string_from_cstring_lit("Giulio");
     String riccardo = string_from_cstring_lit("Riccardo");
     String mario = string_from_cstring_lit("Mario");
-    String newriccardo = string_from_cstring_lit("New Riccardo");
+    String persona1 = string_from_cstring_lit("Persona1");
+    String persona2 = string_from_cstring_lit("Persona2");
+    String persona3 = string_from_cstring_lit("Persona3");
+    String persona4 = string_from_cstring_lit("Persona4");
+    String persona5 = string_from_cstring_lit("Persona5");
+    String persona6 = string_from_cstring_lit("Persona6");
+    String persona7 = string_from_cstring_lit("Persona7");
+    String persona8 = string_from_cstring_lit("Persona8");
 
     String ping_pong = string_from_cstring_lit("Ping Pong");
     String machiavelli = string_from_cstring_lit("Machiavelli");
@@ -62,11 +70,31 @@ main(void) {
     registration_create(&player_map, giulio, &registration_state, &name_state, &name_chunk_state);
     registration_create(&player_map, mario, &registration_state, &name_state, &name_chunk_state);
 
+    registration_create(&player_map, persona1, &registration_state, &name_state, &name_chunk_state);
+    registration_create(&player_map, persona2, &registration_state, &name_state, &name_chunk_state);
+    registration_create(&player_map, persona3, &registration_state, &name_state, &name_chunk_state);
+    registration_create(&player_map, persona4, &registration_state, &name_state, &name_chunk_state);
+    registration_create(&player_map, persona5, &registration_state, &name_state, &name_chunk_state);
+    registration_create(&player_map, persona6, &registration_state, &name_state, &name_chunk_state);
+    registration_create(&player_map, persona7, &registration_state, &name_state, &name_chunk_state);
+    registration_create(&player_map, persona8, &registration_state, &name_state, &name_chunk_state);
+
     registration_create(&tournament_map, ping_pong, &registration_state, &name_state, &name_chunk_state);
     registration_create(&tournament_map, machiavelli, &registration_state, &name_state, &name_chunk_state);
 
     player_enroll(&player_map, &tournament_map, riccardo, ping_pong, &name_state, &name_chunk_state);
     player_enroll(&player_map, &tournament_map, giulio, ping_pong, &name_state, &name_chunk_state);
+    player_enroll(&player_map, &tournament_map, mario, ping_pong, &name_state, &name_chunk_state);
+
+    player_enroll(&player_map, &tournament_map, persona1, ping_pong, &name_state, &name_chunk_state);
+    player_enroll(&player_map, &tournament_map, persona2, ping_pong, &name_state, &name_chunk_state);
+    player_enroll(&player_map, &tournament_map, persona3, ping_pong, &name_state, &name_chunk_state);
+    player_enroll(&player_map, &tournament_map, persona4, ping_pong, &name_state, &name_chunk_state);
+    player_enroll(&player_map, &tournament_map, persona5, ping_pong, &name_state, &name_chunk_state);
+    // player_enroll(&player_map, &tournament_map, persona6, ping_pong, &name_state, &name_chunk_state);
+    // player_enroll(&player_map, &tournament_map, persona7, ping_pong, &name_state, &name_chunk_state);
+    // player_enroll(&player_map, &tournament_map, persona8, ping_pong, &name_state, &name_chunk_state);
+
     player_enroll(&player_map, &tournament_map, riccardo, machiavelli, &name_state, &name_chunk_state);
 
 
@@ -153,6 +181,10 @@ main(void) {
         BeginDrawing();
         ClearBackground(BLACK);
         Clay_Raylib_Render(renderCommands, fonts, layoutData);
+
+        // TODO: for now hardcoded for the 9 players in the ping pong tournament
+        DrawBezierCurves(8); 
+
         EndDrawing();
     }
 

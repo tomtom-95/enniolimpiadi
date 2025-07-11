@@ -26,6 +26,7 @@
         "vector": "c",
         "complex": "c",
         "cctype": "c",
-        "registration.h": "c"
+        "registration.h": "c",
+        "utils.h": "c"
     }
 }

@@ -214,8 +214,18 @@ HandlePlayerSelection(Clay_ElementId element_id, Clay_PointerData pointer_data, 
 void
 HandleTournamentSelection(Clay_ElementId element_id, Clay_PointerData pointer_data, intptr_t data) {
     String *tournament_string = (String *)data;
-    if (pointer_data.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+
+    if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
         layoutData.last_element_clicked = element_id;
+    }
+
+    if (pointer_data.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        if (layoutData.selectedTournamentChart) {
+            name_delete(layoutData.selectedTournamentChart, layoutData.name_state, layoutData.name_chunk_state);
+        }
+        layoutData.selectedTournamentChart = (
+            name_alloc(*tournament_string, layoutData.name_state, layoutData.name_chunk_state)
+        );
     }
 }
 

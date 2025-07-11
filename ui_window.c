@@ -498,42 +498,26 @@ LayoutPlayersWindow(void) {
     }
 }
 
-// void
-// LayoutCouple(void) {
-//     CLAY({
-//         .layout = {
-//             .sizing = { .width = CLAY_SIZING_GROW(0), .height = 20 },
-//             .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER},
-//         },
-//         .backgroundColor = yellow,
-//         .cornerRadius = CLAY_CORNER_RADIUS(8),
-//     }) {
-//         CLAY_TEXT(CLAY_STRING("tusorella1"), CLAY_TEXT_CONFIG({
-//             .fontId = FONT_ID_BODY_16,
-//             .fontSize = 16,
-//             .textColor = black
-//         }));
-//     }
-//     CLAY({.layout = {.sizing = layoutExpand}}) {}
-//     CLAY({
-//         .layout = {
-//             .sizing = { .width = CLAY_SIZING_GROW(0), .height = 20 },
-//             .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER},
-//         },
-//         .backgroundColor = yellow,
-//         .cornerRadius = CLAY_CORNER_RADIUS(8),
-//     }) {
-//         CLAY_TEXT(CLAY_STRING("tusorella2"), CLAY_TEXT_CONFIG({
-//             .fontId = FONT_ID_BODY_16,
-//             .fontSize = 16,
-//             .textColor = black
-//         }));
-//     }
-// }
-
 void
-LayoutSingle(void) {
+LayoutPlayerBoxTournamentChart(String str, u32 round, u32 num) {
+    String str_label = string_from_cstring_lit("label");
+    String str_underscore = string_from_cstring_lit("_");
+
+    String *str_round = arena_push(layoutData.arena_frame, sizeof(String));
+    str_round->str = arena_push(layoutData.arena_frame, 11);
+    str_round->len = snprintf(str_round->str, 11, "%u", round);
+
+    String *str_num = arena_push(layoutData.arena_frame, sizeof(String));
+    str_num->str = arena_push(layoutData.arena_frame, 11);
+    str_num->len = snprintf(str_num->str, 11, "%u", num);
+
+    String tmp0 = string_cat(layoutData.arena_frame, str_label, str_underscore);
+    String tmp1 = string_cat(layoutData.arena_frame, tmp0, *str_round);
+    String tmp2 = string_cat(layoutData.arena_frame, tmp1, str_underscore);
+    String final = string_cat(layoutData.arena_frame, tmp2, *str_num);
+
     CLAY({
+        .id = CLAY_SID(Clay_String_from_String(final)),
         .layout = {
             .sizing = { .width = CLAY_SIZING_GROW(0), .height = 20 },
             .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER},
@@ -541,26 +525,112 @@ LayoutSingle(void) {
         .backgroundColor = yellow,
         .cornerRadius = CLAY_CORNER_RADIUS(8),
     }) {
-        CLAY_TEXT(CLAY_STRING("winner"), CLAY_TEXT_CONFIG({
-            .fontId = FONT_ID_BODY_16,
-            .fontSize = 16,
-            .textColor = black
-        }));
+        if (str.len != 0) {
+            Clay_String clay_str = Clay_String_from_String(str);
+            CLAY_TEXT(clay_str, CLAY_TEXT_CONFIG({
+                .fontId = FONT_ID_BODY_16,
+                .fontSize = 16,
+                .textColor = black
+            }));
+        }
     }
 }
 
 void
-LayoutTurn(int playersNum) {
-    while (playersNum > 0) {
-        CLAY({.layout = {.sizing = layoutExpand}}) {}
-        LayoutSingle();
-        CLAY({.layout = {.sizing = layoutExpand}}) {}
-        --playersNum;
+LayoutRounds(StringList players)
+{
+    StringNode *str_node_player = players.head;
+    u32 playersNum = players.len;
+
+    u32 power_of_two = flp2(playersNum);
+    u32 remainder = (playersNum - power_of_two) * 2;
+    u32 tmp = 2 * power_of_two;
+
+    if (playersNum != power_of_two) {
+        // Layout of the first turn
+        CLAY({
+            .layout = {
+                .sizing = layoutExpand,
+                .layoutDirection = CLAY_TOP_TO_BOTTOM,
+            },
+        }) {
+            while (tmp > remainder) {
+                CLAY({.layout = {.sizing = layoutExpand}}) {}
+                CLAY({
+                    .layout = {
+                        .sizing = { .width = CLAY_SIZING_GROW(0), .height = 20 },
+                        .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER},
+                    },
+                    .backgroundColor = black,
+                    .cornerRadius = CLAY_CORNER_RADIUS(8),
+                }) {}
+                CLAY({.layout = {.sizing = layoutExpand}}) {}
+                --tmp;
+            }
+
+            while (tmp) {
+                CLAY({.layout = {.sizing = layoutExpand}}) {}
+                LayoutPlayerBoxTournamentChart(str_node_player->str, 0, tmp);
+                CLAY({.layout = {.sizing = layoutExpand}}) {}
+                --tmp;
+                str_node_player = str_node_player->next;
+            }
+        }
     }
-} 
+
+    // Layout of all the other turns
+    u32 round = 0;
+    while (power_of_two) {
+        ++round;
+        CLAY({
+            .layout = {
+                .sizing = layoutExpand,
+                .layoutDirection = CLAY_TOP_TO_BOTTOM,
+            },
+        }) {
+            u32 tmp = power_of_two;
+            while (tmp > 0) {
+                CLAY({.layout = {.sizing = layoutExpand}}) {}
+                if (str_node_player) {
+                    LayoutPlayerBoxTournamentChart(str_node_player->str, round, tmp);
+                    str_node_player = str_node_player->next;
+                }
+                else {
+                    LayoutPlayerBoxTournamentChart(string_from_lit_comp(""), round, tmp);
+                }
+                CLAY({.layout = {.sizing = layoutExpand}}) {}
+                --tmp;
+            }
+            power_of_two = power_of_two / 2;
+        }
+    }
+}
 
 void
-LayoutTournamentsWindow(void) {
+LayoutTournamentChart(Name *tournament_name)
+{
+    CLAY({
+        .id = CLAY_ID("TournamentChart"),
+        .layout = {
+            .sizing = layoutExpand,
+            .layoutDirection = CLAY_LEFT_TO_RIGHT,
+            .childGap = 32
+        },
+        .backgroundColor = violet,
+    }) {
+        // Retrieve all the players that are enrolled to the tournament
+        String str_tournament_name = push_string_from_name(layoutData.arena_frame, *tournament_name);
+        StringList players = (
+            list_registrations_by_str(layoutData.arena_frame, layoutData.tournament_map, str_tournament_name)
+        );
+
+        LayoutRounds(players);
+    }
+}
+
+void
+LayoutTournamentsWindow(void)
+{
     StringList string_list = list_registrations(layoutData.arena_frame, layoutData.tournament_map);
     StringNode *node = string_list.head;
     CLAY({
@@ -609,59 +679,8 @@ LayoutTournamentsWindow(void) {
                 node = node->next;
             }
         }
-        CLAY({
-            .id = CLAY_ID("TournamentGraphic"),
-            .layout = {
-                .sizing = layoutExpand,
-                .layoutDirection = CLAY_LEFT_TO_RIGHT,
-                .childGap = 32
-            },
-            .backgroundColor = violet,
-        }) {
-            u32 startPlayerNum = 7;
-            u32 power_of_two = flp2(startPlayerNum);
-            u32 remainder = (startPlayerNum - power_of_two) * 2;
-
-            CLAY({
-                .layout = {
-                    .sizing = layoutExpand,
-                    .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                },
-            }) {
-                u32 tmp = 2 * power_of_two;
-                while (tmp) {
-                    if (tmp > remainder) {
-                        CLAY({.layout = {.sizing = layoutExpand}}) {}
-                        CLAY({
-                            .layout = {
-                                .sizing = { .width = CLAY_SIZING_GROW(0), .height = 20 },
-                                .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER},
-                            },
-                            .backgroundColor = black,
-                            .cornerRadius = CLAY_CORNER_RADIUS(8),
-                        }) {}
-                        CLAY({.layout = {.sizing = layoutExpand}}) {}
-                    }
-                    else {
-                        CLAY({.layout = {.sizing = layoutExpand}}) {}
-                        LayoutSingle();
-                        CLAY({.layout = {.sizing = layoutExpand}}) {}
-                    }
-                    --tmp;
-                }
-                CLAY({.layout = {.sizing = layoutExpand}}) {}
-            }
-            while (power_of_two) {
-                CLAY({
-                    .layout = {
-                        .sizing = layoutExpand,
-                        .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                    },
-                }) {
-                    LayoutTurn(power_of_two);
-                    power_of_two = power_of_two / 2;
-                }
-            }
+        if (layoutData.selectedTournamentChart) {
+            LayoutTournamentChart(layoutData.selectedTournamentChart);
         }
     }
 }

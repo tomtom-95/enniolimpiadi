@@ -50,6 +50,7 @@ typedef struct {
     Tab tab;
     String feedbackOnAddPlayerButton;
     String feedbackOnAddTournamentButton;
+    Name *selectedTournamentChart;
     TextBoxData addPlayerTextBoxData;
     TextBoxData addTournamentTextBoxData;
     Clay_ElementId last_element_clicked;
