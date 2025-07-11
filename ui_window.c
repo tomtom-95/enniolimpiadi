@@ -498,37 +498,38 @@ LayoutPlayersWindow(void) {
     }
 }
 
-void
-LayoutCouple(void) {
-    CLAY({
-        .layout = {
-            .sizing = { .width = CLAY_SIZING_GROW(0), .height = 20 },
-            .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER},
-        },
-        .backgroundColor = yellow,
-        .cornerRadius = CLAY_CORNER_RADIUS(8),
-    }) {
-        CLAY_TEXT(CLAY_STRING("tusorella1"), CLAY_TEXT_CONFIG({
-            .fontId = FONT_ID_BODY_16,
-            .fontSize = 16,
-            .textColor = black
-        }));
-    }
-    CLAY({
-        .layout = {
-            .sizing = { .width = CLAY_SIZING_GROW(0), .height = 20 },
-            .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER},
-        },
-        .backgroundColor = yellow,
-        .cornerRadius = CLAY_CORNER_RADIUS(8),
-    }) {
-        CLAY_TEXT(CLAY_STRING("tusorella2"), CLAY_TEXT_CONFIG({
-            .fontId = FONT_ID_BODY_16,
-            .fontSize = 16,
-            .textColor = black
-        }));
-    }
-}
+// void
+// LayoutCouple(void) {
+//     CLAY({
+//         .layout = {
+//             .sizing = { .width = CLAY_SIZING_GROW(0), .height = 20 },
+//             .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER},
+//         },
+//         .backgroundColor = yellow,
+//         .cornerRadius = CLAY_CORNER_RADIUS(8),
+//     }) {
+//         CLAY_TEXT(CLAY_STRING("tusorella1"), CLAY_TEXT_CONFIG({
+//             .fontId = FONT_ID_BODY_16,
+//             .fontSize = 16,
+//             .textColor = black
+//         }));
+//     }
+//     CLAY({.layout = {.sizing = layoutExpand}}) {}
+//     CLAY({
+//         .layout = {
+//             .sizing = { .width = CLAY_SIZING_GROW(0), .height = 20 },
+//             .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER},
+//         },
+//         .backgroundColor = yellow,
+//         .cornerRadius = CLAY_CORNER_RADIUS(8),
+//     }) {
+//         CLAY_TEXT(CLAY_STRING("tusorella2"), CLAY_TEXT_CONFIG({
+//             .fontId = FONT_ID_BODY_16,
+//             .fontSize = 16,
+//             .textColor = black
+//         }));
+//     }
+// }
 
 void
 LayoutSingle(void) {
@@ -540,7 +541,7 @@ LayoutSingle(void) {
         .backgroundColor = yellow,
         .cornerRadius = CLAY_CORNER_RADIUS(8),
     }) {
-        CLAY_TEXT(CLAY_STRING("tusorellavincitrice"), CLAY_TEXT_CONFIG({
+        CLAY_TEXT(CLAY_STRING("winner"), CLAY_TEXT_CONFIG({
             .fontId = FONT_ID_BODY_16,
             .fontSize = 16,
             .textColor = black
@@ -551,23 +552,10 @@ LayoutSingle(void) {
 void
 LayoutTurn(int playersNum) {
     while (playersNum > 0) {
-        CLAY({
-            .layout = {
-                .sizing = layoutExpand
-            }
-        }) {}
-        if (playersNum == 1) {
-            LayoutSingle();
-        }
-        else {
-            LayoutCouple();
-        }
-        CLAY({
-            .layout = {
-                .sizing = layoutExpand
-            }
-        }) {}
-        playersNum -= 2;
+        CLAY({.layout = {.sizing = layoutExpand}}) {}
+        LayoutSingle();
+        CLAY({.layout = {.sizing = layoutExpand}}) {}
+        --playersNum;
     }
 } 
 
@@ -630,21 +618,48 @@ LayoutTournamentsWindow(void) {
             },
             .backgroundColor = violet,
         }) {
-            int startPlayerNum = 16;
-            while (startPlayerNum) {
+            u32 startPlayerNum = 7;
+            u32 power_of_two = flp2(startPlayerNum);
+            u32 remainder = (startPlayerNum - power_of_two) * 2;
+
+            CLAY({
+                .layout = {
+                    .sizing = layoutExpand,
+                    .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                },
+            }) {
+                u32 tmp = 2 * power_of_two;
+                while (tmp) {
+                    if (tmp > remainder) {
+                        CLAY({.layout = {.sizing = layoutExpand}}) {}
+                        CLAY({
+                            .layout = {
+                                .sizing = { .width = CLAY_SIZING_GROW(0), .height = 20 },
+                                .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER},
+                            },
+                            .backgroundColor = black,
+                            .cornerRadius = CLAY_CORNER_RADIUS(8),
+                        }) {}
+                        CLAY({.layout = {.sizing = layoutExpand}}) {}
+                    }
+                    else {
+                        CLAY({.layout = {.sizing = layoutExpand}}) {}
+                        LayoutSingle();
+                        CLAY({.layout = {.sizing = layoutExpand}}) {}
+                    }
+                    --tmp;
+                }
+                CLAY({.layout = {.sizing = layoutExpand}}) {}
+            }
+            while (power_of_two) {
                 CLAY({
                     .layout = {
                         .sizing = layoutExpand,
                         .layoutDirection = CLAY_TOP_TO_BOTTOM,
                     },
                 }) {
-                    LayoutTurn(startPlayerNum);
-                }
-                if (startPlayerNum == 1) {
-                    break;
-                }
-                else {
-                    startPlayerNum = startPlayerNum / 2 + startPlayerNum % 2;
+                    LayoutTurn(power_of_two);
+                    power_of_two = power_of_two / 2;
                 }
             }
         }
