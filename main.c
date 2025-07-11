@@ -91,8 +91,8 @@ main(void) {
     player_enroll(&player_map, &tournament_map, persona3, ping_pong, &name_state, &name_chunk_state);
     player_enroll(&player_map, &tournament_map, persona4, ping_pong, &name_state, &name_chunk_state);
     player_enroll(&player_map, &tournament_map, persona5, ping_pong, &name_state, &name_chunk_state);
-    // player_enroll(&player_map, &tournament_map, persona6, ping_pong, &name_state, &name_chunk_state);
-    // player_enroll(&player_map, &tournament_map, persona7, ping_pong, &name_state, &name_chunk_state);
+    player_enroll(&player_map, &tournament_map, persona6, ping_pong, &name_state, &name_chunk_state);
+    player_enroll(&player_map, &tournament_map, persona7, ping_pong, &name_state, &name_chunk_state);
     // player_enroll(&player_map, &tournament_map, persona8, ping_pong, &name_state, &name_chunk_state);
 
     player_enroll(&player_map, &tournament_map, riccardo, machiavelli, &name_state, &name_chunk_state);
@@ -182,8 +182,7 @@ main(void) {
         ClearBackground(BLACK);
         Clay_Raylib_Render(renderCommands, fonts, layoutData);
 
-        // TODO: for now hardcoded for the 9 players in the ping pong tournament
-        DrawBezierCurves(8); 
+        DrawBezierCurves(10); 
 
         EndDrawing();
     }
