@@ -1,11 +1,14 @@
 #!/bin/bash
+set -x
 
 SRC="main.c"
 SRC_BUGTEST="bugtest.c"
+SRC_BUGTEST2="bugtest2.c"
 
 OUT_DIR="build"
 OUT="$OUT_DIR/enniolimpiadi"
 OUT_BUGTEST="$OUT_DIR/bugtest"
+OUT_BUGTEST2="$OUT_DIR/bugtest2"
 
 # -Werror?
 CFLAGS="-fcolor-diagnostics -fansi-escape-codes -fsanitize=address -std=c99 -Wall -Wconversion -pedantic -g -O0"
@@ -16,7 +19,8 @@ show_help() {
     echo "Usage: $0 [main|bugtest|clean]"
     echo
     echo "  enniolimpiadi    Compile main.c -> $OUT"
-    echo "  bugtest          Compile bugtest.c -> $OUT_BUGTEST"
+    echo "  bugtest          Compile bugtest.c  -> $OUT_BUGTEST"
+    echo "  bugtest2         Compile bugtest2.c -> $OUT_BUGTEST2"
     echo "  testnames        Compile tests/test_names.c -> build/test_names"
     echo "  teststring       Compile tests/test_string.c -> build/test_string"
     echo "  testregistration Compile tests/test_registration.c -> build/test_registration"
@@ -55,6 +59,10 @@ case "$1" in
     bugtest)
         echo "Compiling $SRC_BUGTEST -> $OUT_BUGTEST"
         clang $CFLAGS $SRC_BUGTEST -o $OUT_BUGTEST $PKG_FLAGS
+        ;;
+    bugtest2)
+        echo "Compiling $SRC_BUGTEST2 -> $OUT_BUGTEST2"
+        clang $CFLAGS $SRC_BUGTEST2 -o $OUT_BUGTEST2
         ;;
     testnames)
         echo "Compiling tests/test_names.c -> $OUT_DIR/test_names"

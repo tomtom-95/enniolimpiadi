@@ -64,6 +64,89 @@ GetLayout(void)
 }
 
 void
+LayoutPlayerBox(u32 idx, String str)
+{
+    CLAY({
+        .id = CLAY_IDI("playerchart", idx),
+        .layout = {
+            .sizing = { .width = CLAY_SIZING_FIT(100), .height = 20 },
+            .childAlignment = { .x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER },
+        },
+        .backgroundColor = white,
+        .cornerRadius = CLAY_CORNER_RADIUS(8),
+    }) {
+        CLAY_TEXT(Clay_String_from_String(str), CLAY_TEXT_CONFIG({
+            .fontId = FONT_ID_BODY_16,
+            .fontSize = 16,
+            .textColor = black
+        }));
+    }
+}
+
+void
+RecursiveLayout(u32 numPlayers, u32 idx)
+{
+    // if numPlayers is a power of two
+    if (numPlayers == 1) {
+        CLAY({
+            .layout = {
+                .sizing = { .width = CLAY_SIZING_PERCENT(1), .height = CLAY_SIZING_GROW(0) },
+                .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                .childAlignment = { .x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER },
+            },
+            .backgroundColor = yellow
+        }) {
+            String str = string_from_lit_comp("tusorella");
+            LayoutPlayerBox(idx, str);
+        }
+    }
+    else {
+        u32 v = numPlayers;      // 32-bit word input to count zero bits on right
+        u32 c = 32;              // c will be the number of zero bits on the right
+        v &= -(signed)(v);
+        if (v) c--;
+        if (v & 0x0000FFFF) c -= 16;
+        if (v & 0x00FF00FF) c -= 8;
+        if (v & 0x0F0F0F0F) c -= 4;
+        if (v & 0x33333333) c -= 2;
+        if (v & 0x55555555) c -= 1;
+
+        u32 panes = c + 1;
+
+        float left = 1 - 1 / (float)panes;
+        float right = 1 - left;
+        CLAY({
+            .layout = {
+                .sizing = layoutExpand, .layoutDirection = CLAY_LEFT_TO_RIGHT
+            },
+            .backgroundColor = blue_ligth
+        }) {
+            CLAY({
+                .layout = {
+                    .sizing = { .width = CLAY_SIZING_PERCENT(left), .height = CLAY_SIZING_GROW(0) },
+                    .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER}, 
+                    .layoutDirection = CLAY_TOP_TO_BOTTOM
+                },
+                .backgroundColor = yellow
+            }) {
+                RecursiveLayout(numPlayers / 2, 2 * idx + 1);
+                RecursiveLayout(numPlayers / 2, 2 * idx + 2);
+            }
+            CLAY({
+                .layout = {
+                    .sizing = { .width = CLAY_SIZING_PERCENT(right), .height = CLAY_SIZING_GROW(0) },
+                    .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                    .childAlignment = { .x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER },
+                },
+                .backgroundColor = yellow
+            }) {
+                LayoutPlayerBox(idx, string_from_lit_comp(""));
+            }
+        }
+    }
+}
+
+void
 LayoutFloatingEnrollList_(String string, RegistrationMap *primary_map, RegistrationMap *link_map)
 {
     CLAY({
@@ -454,9 +537,9 @@ LayoutAddTournamentWindow(LayoutData *layoutData) {
 }
 
 void
-LayoutPlayersWindow(void) {
+LayoutPlayersWindow(void)
+{
     StringList string_list = list_registrations(layoutData.arena_frame, layoutData.player_map);
-    StringNode *node = string_list.head;
     CLAY({
         .id = CLAY_ID("PlayerSidebar"),
         .layout = {
@@ -465,11 +548,10 @@ LayoutPlayersWindow(void) {
         },
         .backgroundColor = blue,
     }) {
-        while (node) {
-            String *string = &node->str;
-            Clay_String clay_string = Clay_String_from_String(node->str);
+        StringNode *node = string_list.head;
+        for (u32 playerIdx = 0; playerIdx < string_list.len; ++playerIdx) {
             CLAY({
-                .id = CLAY_SID(clay_string),
+                .id = CLAY_IDI("Player", playerIdx),
                 .layout = {
                     .sizing = { .width = CLAY_SIZING_FIT(200), .height = 0 },
                     .padding = CLAY_PADDING_ALL(12)
@@ -477,20 +559,23 @@ LayoutPlayersWindow(void) {
                 .backgroundColor = Clay_Hovered() ? gray_lighter : gray_light,
                 .cornerRadius = CLAY_CORNER_RADIUS(5)
             }) {
-                Clay_OnHover(HandlePlayerSelection, (intptr_t)&node->str);
+                Clay_OnHover(HandlePlayerSelection, (intptr_t)playerIdx);
                 CLAY({
                     .layout = {
-                        .sizing = { .width = CLAY_SIZING_FIT(150) },
-                    },
+                        .sizing = { .width = CLAY_SIZING_FIT(150) }
+                    }
                 }) {
-                    CLAY_TEXT(clay_string, CLAY_TEXT_CONFIG({
+                    CLAY_TEXT(Clay_String_from_String(node->str), CLAY_TEXT_CONFIG({
                         .fontId = FONT_ID_BODY_16,
                         .fontSize = 24,
                         .textColor = white
                     }));
-                    if (layoutData.last_element_clicked.id == CLAY_SID(clay_string).id) {
-                        LayoutPlayerFloatingMenu(*string, layoutData.player_map, layoutData.tournament_map);
+                    if (layoutData.clickedPlayerId.id == CLAY_IDI("Player", playerIdx).id) {
+                        LayoutPlayerFloatingMenu(node->str, layoutData.player_map, layoutData.tournament_map);
                     }
+                    // if (layoutData.playerIdx == playerIdx) {
+                    //     LayoutPlayerFloatingMenu(node->str, layoutData.player_map, layoutData.tournament_map);
+                    // }
                 }
             }
             node = node->next;
@@ -672,7 +757,8 @@ LayoutTournamentsWindow(void)
                             .textColor = white
                         }));
                         if (layoutData.last_element_clicked.id == CLAY_SID(clay_string).id) {
-                            LayoutTournamentFloatingMenu(node->str, layoutData.player_map, layoutData.tournament_map);
+                            LayoutTournamentFloatingMenu(node->str, layoutData.player_map,
+                                layoutData.tournament_map);
                         }
                     }
                 }
@@ -680,7 +766,9 @@ LayoutTournamentsWindow(void)
             }
         }
         if (layoutData.selectedTournamentChart) {
-            LayoutTournamentChart(layoutData.selectedTournamentChart);
+            u32 numPlayers = 8;
+            RecursiveLayout(numPlayers, 0);
+            // LayoutTournamentChart(layoutData.selectedTournamentChart);
         }
     }
 }

@@ -6,6 +6,7 @@
 
 #include "utils.c"
 
+
 String
 CreateLabelStr(Arena *arena, u32 round, u32 idx)
 {
@@ -73,22 +74,39 @@ BezierWrapper(u32 round, u32 num)
 }
 
 void
-DrawBezierCurves(u32 numPlayers) {
-    u32 roundsNum = GetRoundsNum(numPlayers);
+DrawBezierCurves(u32 num) {
+    for (u32 i = 0; i < num; ++i) {
+        Clay_ElementData el0 = Clay_GetElementData(Clay_GetElementIdWithIndex(CLAY_STRING("playerchart"), i));
+        Clay_ElementData el1 = Clay_GetElementData(Clay_GetElementIdWithIndex(CLAY_STRING("playerchart"), 2 * i + 1));
+        Clay_ElementData el2 = Clay_GetElementData(Clay_GetElementIdWithIndex(CLAY_STRING("playerchart"), 2 * i + 2));
 
-    u32 power_of_two = flp2(numPlayers);
-    u32 remainder = (numPlayers - power_of_two) * 2;
+        Vector2 endPoint = {el0.boundingBox.x, el0.boundingBox.y + el0.boundingBox.height / 2};
+        Vector2 startPointEl1 = {
+            el1.boundingBox.x + el1.boundingBox.width, el1.boundingBox.y + el1.boundingBox.height / 2
+        };
+        Vector2 startPointEl2 = {
+            el2.boundingBox.x + el2.boundingBox.width, el2.boundingBox.y + el2.boundingBox.height / 2
+        };
 
-    while (remainder) {
-        BezierWrapper(0, remainder);
-        --remainder;
+        DrawLineBezier(startPointEl1, endPoint, 1.0f, BLACK);
+        DrawLineBezier(startPointEl2, endPoint, 1.0f, BLACK);
     }
-    for (int i = 1; i < roundsNum; ++i) {
-        for (int j = 1; j <= power_of_two; ++j) {
-            BezierWrapper(i, j);
-        }
-        power_of_two = power_of_two / 2;
-    }
+
+    // u32 roundsNum = GetRoundsNum(numPlayers);
+
+    // u32 power_of_two = flp2(numPlayers);
+    // u32 remainder = (numPlayers - power_of_two) * 2;
+
+    // while (remainder) {
+    //     BezierWrapper(0, remainder);
+    //     --remainder;
+    // }
+    // for (int i = 1; i < roundsNum; ++i) {
+    //     for (int j = 1; j <= power_of_two; ++j) {
+    //         BezierWrapper(i, j);
+    //     }
+    //     power_of_two = power_of_two / 2;
+    // }
 }
 
 #endif

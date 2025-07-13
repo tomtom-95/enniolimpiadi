@@ -7,6 +7,8 @@
 #include "raylib/raylib.h"
 #include "clay.h"
 
+static Clay_ElementId g_lastClicked = {0};
+
 typedef enum {
     TAB_PLAYERS = 0,
     TAB_TOURNAMENTS,
@@ -54,6 +56,8 @@ typedef struct {
     TextBoxData addPlayerTextBoxData;
     TextBoxData addTournamentTextBoxData;
     Clay_ElementId last_element_clicked;
+    s32 playerIdx;
+    Clay_ElementId clickedPlayerId;
 } LayoutData;
 
 typedef struct {

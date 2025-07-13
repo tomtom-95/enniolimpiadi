@@ -27,6 +27,7 @@
         "complex": "c",
         "cctype": "c",
         "registration.h": "c",
-        "utils.h": "c"
+        "utils.h": "c",
+        "ui_utils.h": "c"
     }
 }

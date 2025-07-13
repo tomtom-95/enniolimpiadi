@@ -18,6 +18,14 @@
         "cwd": "${workspaceFolder}/build",
       },
       {
+        "name": "Debug Test Id",
+        "type": "lldb",
+        "request": "launch",
+        "program": "${workspaceFolder}/build/bugtest2",
+        "args": [],
+        "cwd": "${workspaceFolder}/build",
+      },
+      {
           "name": "Debug Tests",
           "type": "lldb",
           "request": "launch",

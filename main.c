@@ -13,6 +13,21 @@
 #include "names.c"
 #include "drawing.c"
 
+void UpdatePointerLogic(void)
+{
+    /* 1. Only care about the frame the button went down */
+    if (Clay_GetCurrentContext()->pointerInfo.state != CLAY_POINTER_DATA_PRESSED_THIS_FRAME)
+        return;
+
+    /* 2. Ask Clay (public API) which elements are under the cursor */
+    Clay_ElementIdArray over = Clay_GetPointerOverIds();
+    if (over.length == 0)
+        return;                    /* nothing hit */
+
+    /* 3. over[0] is the front-most element; use length-1 for back-most */
+    g_lastClicked = *Clay_ElementIdArray_Get(&over, over.length - 1);
+}
+
 int
 main(void) {
     Clay_Raylib_Initialize(
@@ -30,7 +45,7 @@ main(void) {
         (Clay_ErrorHandler) { HandleClayErrors }
     );
 
-    Clay_SetDebugModeEnabled(false);
+    Clay_SetDebugModeEnabled(true);
 
     fonts[FONT_ID_BODY_16] = LoadFontEx("resources/FiraCode-Regular.ttf", 48, 0, 400);
     SetTextureFilter(fonts[FONT_ID_BODY_16].texture, TEXTURE_FILTER_BILINEAR);
@@ -149,7 +164,8 @@ main(void) {
         .name_state = &name_state,
         .name_chunk_state = &name_chunk_state,
         .addPlayerTextBoxData = addPlayerTextBoxData,
-        .addTournamentTextBoxData = addTournamentTextBoxData
+        .addTournamentTextBoxData = addTournamentTextBoxData,
+        .playerIdx = -1
     };
 
     ////////////////////////////////////////////////////////////////
@@ -158,6 +174,8 @@ main(void) {
     SetTargetFPS(60);
     while (!WindowShouldClose()) {
         Clay_SetLayoutDimensions((Clay_Dimensions) { .width = GetScreenWidth(), .height = GetScreenHeight() });
+
+        UpdatePointerLogic();
 
         Vector2 mousePosition = GetMousePosition();
         Vector2 scrollDelta = GetMouseWheelMoveV();
@@ -182,7 +200,21 @@ main(void) {
         ClearBackground(BLACK);
         Clay_Raylib_Render(renderCommands, fonts, layoutData);
 
-        DrawBezierCurves(10); 
+        // TODO: add condition && layoutData.last_element_clicked not one of the tournament name in the sidebar
+        //       handling stuff by CLAY_ID is starting to become really a pain in the ...
+        if (layoutData.selectedTournamentChart) {
+            String str_tournament_name = (
+                push_string_from_name(layoutData.arena_frame, *layoutData.selectedTournamentChart)
+            );
+            StringList str_list = (
+                list_registrations_by_str(layoutData.arena_frame,
+                    layoutData.tournament_map, str_tournament_name)
+            );
+
+            DrawBezierCurves(8 - 1); 
+            // DrawBezierCurves(str_list.len); 
+        }
+
 
         EndDrawing();
     }

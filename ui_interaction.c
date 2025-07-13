@@ -200,14 +200,24 @@ HandleMainWindowInteraction(Clay_ElementId element_id, Clay_PointerData pointer_
     LayoutData *user_data = (LayoutData *)data;
     if (pointer_data.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         user_data->last_element_clicked = element_id;
+        layoutData.playerIdx = -1;
+        layoutData.clickedPlayerId = CLAY_IDI("Player", -1);
     }
 }
 
+// void
+// HandlePlayerSelection(Clay_ElementId element_id, Clay_PointerData pointer_data, intptr_t data) {
+//     String *player_string = (String *)data;
+//     if (pointer_data.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+//         layoutData.last_element_clicked = element_id;
+//     }
+// }
+
 void
 HandlePlayerSelection(Clay_ElementId element_id, Clay_PointerData pointer_data, intptr_t data) {
-    String *player_string = (String *)data;
+    u32 playerIdx = (u32)data;
     if (pointer_data.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        layoutData.last_element_clicked = element_id;
+        layoutData.clickedPlayerId = CLAY_IDI("Player", playerIdx);
     }
 }
 
