@@ -22,10 +22,23 @@ struct Name {
     Name *next;
 };
 
+typedef struct NameNode NameNode;
+struct NameNode {
+    Name name;
+    Name *next;
+};
+
 typedef struct NameList NameList;
 struct NameList {
     Name *first_name;
     Name *last_name;
+};
+
+typedef struct NameArray NameArray;
+struct NameArray {
+    u64 cnt;
+    u64 len;
+    Name *first;
 };
 
 typedef struct NameChunkState NameChunkState;

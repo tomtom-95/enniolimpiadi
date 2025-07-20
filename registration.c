@@ -144,6 +144,13 @@ player_enroll(RegistrationMap *player_map, RegistrationMap *tournament_map, Stri
 {
     registration_enroll_(player_map, tournament_map, str_player_name,
         str_tournament_name, name_state, name_chunk_state);
+    
+    // go to the tournament_map, find the tournament with the given str_tournament_name
+    // update the player_array to have a new str_player_name
+    // in which position should I put the player?
+    // I should look the name_array.first
+    // from there I can look at name_array.first[n].len, if it is 0 it means the element is empty
+
 }
 
 void

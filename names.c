@@ -224,4 +224,81 @@ namelist_delete_all(NameList *name_list, NameState *name_state,
     }
 }
 
+NameArray
+namearray_init(Arena *arena, u64 len)
+{
+    return (NameArray){ .len = len, .cnt = 0, .first = arena_push(arena, len) };
+}
+
+void
+namearray_insert(NameArray name_array, Name name)
+{
+
+    // from name_array.len I get the current number of players. I am adding 1
+    // so I have
+    // n: number of players in the tournament
+    // from the number of players I can get how big I want the name_array and how many should go
+    // into the first round and how many should go into the second round
+    Temp scratch = scratch_get(0, 0);
+
+    u64 round_0_cnt = name_array.len / 2 + 1;
+    u64 round_1_cnt = round_0_cnt / 2;
+
+    // In which cases do I need to relocate the name_array?
+    // If cnt = 0
+    //  -> name_array.len = 1
+    // -> just put the name in the only available place
+
+    // if cnt = 2
+    //  -> name_array.len = 3
+    //  -> adding another name means to modify and relocate the array
+    //  -> name_array.len must become 3 + (3 + 1)
+    // -> what logic do I have to implement to fill the new array?
+    if (name_array.cnt > name_array.len / 2) {
+        // must realloc bigger array
+    }
+    else {
+        // calculate how many elements must be put in round 0 and how many elements must be put in round 1
+        u64 cnt_player_round_1 = round_0_cnt - name_array.cnt;
+        u64 cnt_player_round_0 = name_array.cnt - cnt_player_round_1;
+
+        // find the index ranges for players in round 0
+        u64 idx_round_0_start = name_array.len - 1 - cnt_player_round_0;
+        u64 idx_round_0_end = name_array.len - 1;
+
+        // find the index ranges for players in round 1
+        u64 idx_round_1_start = idx_round_0_start - round_1_cnt;
+        u64 idx_round_1_end = idx_round_1_start + cnt_player_round_1 - 1;
+
+        StringList string_list = {0};
+
+        for (u64 i = idx_round_0_start; i < idx_round_0_end + 1; ++i) {
+            String string = push_string_from_name(scratch.arena, name_array.first[i]);
+            string_list_push(scratch.arena, &string_list, string);
+        }
+        for (u64 i = idx_round_1_start; i < idx_round_1_start + 1; ++i) {
+            String string = push_string_from_name(scratch.arena, name_array.first[i]);
+            string_list_push(scratch.arena, &string_list, string);
+        }
+        String string = push_string_from_name(scratch.arena, name);
+        string_list_push(scratch.arena, &string_list, string);
+
+        memset(name_array.first, 0, sizeof(Name) * name_array.len);
+        ++name_array.cnt;
+
+        // given name_array.cnt and name_array.len I must calculate the idxs again
+        u64 idx_round_0_start_v2 = idx_round_0_start - 2;
+        u64 idx_round_0_end_v2 = idx_round_0_end;
+
+        u64 idx_round_1_start_v2 = idx_round_1_start;
+        u64 idx_round_1_end_v2 = idx_round_1_end - 1;
+
+        // now I must insert all the string in the string_list into the name_array
+        StringNode *node = string_list.head;
+        for (u64 i = idx_round_0_start_v2; i < idx_round_0_end_v2 + 1; ++i) {
+            name_array.first[i] = node
+        }
+    }
+}
+
 #endif // NAMES_C

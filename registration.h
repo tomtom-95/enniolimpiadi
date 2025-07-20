@@ -10,7 +10,7 @@ struct Registration {
     Name *registration_name;
     NameList registration_list;
     Registration *next;
-    void *data;
+    NameArray player_array; // used only when registration is a tournament
 };
 
 typedef struct RegistrationState RegistrationState;
