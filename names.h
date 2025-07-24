@@ -17,28 +17,29 @@ struct NameChunk {
 
 typedef struct Name Name;
 struct Name {
-    NameChunk *first_name_chunk;
+    NameChunk *first_chunk;
+    NameChunk *last_chunk;
     u64 len;
-    Name *next;
 };
 
 typedef struct NameNode NameNode;
 struct NameNode {
     Name name;
-    Name *next;
+    NameNode *next;
 };
 
 typedef struct NameList NameList;
 struct NameList {
-    Name *first_name;
-    Name *last_name;
+    NameNode sentinel;
+    NameNode *tail;
+    u64 len;
 };
 
 typedef struct NameArray NameArray;
 struct NameArray {
-    u64 cnt;
-    u64 len;
     Name *first;
+    u64 len;
+    u64 cnt;
 };
 
 typedef struct NameChunkState NameChunkState;
@@ -50,26 +51,29 @@ struct NameChunkState {
 typedef struct NameState NameState;
 struct NameState {
     Arena *arena;
-    Name *first_free;
+    NameNode *first_free;
 };
 
-Name *name_alloc(String str, NameState *name_state, NameChunkState *name_chunk_state);
-String push_string_from_name(Arena *arena, Name name);
 
-void name_delete(Name *name, NameState *name_state, NameChunkState *name_chunk_state);
-bool name_cmp(Name *a, Name *b);
+void name_chunk_state_init(Arena *arena, NameChunkState *state);
+void name_state_init(Arena *arena, NameState *state);
 
-void namelist_append_right(NameList *name_list, String string, NameState *name_state, NameChunkState *name_chunk_state);
-void namelist_append_left(NameList *name_list, String string, NameState *name_state, NameChunkState *name_chunk_state);
+NameChunk *name_chunk_alloc(NameChunkState *state);
 
-Name *namelist_find(NameList *name_list, String string);
+Name name_from_string(String str, NameChunkState *state);
+void name_release(Name name, NameChunkState *state);
+String string_from_name(Name name, Arena *arena);
+bool are_name_equal(Name *a, Name *b);
 
-void namelist_pop(NameList *name_list, Name *name, NameState *name_state, NameChunkState *name_chunk_state);
-void namelist_pop_by_string(NameList *name_list, String string, NameState *name_state, NameChunkState *name_chunk_state);
+NameNode *name_node_alloc(NameState *name_state);
+void name_node_init(NameNode *node, String str, NameChunkState *name_chunk_state);
+void name_node_release(NameNode *node, NameState *name_state, NameChunkState *name_chunk_state);
 
-void namelist_pop_left(NameList *name_list, NameState *name_state, NameChunkState *name_chunk_state);
-void namelist_pop_right(NameList *name_list, NameState *name_state, NameChunkState *name_chunk_state);
-
-void namelist_delete_all(NameList *name_list, NameState *name_state, NameChunkState *name_chunk_state);
+void namelist_init(NameList *namelist);
+NameNode *namelist_find(NameList *namelist, Name name);
+void namelist_push_front(NameList *namelist, NameNode *node, NameState *name_state, NameChunkState *name_chunk_state);
+void namelist_pop_front(NameList *namelist, NameState *name_state, NameChunkState *name_chunk_state);
+void namelist_pop(NameList *namelist, Name *name, NameState *name_state, NameChunkState *name_chunk_state);
+void namelist_delete(NameList *namelist, NameState *name_state, NameChunkState *name_chunk_state);
 
 #endif // NAMES_H

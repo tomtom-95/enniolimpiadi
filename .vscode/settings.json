@@ -28,6 +28,7 @@
         "cctype": "c",
         "registration.h": "c",
         "utils.h": "c",
-        "ui_utils.h": "c"
+        "ui_utils.h": "c",
+        "arena.h": "c"
     }
 }

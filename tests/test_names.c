@@ -6,6 +6,8 @@
 #include "../string.c"
 #include "../names.c"
 
+#if 0
+
 void
 test_namelist_append_right(void) {
     Arena *arena = arena_alloc(KiloByte(1));
@@ -174,8 +176,122 @@ test_namelist_pop_left(void)
     namelist_pop_left(&name_list, &name_state, &name_chunk_state);
 }
 
+#endif
+
+void
+test_names(void)
+{
+    Arena *arena = arena_alloc(KiloByte(1));
+
+    Ctx ctx = {0};
+    ctx_init(&ctx);
+
+    NameChunkState name_chunk_state;
+    name_chunk_state_init(arena, &name_chunk_state);
+
+    NameState name_state;
+    name_state_init(arena, &name_state);
+
+    NameList namelist;
+    namelist_init(&namelist);
+
+    String str0 = string_from_cstring_lit("Ciao");
+    String str1 = string_from_cstring_lit("Hello");
+
+    NameNode *node0 = name_node_alloc(&name_state);
+    name_node_init(node0, str0, &name_state);
+
+    NameNode *node1 = name_node_alloc(&name_state);
+    name_node_init(node1, str1, &name_state);
+
+    Name samestr1name = name_from_string(str1, &name_chunk_state);
+
+    namelist_push_front(&namelist, node0, &name_state, &name_chunk_state);
+    namelist_push_front(&namelist, node1, &name_state, &name_chunk_state);
+
+    namelist_pop_front(&namelist, &name_state, &name_chunk_state);
+    namelist_pop_front(&namelist, &name_state, &name_chunk_state);
+    namelist_pop_front(&namelist, &name_state, &name_chunk_state);
+
+    NameNode *found = namelist_find(&namelist, samestr1name);
+}
+
+#if 0
+void
+test_namearray(void)
+{
+    Arena *arena = arena_alloc(KiloByte(1));
+
+    Ctx ctx = {0};
+    ctx_init(&ctx);
+
+    NameChunkState name_chunk_state;
+    name_chunk_state_init(arena, &name_chunk_state);
+
+    NameState name_state;
+    name_state_init(arena, &name_state);
+
+    NameArray namearray;
+    namearray_init(arena, &namearray, 16);
+
+    String str0 = string_from_cstring_lit("Ciao");
+
+    namearray_insert_from_string(&namearray, &name_state, &name_chunk_state, str0, 0);
+}
+#endif
+
+void
+test_name_copy(void)
+{
+    Arena *arena = arena_alloc(KiloByte(1));
+
+    Ctx ctx = {0};
+    ctx_init(&ctx);
+
+    NameChunkState name_chunk_state;
+    name_chunk_state_init(arena, &name_chunk_state);
+
+    String srcstr = string_from_lit_comp(
+        "Ciaooooooooooooooooooooooooooooooooooooooooooooooooiiiiiiiiiiiiiiiii"
+    );
+    Name srcname = name_from_string(srcstr, &name_chunk_state);
+    Name dstname;
+
+    name_copy(&dstname, &srcname, &name_chunk_state);
+}
+
+void
+test_namearray(void)
+{
+    Arena *arena = arena_alloc(KiloByte(1));
+
+    Ctx ctx = {0};
+    ctx_init(&ctx);
+
+    NameChunkState name_chunk_state;
+    name_chunk_state_init(arena, &name_chunk_state);
+
+    NameState name_state;
+    name_state_init(arena, &name_state);
+
+    Name riccardo = name_from_string(string_from_lit_comp("riccado"), &name_chunk_state);
+    Name giulio = name_from_string(string_from_lit_comp("giulio"), &name_chunk_state);
+    Name tommaso = name_from_string(string_from_lit_comp("tommaso"), &name_chunk_state);
+    Name davide = name_from_string(string_from_lit_comp("davide"), &name_chunk_state);
+
+    NameArray namearray;
+    namearray_init(arena, &namearray, 1);
+
+    insert_player_into_tournament_array(arena, &namearray, riccardo, &name_chunk_state);
+    insert_player_into_tournament_array(arena, &namearray, davide, &name_chunk_state);
+    // insert_player_into_tournament_array(arena, &namearray, davide, &name_chunk_state);
+    // insert_player_into_tournament_array(arena, &namearray, davide, &name_chunk_state);
+}
+
+
+
 int main(void)
 {
-    test_namelist_pop_left();
+    test_namearray();
 }
 
