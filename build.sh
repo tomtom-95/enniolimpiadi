@@ -84,6 +84,10 @@ case "$1" in
         echo "Compiling tests/test_registration.c -> $OUT_DIR/test_registration"
         clang $CFLAGS ./tests/test_registration.c -o $OUT_DIR/test_registration
         ;;
+    testregistration_v2)
+        echo "Compiling tests/test_registration_v2.c -> $OUT_DIR/test_registration_v2"
+        clang $CFLAGS ./tests/test_registration_v2.c -o $OUT_DIR/test_registration_v2
+        ;;
     testarena)
         echo "Compiling tests/test_arena.c -> $OUT_DIR/test_arena"
         clang $CFLAGS ./tests/test_arena.c -o $OUT_DIR/test_arena

@@ -263,7 +263,7 @@ test_name_copy(void)
 void
 test_namearray(void)
 {
-    Arena *arena = arena_alloc(KiloByte(1));
+    Arena *arena = arena_alloc(MegaByte(1));
 
     Ctx ctx = {0};
     ctx_init(&ctx);
@@ -274,21 +274,21 @@ test_namearray(void)
     NameState name_state;
     name_state_init(arena, &name_state);
 
+    NameArrayState name_array_state;
+    name_array_state_init(arena, &name_array_state);
+
     Name riccardo = name_from_string(string_from_lit_comp("riccado"), &name_chunk_state);
-    Name giulio = name_from_string(string_from_lit_comp("giulio"), &name_chunk_state);
-    Name tommaso = name_from_string(string_from_lit_comp("tommaso"), &name_chunk_state);
-    Name davide = name_from_string(string_from_lit_comp("davide"), &name_chunk_state);
+    Name giulio   = name_from_string(string_from_lit_comp("giulio"), &name_chunk_state);
+    Name tommaso  = name_from_string(string_from_lit_comp("tommaso"), &name_chunk_state);
+    Name davide   = name_from_string(string_from_lit_comp("davide"), &name_chunk_state);
 
-    NameArray namearray;
-    namearray_init(arena, &namearray, 1);
+    NameArray *namearray = namearray_init(arena, 1, &name_array_state);
 
-    insert_player_into_tournament_array(arena, &namearray, riccardo, &name_chunk_state);
-    insert_player_into_tournament_array(arena, &namearray, davide, &name_chunk_state);
-    // insert_player_into_tournament_array(arena, &namearray, davide, &name_chunk_state);
-    // insert_player_into_tournament_array(arena, &namearray, davide, &name_chunk_state);
+    insert_player_into_tournament_array(arena, namearray, riccardo, &name_chunk_state);
+    insert_player_into_tournament_array(arena, namearray, giulio, &name_chunk_state);
+    insert_player_into_tournament_array(arena, namearray, tommaso, &name_chunk_state);
+    insert_player_into_tournament_array(arena, namearray, davide, &name_chunk_state);
 }
-
-
 
 int main(void)
 {

@@ -29,6 +29,7 @@
         "registration.h": "c",
         "utils.h": "c",
         "ui_utils.h": "c",
-        "arena.h": "c"
+        "arena.h": "c",
+        "util.h": "c"
     }
 }

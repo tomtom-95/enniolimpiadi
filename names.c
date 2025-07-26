@@ -17,6 +17,13 @@ name_state_init(Arena *arena, NameState *state)
     state->first_free = NULL;
 }
 
+void
+name_array_state_init(Arena *arena, NameArrayState *name_array_state)
+{
+    name_array_state->arena = arena;
+    name_array_state->first_free = NULL;
+}
+
 NameChunk *
 name_chunk_alloc(NameChunkState *state)
 {
@@ -62,7 +69,7 @@ name_release(Name name, NameChunkState *state)
 }
 
 String
-string_from_name(Name name, Arena *arena)
+string_from_name(Arena *arena, Name name)
 {
     u64 bytes_left = name.len;
     String str = { .len = bytes_left, .str = arena_push(arena, bytes_left) };
@@ -180,17 +187,39 @@ namelist_find(NameList *namelist, Name name)
 }
 
 void
-namelist_push_front(NameList *namelist, NameNode *node,
+namelist_push_front(NameList *namelist, Name name,
     NameState *name_state, NameChunkState *name_chunk_state)
 {
+    // sloppy
+    Temp temp = scratch_get(0, 0);
+
+    String str = string_from_name(temp.arena, name);
+    NameNode *name_node = name_node_alloc(name_state);
+    name_node_init(name_node, str, name_chunk_state);
+
+    scratch_release(temp);
+
     if (namelist->tail == &namelist->sentinel) {
-        namelist->tail = node;
+        namelist->tail = name_node;
     }
 
-    node->next = namelist->sentinel.next;
-    namelist->sentinel.next = node;
+    name_node->next = namelist->sentinel.next;
+    namelist->sentinel.next = name_node;
     ++namelist->len;
 }
+
+// void
+// namelist_push_front(NameList *namelist, NameNode *node,
+//     NameState *name_state, NameChunkState *name_chunk_state)
+// {
+//     if (namelist->tail == &namelist->sentinel) {
+//         namelist->tail = node;
+//     }
+// 
+//     node->next = namelist->sentinel.next;
+//     namelist->sentinel.next = node;
+//     ++namelist->len;
+// }
 
 void
 namelist_pop_front(NameList *namelist,
@@ -243,78 +272,120 @@ namelist_delete(NameList *namelist, NameState *name_state,
     }
 }
 
-void
-namearray_init(Arena *arena, NameArray *namearray, u64 len)
-{
-    namearray->cnt = 0;
-    namearray->len = len;
-    namearray->first = arena_push(arena, len * sizeof *namearray->first);
-}
+// NameArray *
+// namearray_init(u64 len, NameArrayState *name_array_state)
+// {
+//     NameArray *namearray = name_array_state->first_free;
+//     if (namearray) {
+//         name_array_state->first_free = name_array_state->first_free->next;
+//     }
+//     else {
+//         namearray = arena_push(name_array_state->arena,
+//             sizeof *namearray + NAME_ARRAY_MAX_SIZE * sizeof(Name));
+//     }
+// 
+//     namearray->next = NULL;
+//     namearray->len = len;
+//     namearray->cnt = 0;
+// 
+//     return namearray;
+// }
 
-void
-namearray_insert_from_string(NameArray *namearray, NameState *name_state, 
-    NameChunkState *name_chunk_state, String string, u64 pos)
-{
-    assert(pos < namearray->len);
+// void
+// namearray_release(NameArray *namearray, NameArrayState *name_array_state,
+//     NameChunkState *name_chunk_state)
+// {
+//     namearray->next = name_array_state->first_free;
+//     name_array_state->first_free = namearray;
+// 
+//     Name *first_name = namearray + 1;
+// 
+//     // Should I walk the namearray and release every name?
+//     for (u64 i = 0; i < NAME_ARRAY_MAX_SIZE; ++i) {
+//         name_release(*(first_name + i), name_chunk_state);
+// 
+//         // make sure to never dereference a garbage name chunk.
+//         // Is this useful to prevent bugs?
+//         memset(first_name + i, 0, sizeof *first_name);
+//     }
+// }
 
-    Name name = name_from_string(string, name_chunk_state);
-    memcpy(namearray->first + pos, &name, sizeof name);
-}
+// void
+// namearray_insert_from_string(NameArray *namearray, NameState *name_state, 
+//     NameChunkState *name_chunk_state, String string, u64 pos)
+// {
+//     assert(pos < NAME_ARRAY_MAX_SIZE);
+// 
+//     if (pos >= namearray->len) {
+// 
+//     }
+//     assert(pos < namearray->len);
+// 
+//     Name name = name_from_string(string, name_chunk_state);
+//     memcpy(namearray->first + pos, &name, sizeof name);
+// }
+// 
+// void
+// namearray_insert_from_name(NameArray *namearray, NameState *name_state,
+//     NameChunkState *name_chunk_state, Name name, u64 pos)
+// {
+//     assert(pos < namearray->len);
+//     name_copy(namearray->first + pos, &name, name_chunk_state);
+//     ++namearray->cnt;
+// }
 
-void
-namearray_insert_from_name(NameArray *namearray, NameState *name_state,
-    NameChunkState *name_chunk_state, Name name, u64 pos)
-{
-    assert(pos < namearray->len);
-    name_copy(namearray->first + pos, &name, name_chunk_state);
-    ++namearray->cnt;
-}
 
+// void
+// insert_player_into_player_array(Arena *arena, NameArray *playerarray,
+//     Name player_name, NameChunkState *name_chunk_state)
+// {
+//     assert(playerarray->len != 0 && playerarray->cnt < NAME_ARRAY_MAX_SIZE / 2);
+// 
+//     if (playerarray->cnt == 0) {
+//         name_copy((u8 *)playerarray + sizeof *playerarray, &player_name, name_chunk_state);
+//     }
+//     else if (playerarray->cnt < playerarray->len / 2 + 1) {
+//         u64 round_0_cnt = playerarray->len / 2 + 1;
+//         u64 round_1_cnt = round_0_cnt / 2;
+// 
+//         u64 players_on_round_1 = round_0_cnt - playerarray->cnt;
+//         u64 players_on_round_0 = playerarray->cnt - players_on_round_1;
+// 
+//         u64 dst_position = playerarray->len - 1 - players_on_round_0;
+//         u64 src_position = dst_position / 2 - 1;
+// 
+//         Name *first_name = playerarray + 1;
+// 
+//         Name *src_p = first_name + src_position;
+//         Name *dst_p = first_name + dst_position;
+// 
+//         name_copy(dst_p, src_p, name_chunk_state);
+// 
+//         name_release(*src_p, name_chunk_state);
+//         memset(src_p, 0, sizeof(Name));
+// 
+//         name_copy(dst_p - 1, &player_name, name_chunk_state);
+//     }
+//     else {
+//         u64 src_position = playerarray->len - 1;
+//         u64 dst_position = 2 * playerarray->len;
+// 
+//         Name *first_name = playerarray + 1;
+// 
+//         Name *src_p = first_name + src_position;
+//         Name *dst_p = first_name + dst_position;
+// 
+//         name_copy(dst_p, src_p, name_chunk_state);
+// 
+//         name_release(*src_p, name_chunk_state);
+//         memset(src_p, 0, sizeof(Name));
+// 
+//         name_copy(dst_p - 1, &player_name, name_chunk_state);
+// 
+//         playerarray->len = 2 * playerarray->len + 1;
+//     }
+//     ++playerarray->cnt;
+// }
 
-void
-insert_player_into_tournament_array(Arena *arena, NameArray *namearray,
-    Name player_name, NameChunkState *name_chunk_state)
-{
-    assert(namearray->len != 0);
-
-    if (namearray->cnt == 0) {
-        name_copy(namearray->first, &player_name, name_chunk_state);
-    }
-    else if (namearray->cnt < namearray->len / 2 + 1) {
-        u64 round_0_cnt = namearray->len / 2 + 1;
-        u64 round_1_cnt = round_0_cnt / 2;
-
-        // move stuff around in the old array
-        u64 players_on_round_1 = round_0_cnt - namearray->cnt;
-        u64 players_on_round_0 = namearray->cnt - players_on_round_1;
-
-        u64 dst_position = namearray->len - 1 - players_on_round_0;
-        u64 src_position = dst_position / 2 - 1;
-
-        name_copy(namearray->first + dst_position, namearray->first + src_position, name_chunk_state);
-
-        name_release(namearray->first[src_position], name_chunk_state);
-        namearray->first[src_position].first_chunk = NULL;
-        namearray->first[src_position].last_chunk = NULL;
-        namearray->first[src_position].len = 0;
-
-        name_copy(namearray->first + dst_position - 1, &player_name, name_chunk_state);
-    }
-    else {
-        // allocate new array (and for now forget the old one -> memory leak)
-        Name *tmp = namearray->first + namearray->len - 1;
-
-        u64 new_len = 2 * namearray->len + 1;
-        u64 oldcnt = namearray->cnt;
-        namearray_init(arena, namearray, new_len);
-        namearray->cnt = oldcnt;
-
-        name_copy(namearray->first + new_len - 1, tmp, name_chunk_state);
-        name_copy(namearray->first + new_len - 2, &player_name, name_chunk_state);
-
-        namearray->len = new_len;
-    }
-    ++namearray->cnt;
-}
 
 #endif // NAMES_C
