@@ -44,11 +44,8 @@ typedef struct {
     float yOffset;
     Arena *arena_frame;
     Arena *arena_permanent;
-    RegistrationMap *player_map;
-    RegistrationMap *tournament_map;
-    RegistrationState *registration_state;
-    NameState *name_state;
-    NameChunkState *name_chunk_state;
+    TournamentMap tournament_map;
+    NameState name_state;
     Tab tab;
     String feedbackOnAddPlayerButton;
     String feedbackOnAddTournamentButton;
@@ -60,12 +57,12 @@ typedef struct {
     Clay_ElementId clickedPlayerId;
 } LayoutData;
 
-typedef struct {
-    RegistrationMap *primary_map;
-    RegistrationMap *link_map;
-    String primary_str;
-    String link_str;
-} RegistrationPair;
+// typedef struct {
+//     RegistrationMap *primary_map;
+//     RegistrationMap *link_map;
+//     String primary_str;
+//     String link_str;
+// } RegistrationPair;
 
 typedef enum {
     CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL,
@@ -133,14 +130,14 @@ String strFeedbackAddTournament1 = string_from_lit_comp("Cannot create tournamen
 String strFeedbackAddTournament2 = string_from_lit_comp("Tournament already created");
 String strFeedbackAddTournament3 = string_from_lit_comp("Tournament successfully created");
 
-Clay_String addPlayerTextBoxStr = CLAY_STRING("AddPlayerTextBox");
+Clay_String addPlayerTextBoxStr     = CLAY_STRING("AddPlayerTextBox");
 Clay_String addTournamentTextBoxStr = CLAY_STRING("AddTournamentTextBox");
 
-Clay_String floatingMenuStrId = CLAY_STRING("FloatingMenu");
-Clay_String floatingMenuEnrollStrId = CLAY_STRING("FloatingMenuEnroll");
-Clay_String floatingMenuWithdrawStrId = CLAY_STRING("FloatingMenuWithdraw");
-Clay_String floatingMenuDeleteStrId = CLAY_STRING("FloatingMenuDelete");
-Clay_String floatingMenuEnrollListStrId = CLAY_STRING("FloatingMenuEnrollList");
+Clay_String floatingMenuStrId             = CLAY_STRING("FloatingMenu");
+Clay_String floatingMenuEnrollStrId       = CLAY_STRING("FloatingMenuEnroll");
+Clay_String floatingMenuWithdrawStrId     = CLAY_STRING("FloatingMenuWithdraw");
+Clay_String floatingMenuDeleteStrId       = CLAY_STRING("FloatingMenuDelete");
+Clay_String floatingMenuEnrollListStrId   = CLAY_STRING("FloatingMenuEnrollList");
 Clay_String floatingMenuWithdrawListStrId = CLAY_STRING("FloatingMenuWithdrawList");
 
 LayoutData layoutData;

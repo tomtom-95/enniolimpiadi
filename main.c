@@ -9,7 +9,8 @@
 #include "ui_interaction.c"
 
 #include "utils.c"
-#include "registration.c"
+// #include "registration.c"
+#include "registration_v2.h"
 #include "names.c"
 #include "drawing.c"
 
@@ -41,8 +42,8 @@ main(void) {
     );
 
     Clay_Initialize(
-        clayMemory, (Clay_Dimensions) {.width = GetScreenWidth(), .height = GetScreenHeight()},
-        (Clay_ErrorHandler) { HandleClayErrors }
+        clayMemory, (Clay_Dimensions){ .width = GetScreenWidth(), .height = GetScreenHeight() },
+        (Clay_ErrorHandler){ HandleClayErrors }
     );
 
     Clay_SetDebugModeEnabled(true);
@@ -57,13 +58,11 @@ main(void) {
     Arena *arena_permanent = arena_alloc(MegaByte(1));
     Arena *arena_frame = arena_alloc(MegaByte(1));
 
-    NameState name_state = { .arena = arena_permanent, .first_free = NULL };
-    NameChunkState name_chunk_state = { .arena = arena_permanent, .first_free = NULL };
-    RegistrationState registration_state = { .arena = arena_permanent, .first_free = NULL };
+    NameState name_state = name_state_init(arena_permanent);
+    TournamentMap tournament_map = tournament_map_init(arena_permanent, 16);
 
-    String giulio = string_from_cstring_lit("Giulio");
-    String riccardo = string_from_cstring_lit("Riccardo");
-    String mario = string_from_cstring_lit("Mario");
+    String giulio   = string_from_cstring_lit("Giulio");
+    String mario    = string_from_cstring_lit("Mario");
     String persona1 = string_from_cstring_lit("Persona1");
     String persona2 = string_from_cstring_lit("Persona2");
     String persona3 = string_from_cstring_lit("Persona3");
@@ -73,45 +72,17 @@ main(void) {
     String persona7 = string_from_cstring_lit("Persona7");
     String persona8 = string_from_cstring_lit("Persona8");
 
-    String ping_pong = string_from_cstring_lit("Ping Pong");
-    String machiavelli = string_from_cstring_lit("Machiavelli");
+    // Tournaments
+    Name ping_pong   = name_init(string_from_cstring_lit("Ping Pong"), &name_state.name_chunk_state);
+    Name machiavelli = name_init(string_from_cstring_lit("Machiavelli"), &name_state.name_chunk_state);
 
-    RegistrationMap player_map = {0};
-    RegistrationMap tournament_map = {0};
-    registration_map_init(arena_permanent, &player_map, 1);
-    registration_map_init(arena_permanent, &tournament_map, 1);
+    // Players
+    Name riccardo    = name_init(string_from_cstring_lit("Riccardo"), &name_state.name_chunk_state);
 
-    registration_create(&player_map, riccardo, &registration_state, &name_state, &name_chunk_state);
-    registration_create(&player_map, giulio, &registration_state, &name_state, &name_chunk_state);
-    registration_create(&player_map, mario, &registration_state, &name_state, &name_chunk_state);
+    tournament_add(&tournament_map, ping_pong, &name_state);
+    tournament_add(&tournament_map, machiavelli, &name_state);
 
-    registration_create(&player_map, persona1, &registration_state, &name_state, &name_chunk_state);
-    registration_create(&player_map, persona2, &registration_state, &name_state, &name_chunk_state);
-    registration_create(&player_map, persona3, &registration_state, &name_state, &name_chunk_state);
-    registration_create(&player_map, persona4, &registration_state, &name_state, &name_chunk_state);
-    registration_create(&player_map, persona5, &registration_state, &name_state, &name_chunk_state);
-    registration_create(&player_map, persona6, &registration_state, &name_state, &name_chunk_state);
-    registration_create(&player_map, persona7, &registration_state, &name_state, &name_chunk_state);
-    registration_create(&player_map, persona8, &registration_state, &name_state, &name_chunk_state);
-
-    registration_create(&tournament_map, ping_pong, &registration_state, &name_state, &name_chunk_state);
-    registration_create(&tournament_map, machiavelli, &registration_state, &name_state, &name_chunk_state);
-
-    player_enroll(&player_map, &tournament_map, riccardo, ping_pong, &name_state, &name_chunk_state);
-    player_enroll(&player_map, &tournament_map, giulio, ping_pong, &name_state, &name_chunk_state);
-    player_enroll(&player_map, &tournament_map, mario, ping_pong, &name_state, &name_chunk_state);
-
-    player_enroll(&player_map, &tournament_map, persona1, ping_pong, &name_state, &name_chunk_state);
-    player_enroll(&player_map, &tournament_map, persona2, ping_pong, &name_state, &name_chunk_state);
-    player_enroll(&player_map, &tournament_map, persona3, ping_pong, &name_state, &name_chunk_state);
-    player_enroll(&player_map, &tournament_map, persona4, ping_pong, &name_state, &name_chunk_state);
-    player_enroll(&player_map, &tournament_map, persona5, ping_pong, &name_state, &name_chunk_state);
-    player_enroll(&player_map, &tournament_map, persona6, ping_pong, &name_state, &name_chunk_state);
-    player_enroll(&player_map, &tournament_map, persona7, ping_pong, &name_state, &name_chunk_state);
-    // player_enroll(&player_map, &tournament_map, persona8, ping_pong, &name_state, &name_chunk_state);
-
-    player_enroll(&player_map, &tournament_map, riccardo, machiavelli, &name_state, &name_chunk_state);
-
+    tournament_player_enroll(&tournament_map, ping_pong, riccardo, &name_state);
 
     ////////////////////////////////////////////////////////////////
     // textBoxData initialization
@@ -158,11 +129,8 @@ main(void) {
     layoutData = (LayoutData) {
         .arena_frame = arena_frame,
         .arena_permanent = arena_permanent,
-        .player_map = &player_map,
-        .tournament_map = &tournament_map,
-        .registration_state = &registration_state,
-        .name_state = &name_state,
-        .name_chunk_state = &name_chunk_state,
+        .tournament_map = tournament_map,
+        .name_state = name_state,
         .addPlayerTextBoxData = addPlayerTextBoxData,
         .addTournamentTextBoxData = addTournamentTextBoxData,
         .playerIdx = -1
@@ -203,18 +171,15 @@ main(void) {
         // TODO: add condition && layoutData.last_element_clicked not one of the tournament name in the sidebar
         //       handling stuff by CLAY_ID is starting to become really a pain in the ...
         if (layoutData.selectedTournamentChart) {
-            String str_tournament_name = (
-                push_string_from_name(layoutData.arena_frame, *layoutData.selectedTournamentChart)
-            );
-            StringList str_list = (
-                list_registrations_by_str(layoutData.arena_frame,
-                    layoutData.tournament_map, str_tournament_name)
-            );
+            String str_tournament_name = string_from_name(layoutData.arena_frame, *layoutData.selectedTournamentChart);
+            // StringList str_list = (
+            //     list_registrations_by_str(layoutData.arena_frame,
+            //         layoutData.tournament_map, str_tournament_name)
+            // );
 
             DrawBezierCurves(8 - 1); 
             // DrawBezierCurves(str_list.len); 
         }
-
 
         EndDrawing();
     }

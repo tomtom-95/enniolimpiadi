@@ -3,50 +3,38 @@
 
 #include "names.h"
 
-void
-name_chunk_state_init(Arena *arena, NameChunkState *state)
+NameChunkState
+name_chunk_state_init(Arena *arena)
 {
-    state->arena = arena;
-    state->first_free = NULL;
-}
-
-void
-name_state_init(Arena *arena, NameState *state)
-{
-    state->arena = arena;
-    state->first_free = NULL;
-}
-
-void
-name_array_state_init(Arena *arena, NameArrayState *name_array_state)
-{
-    name_array_state->arena = arena;
-    name_array_state->first_free = NULL;
+    return (NameChunkState){ .arena = arena, .first_free = NULL };
 }
 
 NameChunk *
-name_chunk_alloc(NameChunkState *state)
+name_chunk_alloc(NameChunkState *name_chunk_state)
 {
-    NameChunk *chunk = state->first_free;
+    // NOTE: retrieved name_chunk can contain garbage value
+    //       this implementation is fine as long as the caller
+    //       fills the retrieved chunk with valid data before use
+    NameChunk *chunk = name_chunk_state->first_free;
 
     if (chunk) {
-        state->first_free = state->first_free->next;
+        name_chunk_state->first_free = name_chunk_state->first_free->next;
     }
     else {
-        chunk = (NameChunk *)arena_push(state->arena, sizeof(NameChunk));
+        chunk = arena_push(name_chunk_state->arena, sizeof *chunk);
     }
 
     return chunk;
 }
 
 Name
-name_from_string(String str, NameChunkState *state)
+name_init(String str, NameChunkState *name_chunk_state)
 {
     Name result = { .len = str.len };
     NameChunk **link = &result.first_chunk;
 
     for (u64 off = 0; off < str.len; off += NAME_CHUNK_PAYLOAD_SIZE) {
-        NameChunk *chunk = name_chunk_alloc(state);
+        NameChunk *chunk = name_chunk_alloc(name_chunk_state);
 
         u64 bytes = Min((u64)NAME_CHUNK_PAYLOAD_SIZE, str.len - off);
         memcpy(chunk->str, str.str + off, bytes);
@@ -62,10 +50,20 @@ name_from_string(String str, NameChunkState *state)
 }
 
 void
-name_release(Name name, NameChunkState *state)
+name_free(Name name, NameChunkState *name_chunk_state)
 {
-    name.last_chunk->next = state->first_free;
-    state->first_free = name.first_chunk;
+    name.last_chunk->next = name_chunk_state->first_free;
+    name_chunk_state->first_free = name.first_chunk;
+}
+
+void
+name_free_scrub(Name *name, NameChunkState *name_chunk_state)
+{
+    // NOTE: individual chunks are not zeroed
+    // NOTE: apparently memset could be optimized away by the compiler?
+    name->last_chunk->next = name_chunk_state->first_free;
+    name_chunk_state->first_free = name->first_chunk;
+    memset(name, 0, sizeof *name);
 }
 
 String
@@ -84,16 +82,16 @@ string_from_name(Arena *arena, Name name)
 }
 
 bool
-are_name_equal(Name *a, Name *b)
+are_name_equal(Name a, Name b)
 {
-    if (a->len != b->len) {
+    if (a.len != b.len) {
         return false;
     }
 
-    NameChunk *ca = a->first_chunk;
-    NameChunk *cb = b->first_chunk;
+    NameChunk *ca = a.first_chunk;
+    NameChunk *cb = b.first_chunk;
 
-    u64 bytes_left = a->len;
+    u64 bytes_left = a.len;
     while (bytes_left) {
         u64 step = bytes_left < NAME_CHUNK_PAYLOAD_SIZE ? bytes_left : NAME_CHUNK_PAYLOAD_SIZE;
         if (memcmp(ca->str, cb->str, step) != 0) {
@@ -107,18 +105,18 @@ are_name_equal(Name *a, Name *b)
     return true;
 }
 
-void
-name_copy(Name *dst, Name *src, NameChunkState *name_chunk_state)
+Name
+name_copy(Name src, NameChunkState *name_chunk_state)
 {
-    dst->len = src->len;
+    Name dst = { .len = src.len };
 
-    NameChunk **link = &dst->first_chunk;
+    NameChunk **link = &dst.first_chunk;
 
-    NameChunk *src_chunk = src->first_chunk;
-    for (u64 off = 0; off < src->len; off += NAME_CHUNK_PAYLOAD_SIZE) {
+    NameChunk *src_chunk = src.first_chunk;
+    for (u64 off = 0; off < src.len; off += NAME_CHUNK_PAYLOAD_SIZE) {
         NameChunk *chunk = name_chunk_alloc(name_chunk_state);
 
-        u64 bytes = Min((u64)NAME_CHUNK_PAYLOAD_SIZE, src->len - off);
+        u64 bytes = Min((u64)NAME_CHUNK_PAYLOAD_SIZE, src.len - off);
         memcpy(chunk->str, src_chunk->str, bytes);
         src_chunk = src_chunk->next;
 
@@ -126,151 +124,12 @@ name_copy(Name *dst, Name *src, NameChunkState *name_chunk_state)
         link  = &chunk->next;
     }
 
-    dst->last_chunk = ContainerOf(link, NameChunk, next);
+    dst.last_chunk = ContainerOf(link, NameChunk, next);
     *link = NULL;
+
+    return dst;
 }
 
-void
-namelist_init(NameList *namelist)
-{
-    namelist->sentinel.next = NULL;
-    namelist->tail = &(namelist->sentinel);
-    namelist->len = 0;
-}
-
-NameNode *
-name_node_alloc(NameState *name_state)
-{
-    NameNode *name_node = name_state->first_free;
-
-    if (name_node) {
-        name_state->first_free->next = name_node->next;
-    }
-    else {
-        name_node = (NameNode *)arena_push(name_state->arena, sizeof *name_node);
-    }
-
-    return name_node;
-}
-
-void
-name_node_init(NameNode *node, String str,
-    NameChunkState *name_chunk_state)
-{
-    node->name = name_from_string(str, name_chunk_state);
-    node->next = NULL;
-}
-
-void
-name_node_release(NameNode *node, NameState *name_state,
-    NameChunkState *name_chunk_state)
-{
-    name_release(node->name, name_chunk_state);
-    node->next = name_state->first_free;
-    name_state->first_free = node;
-}
-
-NameNode *
-namelist_find(NameList *namelist, Name name)
-{
-    NameNode *node = namelist->sentinel.next;
-    while (node) {
-        if (are_name_equal(&node->name, &name)) {
-            break;
-        }
-        else {
-            node = node->next;
-        }
-    }
-
-    return node;
-}
-
-void
-namelist_push_front(NameList *namelist, Name name,
-    NameState *name_state, NameChunkState *name_chunk_state)
-{
-    // sloppy
-    Temp temp = scratch_get(0, 0);
-
-    String str = string_from_name(temp.arena, name);
-    NameNode *name_node = name_node_alloc(name_state);
-    name_node_init(name_node, str, name_chunk_state);
-
-    scratch_release(temp);
-
-    if (namelist->tail == &namelist->sentinel) {
-        namelist->tail = name_node;
-    }
-
-    name_node->next = namelist->sentinel.next;
-    namelist->sentinel.next = name_node;
-    ++namelist->len;
-}
-
-// void
-// namelist_push_front(NameList *namelist, NameNode *node,
-//     NameState *name_state, NameChunkState *name_chunk_state)
-// {
-//     if (namelist->tail == &namelist->sentinel) {
-//         namelist->tail = node;
-//     }
-// 
-//     node->next = namelist->sentinel.next;
-//     namelist->sentinel.next = node;
-//     ++namelist->len;
-// }
-
-void
-namelist_pop_front(NameList *namelist,
-    NameState *name_state, NameChunkState *name_chunk_state)
-{
-    if (namelist->sentinel.next == NULL) {
-        return;
-    }
-
-    if (namelist->tail == namelist->sentinel.next) {
-        namelist->tail = &namelist->sentinel;
-    }
-
-    NameNode *node = namelist->sentinel.next;
-
-    --namelist->len;
-    namelist->sentinel.next = node->next;
-    name_node_release(node, name_state, name_chunk_state);
-}
-
-void
-namelist_pop(NameList *namelist, Name *name,
-    NameState *name_state, NameChunkState *name_chunk_state)
-{
-    NameNode *node = &namelist->sentinel;
-    while (node->next) {
-        if (are_name_equal(&(node->next->name), name)) {
-            break;
-        }
-        else {
-            node = node->next;
-        }
-    }
-
-    if (node->next) {
-        if (namelist->tail == node->next) {
-            namelist->tail = node;
-        }
-        name_node_release(node->next, name_state, name_chunk_state);
-        node->next = node->next->next;
-    }
-}
-
-void
-namelist_delete(NameList *namelist, NameState *name_state,
-    NameChunkState *name_chunk_state)
-{
-    while (namelist->sentinel.next) {
-        namelist_pop_front(namelist, name_state, name_chunk_state);
-    }
-}
 
 // NameArray *
 // namearray_init(u64 len, NameArrayState *name_array_state)

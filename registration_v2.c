@@ -1,119 +1,11 @@
+#ifndef REGISTRATION_V2_C
+#define REGISTRATION_V2_C
+
 #include "utils.c"
 #include "arena.c"
 #include "names.c"
 
-typedef struct Element Element;
-struct Element {
-    u64 data;
-    u64 next;
-};
-
-typedef struct HashMap HashMap;
-struct HashMap {
-    u64 *index_array;
-    Element *collision_array;
-    u64 offset;
-    u64 first_free;
-    u64 bucket_count;
-};
-
-u64
-hash_integer(u64 data)
-{
-    return (uint64_t)data * 2654435761u;
-}
-
-HashMap
-hashmap_init(Arena *arena, u64 bucket_count)
-{
-    return (HashMap){ 
-        .index_array = arena_push(arena, sizeof(u64) * bucket_count),
-        .collision_array = arena_push(arena, MegaByte(1)),
-        .offset = 0, .first_free = 0, .bucket_count = bucket_count
-    };
-}
-
-u64
-hashmap_find(HashMap *hash_map, u64 data)
-{
-    u64 bucket = hash_integer(data) % hash_map->bucket_count;
-
-    u64 idx = hash_map->index_array[bucket];
-    while (idx != 0) {
-        if (hash_map->collision_array[idx].data == data) {
-            return idx;
-        }
-        else {
-            idx = hash_map->collision_array[idx].next;
-        }
-    }
-
-    return idx;
-}
-
-void
-hashmap_insert(HashMap *hash_map, u64 data)
-{
-    // make sure data is not already in the map
-    assert(hashmap_find(hash_map, data) == 0);
-
-    u64 bucket = hash_integer(data) % hash_map->bucket_count;
-
-    u64 free_slot = hash_map->first_free;
-    if (free_slot) {
-        hash_map->first_free = hash_map->collision_array[hash_map->first_free].next;
-    }
-    else {
-        free_slot = ++hash_map->offset;
-    }
-
-    u64 idx = hash_map->index_array[bucket];
-
-    hash_map->index_array[bucket] = free_slot;
-    hash_map->collision_array[free_slot].data = data;
-    hash_map->collision_array[free_slot].next = idx;
-}
-
-void
-hashmap_pop(HashMap *hash_map, u64 data)
-{
-    u64 bucket = hash_integer(data) % hash_map->bucket_count;
-
-    u64 *idx_ptr = &hash_map->index_array[bucket];
-    while (*idx_ptr != 0) {
-        u64 idx = *idx_ptr;
-        if (hash_map->collision_array[idx].data == data) {
-            *idx_ptr = hash_map->collision_array[idx].next;
-
-            hash_map->collision_array[idx].next = hash_map->first_free;
-            hash_map->first_free = idx;
-
-            return;
-        }
-        else {
-            idx_ptr = &hash_map->collision_array[idx].next;
-        }
-    }
-}
-
-// What changed if I want to use this map for my case? data in element must not be u64
-// but a Tournament data structure with all the info I actually need to store for tournament
-
-typedef struct Tournament Tournament;
-struct Tournament {
-    Name name;
-    NameList players_enrolled;
-    u64 next;
-};
-
-typedef struct TournamentMap TournamentMap;
-struct TournamentMap {
-    u64 *index_array;
-    Tournament *tournaments;
-    u64 offset;
-    u64 first_free;
-    u64 bucket_count;
-};
+#include "registration_v2.h"
 
 u64
 hash_string(String str)
@@ -147,7 +39,7 @@ tournament_find(TournamentMap *map, Name tournament_name)
 
     u64 idx = map->index_array[bucket];
     while (idx != 0) {
-        if (are_name_equal(&map->tournaments[idx].name, &tournament_name)) {
+        if (are_name_equal(map->tournaments[idx].name, tournament_name)) {
             return idx;
         }
         else {
@@ -159,7 +51,7 @@ tournament_find(TournamentMap *map, Name tournament_name)
 }
 
 void
-tournament_add(TournamentMap *map, Name tournament_name, NameChunkState *name_chunk_state)
+tournament_add(TournamentMap *map, Name tournament_name, NameState *name_state)
 {
     // make sure data is not already in the map
     assert(tournament_find(map, tournament_name) == 0);
@@ -183,14 +75,13 @@ tournament_add(TournamentMap *map, Name tournament_name, NameChunkState *name_ch
 
     map->index_array[bucket] = free_slot;
 
-    name_copy(&map->tournaments[free_slot].name, &tournament_name, name_chunk_state);
+    map->tournaments[free_slot].name = name_copy(tournament_name, &name_state->name_chunk_state);
     namelist_init(&map->tournaments[free_slot].players_enrolled);
     map->tournaments[free_slot].next = idx;
 }
 
 void
-tournament_del(TournamentMap *map, Name tournament_name,
-    NameState *name_state, NameChunkState *name_chunk_state)
+tournament_del(TournamentMap *map, Name tournament_name, NameState *name_state)
 {
     Temp temp = scratch_get(0, 0);
 
@@ -202,11 +93,11 @@ tournament_del(TournamentMap *map, Name tournament_name,
     u64 *idx_ptr = &map->index_array[bucket];
     while (*idx_ptr != 0) {
         u64 idx = *idx_ptr;
-        if (are_name_equal(&map->tournaments[idx].name, &tournament_name)) {
+        if (are_name_equal(map->tournaments[idx].name, tournament_name)) {
             *idx_ptr = map->tournaments[idx].next;
 
-            name_release(map->tournaments[idx].name, name_chunk_state);
-            namelist_delete(&map->tournaments[idx].players_enrolled, name_state, name_chunk_state);
+            name_free(map->tournaments[idx].name, &name_state->name_chunk_state);
+            namelist_delete(&map->tournaments[idx].players_enrolled, name_state);
 
             map->tournaments[idx].next = map->first_free;
             map->first_free = idx;
@@ -220,21 +111,64 @@ tournament_del(TournamentMap *map, Name tournament_name,
 }
 
 void
-tournament_player_withdraw(TournamentMap *map, Name tournament_name, Name player_name,
-    NameState *name_state, NameChunkState *name_chunk_state)
+tournament_player_enroll(TournamentMap *map, Name tournament_name,
+    Name player_name, NameState *name_state)
 {
     u64 idx = tournament_find(map, tournament_name);
 
     Tournament *tournament = map->tournaments + idx;
-    namelist_pop(&tournament->players_enrolled, &player_name, name_state, name_chunk_state);
+    namelist_push_front(&tournament->players_enrolled, player_name, name_state);
 }
 
 void
-tournament_player_enroll(TournamentMap *map, Name tournament_name, Name player_name,
-    NameState *name_state, NameChunkState *name_chunk_state)
+tournament_player_withdraw(TournamentMap *map, Name tournament_name,
+    Name player_name, NameState *name_state)
 {
     u64 idx = tournament_find(map, tournament_name);
 
     Tournament *tournament = map->tournaments + idx;
-    namelist_push_front(&tournament->players_enrolled, player_name, name_state, name_chunk_state);
+    namelist_pop(&tournament->players_enrolled, player_name, name_state);
 }
+
+NameList *
+list_all_tournaments(TournamentMap *map, NameState *name_state, Arena *arena)
+{
+    NameList *namelist = arena_push(arena, sizeof *namelist);
+    namelist_init(namelist);
+
+    for (u64 i = 0; i < map->bucket_count; ++i) {
+        u64 j = map->index_array[i];
+        while (j != 0) {
+            namelist_push_front(namelist, map->tournaments[j].name, name_state);
+            j = map->tournaments[j].next;
+        }
+    }
+
+    return namelist;
+}
+
+NameList *
+list_all_players(TournamentMap *map, NameState *name_state, Arena *arena)
+{
+    NameList *namelist = arena_push(arena, sizeof *namelist);
+    namelist_init(namelist);
+
+    for (u64 i = 0; i < map->bucket_count; ++i) {
+        u64 j = map->index_array[i];
+        while (j != 0) {
+            NameList players_enrolled = map->tournaments[j].players_enrolled;
+            NameNode *player_node = &players_enrolled.sentinel;
+            for (u64 k = 0; k < players_enrolled.len; ++k) {
+                player_node = player_node->next;
+                if (!namelist_find(namelist, player_node->name)) {
+                    namelist_push_front(namelist, player_node->name, name_state);
+                }
+            }
+            j = map->tournaments[j].next;
+        }
+    }
+
+    return namelist;
+}
+
+#endif // REGISTRATION_V2_C
