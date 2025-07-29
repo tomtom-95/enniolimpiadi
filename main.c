@@ -9,10 +9,10 @@
 #include "ui_interaction.c"
 
 #include "utils.c"
-// #include "registration.c"
-#include "registration_v2.h"
 #include "names.c"
+#include "namelist.c"
 #include "drawing.c"
+#include "registration_v2.c"
 
 void UpdatePointerLogic(void)
 {
@@ -55,44 +55,60 @@ main(void) {
     Ctx ctx = {0};
     ctx_init(&ctx);
 
-    Arena *arena_permanent = arena_alloc(MegaByte(1));
-    Arena *arena_frame = arena_alloc(MegaByte(1));
+    Arena *arena_permanent = arena_alloc(MegaByte(20));
+    Arena *arena_frame = arena_alloc(MegaByte(20));
 
     NameState name_state = name_state_init(arena_permanent);
     TournamentMap tournament_map = tournament_map_init(arena_permanent, 16);
-
-    String giulio   = string_from_cstring_lit("Giulio");
-    String mario    = string_from_cstring_lit("Mario");
-    String persona1 = string_from_cstring_lit("Persona1");
-    String persona2 = string_from_cstring_lit("Persona2");
-    String persona3 = string_from_cstring_lit("Persona3");
-    String persona4 = string_from_cstring_lit("Persona4");
-    String persona5 = string_from_cstring_lit("Persona5");
-    String persona6 = string_from_cstring_lit("Persona6");
-    String persona7 = string_from_cstring_lit("Persona7");
-    String persona8 = string_from_cstring_lit("Persona8");
 
     // Tournaments
     Name ping_pong   = name_init(string_from_cstring_lit("Ping Pong"), &name_state.name_chunk_state);
     Name machiavelli = name_init(string_from_cstring_lit("Machiavelli"), &name_state.name_chunk_state);
 
     // Players
-    Name riccardo    = name_init(string_from_cstring_lit("Riccardo"), &name_state.name_chunk_state);
+    Name persona1  = name_init(string_from_cstring_lit("Persona1"), &name_state.name_chunk_state);
+    Name persona2  = name_init(string_from_cstring_lit("Persona2"), &name_state.name_chunk_state);
+    Name persona3  = name_init(string_from_cstring_lit("Persona3"), &name_state.name_chunk_state);
+    Name persona4  = name_init(string_from_cstring_lit("Persona4"), &name_state.name_chunk_state);
+    Name persona5  = name_init(string_from_cstring_lit("Persona5"), &name_state.name_chunk_state);
+    Name persona6  = name_init(string_from_cstring_lit("Persona6"), &name_state.name_chunk_state);
+    Name persona7  = name_init(string_from_cstring_lit("Persona7"), &name_state.name_chunk_state);
+    Name persona8  = name_init(string_from_cstring_lit("Persona8"), &name_state.name_chunk_state);
+    Name persona9  = name_init(string_from_cstring_lit("Persona9"), &name_state.name_chunk_state);
+    Name persona10 = name_init(string_from_cstring_lit("Persona10"), &name_state.name_chunk_state);
 
     tournament_add(&tournament_map, ping_pong, &name_state);
     tournament_add(&tournament_map, machiavelli, &name_state);
 
-    tournament_player_enroll(&tournament_map, ping_pong, riccardo, &name_state);
+    // TODO: how can I track player not registered to any tournament?
+    // tournament_player_enroll(&tournament_map, ping_pong, persona1, &name_state);
+    tournament_player_enroll(&tournament_map, ping_pong, persona2, &name_state);
+    tournament_player_enroll(&tournament_map, ping_pong, persona3, &name_state);
+    tournament_player_enroll(&tournament_map, ping_pong, persona4, &name_state);
+    tournament_player_enroll(&tournament_map, ping_pong, persona5, &name_state);
+    tournament_player_enroll(&tournament_map, ping_pong, persona6, &name_state);
+    tournament_player_enroll(&tournament_map, ping_pong, persona7, &name_state);
+    tournament_player_enroll(&tournament_map, ping_pong, persona8, &name_state);
+    tournament_player_enroll(&tournament_map, ping_pong, persona9, &name_state);
+    tournament_player_enroll(&tournament_map, ping_pong, persona10, &name_state);
 
     ////////////////////////////////////////////////////////////////
-    // textBoxData initialization
+    // layoutData initialization
 
-    u16 strLenMax = 255;
+    String playerStrOutput     = { .len = 0, .str = arena_push(arena_permanent, strLenMax) };
+    String playerStrUser       = { .len = 0, .str = arena_push(arena_permanent, strLenMax) };
+    String tournamentStrOutput = { .len = 0, .str = arena_push(arena_permanent, strLenMax) };
+    String tournamentStrUser   = { .len = 0, .str = arena_push(arena_permanent, strLenMax) };
 
-    String playerStrOutput = {.len = 0, .str = arena_push(arena_permanent, strLenMax)};
-    String playerStrUser = {.len = 0, .str = arena_push(arena_permanent, strLenMax)};
+    layoutData = (LayoutData){
+        .arena_frame     = arena_frame,
+        .arena_permanent = arena_permanent,
+        .tournament_map  = tournament_map,
+        .name_state      = name_state,
+        .playerIdx       = -1,
+    };
 
-    TextBoxData addPlayerTextBoxData = (TextBoxData) {
+    layoutData.addPlayerTextBoxData = (TextBoxData) {
         .strLenMax = strLenMax,
         .cursorFrequency = 40,
         .frameCounter = 40,
@@ -106,10 +122,7 @@ main(void) {
         .fontSize = 16
     };
 
-    String tournamentStrOutput = {.len = 0, .str = arena_push(arena_permanent, strLenMax)};
-    String tournamentStrUser = {.len = 0, .str = arena_push(arena_permanent, strLenMax)};
-
-    TextBoxData addTournamentTextBoxData = (TextBoxData) {
+    layoutData.addTournamentTextBoxData = (TextBoxData) {
         .strLenMax = strLenMax,
         .cursorFrequency = 40,
         .frameCounter = 40,
@@ -121,19 +134,6 @@ main(void) {
         .isKeyHeld = false,
         .font = fonts[FONT_ID_BODY_16],
         .fontSize = 16
-    };
-
-    ////////////////////////////////////////////////////////////////
-    // layoutData initialization
-
-    layoutData = (LayoutData) {
-        .arena_frame = arena_frame,
-        .arena_permanent = arena_permanent,
-        .tournament_map = tournament_map,
-        .name_state = name_state,
-        .addPlayerTextBoxData = addPlayerTextBoxData,
-        .addTournamentTextBoxData = addTournamentTextBoxData,
-        .playerIdx = -1
     };
 
     ////////////////////////////////////////////////////////////////
@@ -170,16 +170,18 @@ main(void) {
 
         // TODO: add condition && layoutData.last_element_clicked not one of the tournament name in the sidebar
         //       handling stuff by CLAY_ID is starting to become really a pain in the ...
-        if (layoutData.selectedTournamentChart) {
-            String str_tournament_name = string_from_name(layoutData.arena_frame, *layoutData.selectedTournamentChart);
-            // StringList str_list = (
-            //     list_registrations_by_str(layoutData.arena_frame,
-            //         layoutData.tournament_map, str_tournament_name)
-            // );
+        // if (layoutData.selectedTournamentChart) {
+        //     String str_tournament_name = (
+        //         string_from_name(layoutData.arena_frame, *layoutData.selectedTournamentChart)
+        //     );
+        //     // StringList str_list = (
+        //     //     list_registrations_by_str(layoutData.arena_frame,
+        //     //         layoutData.tournament_map, str_tournament_name)
+        //     // );
 
-            DrawBezierCurves(8 - 1); 
-            // DrawBezierCurves(str_list.len); 
-        }
+        //     DrawBezierCurves(8 - 1); 
+        //     // DrawBezierCurves(str_list.len); 
+        // }
 
         EndDrawing();
     }

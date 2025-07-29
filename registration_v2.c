@@ -171,4 +171,46 @@ list_all_players(TournamentMap *map, NameState *name_state, Arena *arena)
     return namelist;
 }
 
+NameList *
+list_tournaments_joined_by_player(TournamentMap *map, Name player_name,
+    NameState *name_state, Arena *arena)
+{
+    NameList *tournaments = arena_push(arena, sizeof *tournaments);
+    namelist_init(tournaments);
+
+    for (u64 i = 0; i < map->bucket_count; ++i) {
+        u64 j = map->index_array[i];
+        while (j != 0) {
+            NameList players_enrolled = map->tournaments[j].players_enrolled;
+            if (namelist_find(&players_enrolled, player_name)) {
+                namelist_push_front(tournaments, map->tournaments[i].name, name_state);
+            }
+            j = map->tournaments[j].next;
+        }
+    }
+
+    return tournaments;
+}
+
+NameList *
+list_tournaments_not_joined_by_player(TournamentMap *map, Name player_name,
+    NameState *name_state, Arena *arena)
+{
+    NameList *tournaments = arena_push(arena, sizeof *tournaments);
+    namelist_init(tournaments);
+
+    for (u64 i = 0; i < map->bucket_count; ++i) {
+        u64 j = map->index_array[i];
+        while (j != 0) {
+            NameList players_enrolled = map->tournaments[j].players_enrolled;
+            if (!namelist_find(&players_enrolled, player_name)) {
+                namelist_push_front(tournaments, map->tournaments[i].name, name_state);
+            }
+            j = map->tournaments[j].next;
+        }
+    }
+
+    return tournaments;
+}
+
 #endif // REGISTRATION_V2_C

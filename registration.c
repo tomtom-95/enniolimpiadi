@@ -2,8 +2,8 @@
 #define REGISTRATION_C
 
 #include "utils.c"
-#include "names.c"
 #include "string.c"
+#include "names.h"
 #include "registration.h"
 
 void
@@ -45,10 +45,10 @@ registration_find(RegistrationMap *registration_map, String str)
 
     Temp temp = scratch_get(0, 0); 
 
-    NameState name_state = { .arena = temp.arena, .first_free = NULL };
+    NameState name_state = { .arena = temp.arena, .first_free_name_node = NULL };
     NameChunkState name_chunk_state = {.arena = temp.arena, .first_free = NULL };
 
-    Name name = name_from_string(str, &name_chunk_state);
+    Name name = name_init(str, &name_chunk_state);
 
     while (node) {
         if (are_name_equal(node->registration_name, &name)) {

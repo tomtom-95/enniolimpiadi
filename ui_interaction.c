@@ -4,7 +4,7 @@
 #include "raylib/raylib.h"
 
 #include "arena.c"
-#include "registration.c"
+#include "registration_v2.c"
 
 #include "clay.h"
 #include "ui_utils.h"
@@ -143,6 +143,7 @@ HandleAddTournamentTextBoxInteraction(Clay_ElementId elementId, Clay_PointerData
     }
 }
 
+#if 0
 void
 HandleAddPlayerButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t data) {
     LayoutData *layoutData = (LayoutData *)data;
@@ -195,6 +196,8 @@ HandleAddTournamentButtonInteraction(Clay_ElementId elementId, Clay_PointerData 
     }
 }
 
+#endif
+
 void
 HandleMainWindowInteraction(Clay_ElementId element_id, Clay_PointerData pointer_data, intptr_t data) {
     LayoutData *user_data = (LayoutData *)data;
@@ -217,9 +220,12 @@ void
 HandlePlayerSelection(Clay_ElementId element_id, Clay_PointerData pointer_data, intptr_t data) {
     u32 playerIdx = (u32)data;
     if (pointer_data.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        layoutData.clickedPlayerId = CLAY_IDI("Player", playerIdx);
+        // layoutData.clickedPlayerId = CLAY_IDI("Player", playerIdx);
+        layoutData.playerIdx = playerIdx;
     }
 }
+
+#if 0
 
 void
 HandleTournamentSelection(Clay_ElementId element_id, Clay_PointerData pointer_data, intptr_t data) {
@@ -267,3 +273,5 @@ HandleDeleteRegistrationInteraction(Clay_ElementId element_id, Clay_PointerData 
 }
 
 #endif
+
+#endif // UI_INTERACTION_C

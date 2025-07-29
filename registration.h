@@ -2,8 +2,9 @@
 #define REGISTRATION_H
 
 #include "utils.c"
-#include "names.c"
 #include "string.c"
+#include "names.h"
+#include "namelist.h"
 
 typedef struct Registration Registration;
 struct Registration {

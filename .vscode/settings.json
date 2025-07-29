@@ -33,6 +33,7 @@
         "util.h": "c",
         "names.h": "c",
         "registration_v2.h": "c",
-        "namelist.h": "c"
+        "namelist.h": "c",
+        "ui_window.h": "c"
     }
 }

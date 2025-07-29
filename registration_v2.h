@@ -27,5 +27,7 @@ void          tournament_add(TournamentMap *map, Name tournament_name, NameState
 void          tournament_del(TournamentMap *map, Name tournament_name, NameState *name_state);
 void          tournament_player_enroll(TournamentMap *map, Name tournament_name, Name player_name, NameState *name_state);
 void          tournament_player_withdraw(TournamentMap *map, Name tournament_name, Name player_name, NameState *name_state);
+NameList *    list_tournaments_joined_by_player(TournamentMap *map, Name player_name, NameState *name_state, Arena *arena);
+NameList *    list_tournaments_not_joined_by_player(TournamentMap *map, Name player_name, NameState *name_state, Arena *arena);
 
 #endif // REGISTRATION_V2_H

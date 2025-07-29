@@ -2,10 +2,12 @@
 #define UI_UTILS_H
 
 #include "arena.c"
-#include "registration.c"
+#include "registration_v2.c"
 
 #include "raylib/raylib.h"
 #include "clay.h"
+
+u16 strLenMax = 255;
 
 static Clay_ElementId g_lastClicked = {0};
 
@@ -56,13 +58,6 @@ typedef struct {
     s32 playerIdx;
     Clay_ElementId clickedPlayerId;
 } LayoutData;
-
-// typedef struct {
-//     RegistrationMap *primary_map;
-//     RegistrationMap *link_map;
-//     String primary_str;
-//     String link_str;
-// } RegistrationPair;
 
 typedef enum {
     CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL,
