@@ -204,7 +204,7 @@ list_tournaments_not_joined_by_player(TournamentMap *map, Name player_name,
         while (j != 0) {
             NameList players_enrolled = map->tournaments[j].players_enrolled;
             if (!namelist_find(&players_enrolled, player_name)) {
-                namelist_push_front(tournaments, map->tournaments[i].name, name_state);
+                namelist_push_front(tournaments, map->tournaments[j].name, name_state);
             }
             j = map->tournaments[j].next;
         }

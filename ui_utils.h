@@ -136,5 +136,6 @@ Clay_String floatingMenuEnrollListStrId   = CLAY_STRING("FloatingMenuEnrollList"
 Clay_String floatingMenuWithdrawListStrId = CLAY_STRING("FloatingMenuWithdrawList");
 
 LayoutData layoutData;
+Texture2D texture;
 
 #endif // UI_UTILS_H

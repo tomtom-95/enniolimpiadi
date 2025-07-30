@@ -81,7 +81,7 @@ main(void) {
     tournament_add(&tournament_map, machiavelli, &name_state);
 
     // TODO: how can I track player not registered to any tournament?
-    // tournament_player_enroll(&tournament_map, ping_pong, persona1, &name_state);
+    tournament_player_enroll(&tournament_map, ping_pong, persona1, &name_state);
     tournament_player_enroll(&tournament_map, ping_pong, persona2, &name_state);
     tournament_player_enroll(&tournament_map, ping_pong, persona3, &name_state);
     tournament_player_enroll(&tournament_map, ping_pong, persona4, &name_state);
@@ -138,6 +138,15 @@ main(void) {
 
     ////////////////////////////////////////////////////////////////
     // Main loop
+
+    // Loaded in CPU memory (RAM)
+    Image image = LoadImage("resources/Ennio.jpg");
+
+    // Image converted to texture, GPU memory (VRAM)
+    texture = LoadTextureFromImage(image);
+
+    // Once image has been converted to texture and uploaded to VRAM, it can be unloaded from RAM
+    UnloadImage(image);
 
     SetTargetFPS(60);
     while (!WindowShouldClose()) {

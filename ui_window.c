@@ -168,13 +168,12 @@ LayoutPlayerEnrollListFloating(String str_player_name, TournamentMap *tournament
             .backgroundColor = blue,
             .cornerRadius = CLAY_CORNER_RADIUS(8)
         }) {
-            // TODO: I want to store this in a scratch arena and not use the permanent arena, right now
-            // this is a memory leak
-            Name player_name = name_init(str_player_name, &layoutData.name_state.name_chunk_state);
-            NameList *tournaments = (
-                list_tournaments_not_joined_by_player(tournament_map, player_name,
-                    &layoutData.name_state, layoutData.arena_frame)
-            );
+            NameState temp_name_state = name_state_init(layoutData.arena_frame);
+            Name player_name = name_init(str_player_name, &temp_name_state.name_chunk_state);
+
+            NameList *tournaments = list_tournaments_not_joined_by_player(tournament_map,
+                player_name, &temp_name_state, layoutData.arena_frame);
+
             NameNode *tournament = tournaments->sentinel.next;
             for (u64 i = 0; i < tournaments->len; ++i) {
                 Name name_tournament = tournament->name;
@@ -189,12 +188,6 @@ LayoutPlayerEnrollListFloating(String str_player_name, TournamentMap *tournament
                     .backgroundColor = Clay_Hovered() ? blue_ligth : blue,
                     .cornerRadius = CLAY_CORNER_RADIUS(5)
                 }) {
-                    // RegistrationPair *pair = arena_push(layoutData.arena_frame, sizeof(RegistrationPair));
-                    // pair->primary_str = push_string_cpy(layoutData.arena_frame, string);
-                    // pair->link_str = push_string_cpy(layoutData.arena_frame, strnode->str);
-                    // pair->primary_map = primary_map;
-                    // pair->link_map = link_map;
-
                     // Clay_OnHover(HandleEnrollSelection, (intptr_t)pair);
                     CLAY_TEXT(clay_str_tournament, CLAY_TEXT_CONFIG({
                         .fontId = FONT_ID_BODY_16,
@@ -372,46 +365,46 @@ LayoutPlayerFloatingMenu(String player_string, TournamentMap *tournament_map)
             .backgroundColor = blue,
             .cornerRadius = CLAY_CORNER_RADIUS(8)
         }) {
-            CLAY({
-                .id = CLAY_SID(floatingMenuEnrollStrId),
-                .layout = { 
-                    .sizing = layoutExpand,
-                    .padding = CLAY_PADDING_ALL(8)
-                },
-                .backgroundColor = Clay_Hovered() ? blue_ligth : blue,
-                .cornerRadius = CLAY_CORNER_RADIUS(5)
-            }) {
-                CLAY_TEXT(CLAY_STRING("Enroll"), CLAY_TEXT_CONFIG({
-                    .fontId = FONT_ID_BODY_16,
-                    .fontSize = 16,
-                    .textColor = { 255, 255, 255, 255 }
-                }));
-                if (Clay_PointerOver(Clay_GetElementId(floatingMenuEnrollStrId)) ||
-                    Clay_PointerOver(Clay_GetElementId(floatingMenuEnrollListStrId)))
-                {
-                    LayoutPlayerEnrollListFloating(player_string, tournament_map);
-                }
-            }
-            CLAY({
-                .id = CLAY_SID(floatingMenuWithdrawStrId),
-                .layout = { 
-                    .sizing = layoutExpand,
-                    .padding = CLAY_PADDING_ALL(8)
-                },
-                .backgroundColor = Clay_Hovered() ? blue_ligth : blue,
-                .cornerRadius = CLAY_CORNER_RADIUS(5)
-            }) {
-                CLAY_TEXT(CLAY_STRING("Withdraw"), CLAY_TEXT_CONFIG({
-                    .fontId = FONT_ID_BODY_16,
-                    .fontSize = 16,
-                    .textColor = { 255, 255, 255, 255 }
-                }));
-                if (Clay_PointerOver(Clay_GetElementId(floatingMenuWithdrawStrId)) ||
-                    Clay_PointerOver(Clay_GetElementId(floatingMenuWithdrawListStrId)))
-                {
-                    // LayoutFloatingWithdrawList_(string, primary_map, link_map);
-                }
-            }
+            // CLAY({
+            //     .id = CLAY_SID(floatingMenuEnrollStrId),
+            //     .layout = { 
+            //         .sizing = layoutExpand,
+            //         .padding = CLAY_PADDING_ALL(8)
+            //     },
+            //     .backgroundColor = Clay_Hovered() ? blue_ligth : blue,
+            //     .cornerRadius = CLAY_CORNER_RADIUS(5)
+            // }) {
+            //     CLAY_TEXT(CLAY_STRING("Enroll"), CLAY_TEXT_CONFIG({
+            //         .fontId = FONT_ID_BODY_16,
+            //         .fontSize = 16,
+            //         .textColor = { 255, 255, 255, 255 }
+            //     }));
+            //     if (Clay_PointerOver(Clay_GetElementId(floatingMenuEnrollStrId)) ||
+            //         Clay_PointerOver(Clay_GetElementId(floatingMenuEnrollListStrId)))
+            //     {
+            //         LayoutPlayerEnrollListFloating(player_string, tournament_map);
+            //     }
+            // }
+            // CLAY({
+            //     .id = CLAY_SID(floatingMenuWithdrawStrId),
+            //     .layout = { 
+            //         .sizing = layoutExpand,
+            //         .padding = CLAY_PADDING_ALL(8)
+            //     },
+            //     .backgroundColor = Clay_Hovered() ? blue_ligth : blue,
+            //     .cornerRadius = CLAY_CORNER_RADIUS(5)
+            // }) {
+            //     CLAY_TEXT(CLAY_STRING("Withdraw"), CLAY_TEXT_CONFIG({
+            //         .fontId = FONT_ID_BODY_16,
+            //         .fontSize = 16,
+            //         .textColor = { 255, 255, 255, 255 }
+            //     }));
+            //     if (Clay_PointerOver(Clay_GetElementId(floatingMenuWithdrawStrId)) ||
+            //         Clay_PointerOver(Clay_GetElementId(floatingMenuWithdrawListStrId)))
+            //     {
+            //         // LayoutFloatingWithdrawList_(string, primary_map, link_map);
+            //     }
+            // }
             CLAY({
                 .id = CLAY_SID(floatingMenuDeleteStrId),
                 .layout = { 
@@ -645,26 +638,41 @@ LayoutPlayersWindow(void)
             String player_string = string_from_name(layoutData.arena_frame, player_node->name);
             CLAY({
                 .id = CLAY_IDI("Player", playerIdx),
-                .layout = {
-                    .sizing = { .width = CLAY_SIZING_FIT(200), .height = 0 },
-                    .padding = CLAY_PADDING_ALL(12)
-                },
+                .layout = { .sizing = { .width = CLAY_SIZING_GROW(0) , .height = CLAY_SIZING_FIT(0) } },
                 .backgroundColor = Clay_Hovered() ? gray_lighter : gray_light,
                 .cornerRadius = CLAY_CORNER_RADIUS(5)
             }) {
                 Clay_OnHover(HandlePlayerSelection, (intptr_t)playerIdx);
                 CLAY({
                     .layout = {
-                        .sizing = { .width = CLAY_SIZING_FIT(150) }
+                        .sizing = layoutExpand,
+                        .layoutDirection = { CLAY_LEFT_TO_RIGHT }
                     }
                 }) {
-                    CLAY_TEXT(Clay_String_from_String(player_string), CLAY_TEXT_CONFIG({
-                        .fontId = FONT_ID_BODY_16,
-                        .fontSize = 24,
-                        .textColor = white
-                    }));
-                    if (layoutData.playerIdx == playerIdx) {
-                        LayoutPlayerFloatingMenu(player_string, &layoutData.tournament_map);
+                    CLAY({
+                        .layout = {
+                            .padding = CLAY_PADDING_ALL(4),
+                            .sizing = layoutExpand,
+                            .childAlignment = { .x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER }
+                        }
+                    }) {
+                        CLAY_TEXT(Clay_String_from_String(player_string), CLAY_TEXT_CONFIG({
+                            .fontId = FONT_ID_BODY_16,
+                            .fontSize = 24,
+                            .textColor = white
+                        }));
+                    }
+                    CLAY({
+                        .layout = { .sizing = { .width = CLAY_SIZING_FIT(60), .height = CLAY_SIZING_GROW(0) } },
+                        .backgroundColor = black,
+                        .cornerRadius = CLAY_CORNER_RADIUS(5)
+                    }) {
+                        Clay_ImageElementConfig imgCfg = { .imageData = &texture };
+                        CLAY({
+                            .layout = { .sizing = layoutExpand },
+                            .aspectRatio = { 1 },
+                            .image = imgCfg
+                        }) {}
                     }
                 }
             }
