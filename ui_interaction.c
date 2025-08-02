@@ -158,10 +158,25 @@ HandlePlayerDeletion(Clay_ElementId elementId, Clay_PointerData pointerData, int
 }
 
 void
-DisplayPlayerOptionMenu(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t data)
+HandleTournamentDeletion(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t data)
 {
-    Name *player_name = (Name *)data;
+    Name *tournament_name = (Name *)data;
+
+    if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        tournament_del(&layoutData.tournament_map, *tournament_name, &layoutData.name_state);
+
+        if (are_name_equal(layoutData.selectedTournament, *tournament_name)) {
+            name_free(layoutData.selectedTournament, &layoutData.name_state.name_chunk_state);
+            memset(&layoutData.selectedTournament, 0, sizeof layoutData.selectedTournament);
+        }
+    }
 }
+
+// void
+// DisplayPlayerOptionMenu(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t data)
+// {
+//     Name *player_name = (Name *)data;
+// }
 
 void
 HandleAddPlayerButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t data)

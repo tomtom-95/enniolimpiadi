@@ -669,7 +669,23 @@ LayoutTournamentsWindow(void)
                     },
                     .cornerRadius = CLAY_CORNER_RADIUS(5)
                 }) {
-                    Clay_OnHover(HandleTournamentSelection, (intptr_t)&tournament_node->name);
+                    CLAY({
+                        .layout = {
+                            .sizing = { .width = CLAY_SIZING_FIT(30), .height = CLAY_SIZING_FIT(30) },
+                        },
+                        .cornerRadius = CLAY_CORNER_RADIUS(5),
+                        .backgroundColor = Clay_Hovered() ? black_light : black
+                    }) {
+                        CustomLayoutElement *customLayoutElementX = (
+                            arena_push(layoutData.arena_frame, sizeof(CustomLayoutElement))
+                        );
+                        customLayoutElementX->type = CUSTOM_LAYOUT_X;
+                        Clay_OnHover(HandleTournamentDeletion, (intptr_t)&tournament_node->name);
+                        CLAY({
+                            .layout = layoutExpand,
+                            .custom = { .customData = customLayoutElementX },
+                        }) {}
+                    }
                     CLAY({
                         .layout = {
                             .padding = CLAY_PADDING_ALL(4),
@@ -679,6 +695,7 @@ LayoutTournamentsWindow(void)
                         .cornerRadius = CLAY_CORNER_RADIUS(5),
                         .backgroundColor = Clay_Hovered() ? gray_lighter : gray
                     }) {
+                        Clay_OnHover(HandleTournamentSelection, (intptr_t)&tournament_node->name);
                         CLAY_TEXT(Clay_String_from_String(tournament_string), CLAY_TEXT_CONFIG({
                             .fontId = FONT_ID_BODY_16,
                             .fontSize = 24,
