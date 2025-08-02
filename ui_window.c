@@ -23,6 +23,21 @@ GetLayout(void)
         }
     }) {
         Clay_OnHover(HandleMainWindowInteraction, (intptr_t)&layoutData);
+        CLAY({
+            .id = CLAY_ID("TournamentHeaderBar"),
+            .layout = {
+                .sizing = { .height = CLAY_SIZING_FIXED(40), .width = CLAY_SIZING_GROW(0) },
+                .childGap = 16, .padding = { 16, 16, 0, 0 }, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }
+            },
+            .backgroundColor = gray,
+            .cornerRadius = CLAY_CORNER_RADIUS(8)
+        }) {
+            String str = string_from_lit_comp("Selected tournament: ");
+            String tournament_string = string_from_name(layoutData.arena_frame, layoutData.selectedTournament);
+            CLAY_TEXT(Clay_String_from_String(string_cat(layoutData.arena_frame, str, tournament_string)), CLAY_TEXT_CONFIG({
+                .fontId = FONT_ID_BODY_16, .fontSize = 16, .textColor = white
+            }));
+        }
         LayoutHeaderBar(&layoutData);
         CLAY({
             .id = CLAY_ID("MainContent"),
@@ -34,22 +49,22 @@ GetLayout(void)
             .cornerRadius = CLAY_CORNER_RADIUS(8)
         }) {
             switch (layoutData.tab) {
+                case TAB_TOURNAMENTS:
+                {
+                    LayoutTournamentsWindow();
+                } break;
                 case TAB_PLAYERS:
                 {
                     LayoutPlayersWindow();
                 } break;
-                // case TAB_TOURNAMENTS:
-                // {
-                //     LayoutTournamentsWindow();
-                // } break;
-                // case TAB_NEW_PLAYER:
-                // {
-                //     LayoutAddPlayerWindow(&layoutData);
-                // } break;
-                // case TAB_NEW_TOURNAMENT:
-                // {
-                //     LayoutAddTournamentWindow(&layoutData);
-                // } break;
+                case TAB_NEW_PLAYER:
+                {
+                    LayoutAddPlayerWindow();
+                } break;
+                case TAB_NEW_TOURNAMENT:
+                {
+                    LayoutAddTournamentWindow();
+                } break;
             }
         }
     }
@@ -433,16 +448,16 @@ LayoutPlayerFloatingMenu(String player_string, TournamentMap *tournament_map)
 // }
 
 void
-LayoutAddPlayerWindow(LayoutData *layoutData) {
-    TextBoxData *textBoxData = &layoutData->addPlayerTextBoxData;
+LayoutAddPlayerWindow(void) {
+    TextBoxData *textBoxData = &layoutData.addPlayerTextBoxData;
     Clay_Color colorBorder = textBoxData->colorBorder;
     u16 widthBorder = textBoxData->widthBorder;
 
     CustomLayoutElement *customLayoutElement = (
-        arena_push(layoutData->arena_frame, sizeof(CustomLayoutElement))
+        arena_push(layoutData.arena_frame, sizeof(CustomLayoutElement))
     );
     customLayoutElement->type = CUSTOM_LAYOUT_TEXTBOX;
-    customLayoutElement->customData.textBoxData = &layoutData->addPlayerTextBoxData;
+    customLayoutElement->customData.textBoxData = &layoutData.addPlayerTextBoxData;
     customLayoutElement->textBoxType = ADD_PLAYER_TEXTBOX;
 
     CLAY({
@@ -458,7 +473,7 @@ LayoutAddPlayerWindow(LayoutData *layoutData) {
             .padding = CLAY_PADDING_ALL(12)
         }
     }) {
-        Clay_OnHover(HandleAddPlayerTextBoxInteraction, (intptr_t)layoutData);
+        Clay_OnHover(HandleAddPlayerTextBoxInteraction, (intptr_t)0); 
         CLAY({
             .id = CLAY_ID("AddPlayerTextWrapper"),
             .layout = { .sizing = layoutExpand },
@@ -494,7 +509,7 @@ LayoutAddPlayerWindow(LayoutData *layoutData) {
             }
         }
     }) {
-        // Clay_OnHover(HandleAddPlayerButtonInteraction, (intptr_t)layoutData);
+        Clay_OnHover(HandleAddPlayerButtonInteraction, (intptr_t)0);
         CLAY_TEXT(CLAY_STRING("Add Player"), CLAY_TEXT_CONFIG({
             .fontId = FONT_ID_BODY_16,
             .fontSize = 18,
@@ -515,7 +530,9 @@ LayoutAddPlayerWindow(LayoutData *layoutData) {
             }
         }
     }) {
-        Clay_String feedbackString = Clay_String_from_String(layoutData->feedbackOnAddPlayerButton);
+        Clay_String feedbackString = (
+            Clay_String_from_String(layoutData.feedbackOnAddPlayerButton)
+        );
         CLAY_TEXT(feedbackString, CLAY_TEXT_CONFIG({
             .fontId = FONT_ID_BODY_16,
             .fontSize = 18,
@@ -525,16 +542,17 @@ LayoutAddPlayerWindow(LayoutData *layoutData) {
 }
 
 void
-LayoutAddTournamentWindow(LayoutData *layoutData) {
-    TextBoxData *textBoxData = &(layoutData->addTournamentTextBoxData);
+LayoutAddTournamentWindow(void)
+{
+    TextBoxData *textBoxData = &layoutData.addTournamentTextBoxData;
     Clay_Color colorBorder = textBoxData->colorBorder;
     u16 widthBorder = textBoxData->widthBorder;
 
     CustomLayoutElement *customLayoutElement = (
-        arena_push(layoutData->arena_frame, sizeof(CustomLayoutElement))
+        arena_push(layoutData.arena_frame, sizeof(CustomLayoutElement))
     );
     customLayoutElement->type = CUSTOM_LAYOUT_TEXTBOX;
-    customLayoutElement->customData.textBoxData = &layoutData->addTournamentTextBoxData;
+    customLayoutElement->customData.textBoxData = &layoutData.addTournamentTextBoxData;
     customLayoutElement->textBoxType = ADD_TOURNAMENT_TEXTBOX;
 
     CLAY({
@@ -550,7 +568,7 @@ LayoutAddTournamentWindow(LayoutData *layoutData) {
             .padding = CLAY_PADDING_ALL(12)
         }
     }) {
-        Clay_OnHover(HandleAddTournamentTextBoxInteraction, (intptr_t)layoutData);
+        Clay_OnHover(HandleAddTournamentTextBoxInteraction, (intptr_t)0);
         CLAY({
             .id = CLAY_ID("AddTournamentTextWrapper"),
             .layout = { .sizing = layoutExpand },
@@ -586,7 +604,7 @@ LayoutAddTournamentWindow(LayoutData *layoutData) {
             }
         }
     }) {
-        // Clay_OnHover(HandleAddTournamentButtonInteraction, (intptr_t)layoutData);
+        Clay_OnHover(HandleAddTournamentButtonInteraction, (intptr_t)0);
         CLAY_TEXT(CLAY_STRING("Add Tournament"), CLAY_TEXT_CONFIG({
             .fontId = FONT_ID_BODY_16,
             .fontSize = 18,
@@ -607,7 +625,7 @@ LayoutAddTournamentWindow(LayoutData *layoutData) {
             }
         }
     }) {
-        Clay_String feedbackString = Clay_String_from_String(layoutData->feedbackOnAddTournamentButton);
+        Clay_String feedbackString = Clay_String_from_String(layoutData.feedbackOnAddTournamentButton);
         CLAY_TEXT(feedbackString, CLAY_TEXT_CONFIG({
             .fontId = FONT_ID_BODY_16,
             .fontSize = 18,
@@ -617,15 +635,84 @@ LayoutAddTournamentWindow(LayoutData *layoutData) {
 }
 
 void
+LayoutTournamentsWindow(void)
+{
+    NameState temp_name_state = name_state_init(layoutData.arena_frame);
+    NameList *tournament_names = (
+        list_all_tournaments(&layoutData.tournament_map,
+            &temp_name_state, layoutData.arena_frame)
+    );
+    CLAY({
+        .id = CLAY_ID("TEST"),
+        .layout = {
+            .sizing = layoutExpand, .layoutDirection = CLAY_LEFT_TO_RIGHT, .childGap = 16
+        },
+    }) {
+        CLAY({
+            .id = CLAY_ID("TournamentSidebar"),
+            .layout = {
+                .padding = CLAY_PADDING_ALL(5),
+                .sizing = { .width = CLAY_SIZING_FIT(200), .height = CLAY_SIZING_GROW(0) },
+                .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16,
+            },
+            .backgroundColor = blue,
+            .cornerRadius = CLAY_CORNER_RADIUS(5),
+            .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() }
+        }) {
+            NameNode *tournament_node = tournament_names->sentinel.next;
+            for (u32 tournamentIdx = 0; tournamentIdx < tournament_names->len; ++tournamentIdx) {
+                String tournament_string = string_from_name(layoutData.arena_frame, tournament_node->name);
+                CLAY({
+                    .id = CLAY_IDI("Tournament", tournamentIdx),
+                    .layout = {
+                        .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_FIT(0) },
+                    },
+                    .cornerRadius = CLAY_CORNER_RADIUS(5)
+                }) {
+                    Clay_OnHover(HandleTournamentSelection, (intptr_t)&tournament_node->name);
+                    CLAY({
+                        .layout = {
+                            .padding = CLAY_PADDING_ALL(4),
+                            .sizing = layoutExpand,
+                            .childAlignment = { .x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER }
+                        },
+                        .cornerRadius = CLAY_CORNER_RADIUS(5),
+                        .backgroundColor = Clay_Hovered() ? gray_lighter : gray
+                    }) {
+                        CLAY_TEXT(Clay_String_from_String(tournament_string), CLAY_TEXT_CONFIG({
+                            .fontId = FONT_ID_BODY_16,
+                            .fontSize = 24,
+                            .textColor = white
+                        }));
+                    }
+                }
+                tournament_node = tournament_node->next;
+            }
+        }
+        // if (layoutData.selectedTournamentChart) {
+        //     u32 numPlayers = 8;
+        //     RecursiveLayout(numPlayers, 0);
+        //     // LayoutTournamentChart(layoutData.selectedTournamentChart);
+        // }
+    }
+}
+
+void
 LayoutPlayersWindow(void)
 {
-    NameList *player_names = list_all_players(
-        &layoutData.tournament_map, &layoutData.name_state, layoutData.arena_frame
-    );
+    // NameState temp_name_state = name_state_init(layoutData.arena_frame);
+    // NameList *player_names = (
+    //     list_all_players(&layoutData.tournament_map,
+    //         &temp_name_state, layoutData.arena_frame)
+    // );
+
+    u64 i = tournament_find(&layoutData.tournament_map, layoutData.selectedTournament);
+    NameList player_names = layoutData.tournament_map.tournaments[i].players_enrolled;
 
     CLAY({
         .id = CLAY_ID("PlayerSidebar"),
         .layout = {
+            .padding = CLAY_PADDING_ALL(5),
             .sizing = { .width = CLAY_SIZING_FIT(200), .height = CLAY_SIZING_GROW(0) },
             .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16,
         },
@@ -633,48 +720,111 @@ LayoutPlayersWindow(void)
         .cornerRadius = CLAY_CORNER_RADIUS(5),
         .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() }
     }) {
-        NameNode *player_node = player_names->sentinel.next;
-        for (u32 playerIdx = 0; playerIdx < player_names->len; ++playerIdx) {
+        NameNode *player_node = player_names.sentinel.next;
+        for (u32 playerIdx = 0; playerIdx < player_names.len; ++playerIdx) {
             String player_string = string_from_name(layoutData.arena_frame, player_node->name);
             CLAY({
                 .id = CLAY_IDI("Player", playerIdx),
-                .layout = { .sizing = { .width = CLAY_SIZING_GROW(0) , .height = CLAY_SIZING_FIT(0) } },
-                .backgroundColor = Clay_Hovered() ? gray_lighter : gray_light,
+                .layout = {
+                    .sizing = { .width = CLAY_SIZING_GROW(0) , .height = CLAY_SIZING_FIT(0) },
+                    .layoutDirection = { CLAY_LEFT_TO_RIGHT }
+                },
                 .cornerRadius = CLAY_CORNER_RADIUS(5)
             }) {
-                Clay_OnHover(HandlePlayerSelection, (intptr_t)playerIdx);
                 CLAY({
                     .layout = {
-                        .sizing = layoutExpand,
-                        .layoutDirection = { CLAY_LEFT_TO_RIGHT }
-                    }
+                        .sizing = { .width = CLAY_SIZING_FIT(30), .height = CLAY_SIZING_FIT(30) },
+                    },
+                    .cornerRadius = CLAY_CORNER_RADIUS(5),
+                    .backgroundColor = Clay_Hovered() ? black_light : black
                 }) {
+                    CustomLayoutElement *customLayoutElementX = (
+                        arena_push(layoutData.arena_frame, sizeof(CustomLayoutElement))
+                    );
+                    customLayoutElementX->type = CUSTOM_LAYOUT_X;
+                    Clay_OnHover(HandlePlayerDeletion, (intptr_t)&player_node->name);
                     CLAY({
-                        .layout = {
-                            .padding = CLAY_PADDING_ALL(4),
-                            .sizing = layoutExpand,
-                            .childAlignment = { .x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER }
-                        }
-                    }) {
-                        CLAY_TEXT(Clay_String_from_String(player_string), CLAY_TEXT_CONFIG({
-                            .fontId = FONT_ID_BODY_16,
-                            .fontSize = 24,
-                            .textColor = white
-                        }));
-                    }
-                    CLAY({
-                        .layout = { .sizing = { .width = CLAY_SIZING_FIT(60), .height = CLAY_SIZING_GROW(0) } },
-                        .backgroundColor = black,
-                        .cornerRadius = CLAY_CORNER_RADIUS(5)
-                    }) {
-                        Clay_ImageElementConfig imgCfg = { .imageData = &texture };
-                        CLAY({
-                            .layout = { .sizing = layoutExpand },
-                            .aspectRatio = { 1 },
-                            .image = imgCfg
-                        }) {}
-                    }
+                        .layout = layoutExpand,
+                        .custom = { .customData = customLayoutElementX },
+                    }) {}
                 }
+                CLAY({
+                    .layout = {
+                        .padding = CLAY_PADDING_ALL(4),
+                        .sizing = layoutExpand,
+                        .childAlignment = { .x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER }
+                    },
+                    .cornerRadius = CLAY_CORNER_RADIUS(5),
+                    .backgroundColor = Clay_Hovered() ? gray_lighter : gray
+                }) {
+                    // Clay_OnHover(HandlePlayerSelection, (intptr_t)playerIdx);
+                    CLAY_TEXT(Clay_String_from_String(player_string), CLAY_TEXT_CONFIG({
+                        .fontId = FONT_ID_BODY_16,
+                        .fontSize = 24,
+                        .textColor = white
+                    }));
+                }
+                // CLAY({
+                //     .id = CLAY_IDI("RightPointingTriangle", playerIdx),
+                //     .layout = {
+                //         .sizing = { .width = CLAY_SIZING_FIT(20), .height = CLAY_SIZING_FIT(30) },
+                //     },
+                //     .cornerRadius = CLAY_CORNER_RADIUS(5),
+                //     .backgroundColor = Clay_Hovered() ? black_light : black
+                // }) {
+                //     Clay_OnHover(DisplayPlayerOptionMenu, (intptr_t)&player_node->name);
+                //     CustomLayoutElement *customLayoutElementY = (
+                //         arena_push(layoutData.arena_frame, sizeof(CustomLayoutElement))
+                //     );
+                //     customLayoutElementY->type = CUSTOM_LAYOUT_RIGHT_POINTING_TRIANGLE;
+                //     CLAY({
+                //         .layout = layoutExpand,
+                //         .custom = { .customData = customLayoutElementY },
+                //     }) {}
+                // }
+                // if (Clay_PointerOver(Clay_GetElementIdWithIndex(CLAY_STRING("RightPointingTriangle"), playerIdx))) {
+                //     CLAY({
+                //         // .id = CLAY_SID(floatingMenuEnrollListStrId),
+                //         .floating = {
+                //             .attachTo = CLAY_ATTACH_TO_PARENT,
+                //             .attachPoints = {
+                //                 .parent = CLAY_ATTACH_POINT_RIGHT_TOP
+                //             },
+                //         }
+                //     }) {
+                //         CLAY({
+                //             .layout = {
+                //                 .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                //                 .sizing = {
+                //                     .width = CLAY_SIZING_FIT(0), .height = CLAY_SIZING_FIT(0)
+                //                 },
+                //             },
+                //             .backgroundColor = blue,
+                //             .cornerRadius = CLAY_CORNER_RADIUS(8)
+                //         }) {
+                //             CLAY({
+                //                 .layout = { 
+                //                     .sizing = layoutExpand,
+                //                     .padding = CLAY_PADDING_ALL(8)
+                //                 },
+                //                 .backgroundColor = Clay_Hovered() ? blue_ligth : blue,
+                //                 .cornerRadius = CLAY_CORNER_RADIUS(5)
+                //             }) {
+                //                 // Clay_OnHover(HandleEnrollSelection, (intptr_t)pair);
+                //                 CLAY_TEXT(CLAY_STRING("PingPong"), CLAY_TEXT_CONFIG({
+                //                     .fontId = FONT_ID_BODY_16,
+                //                     .fontSize = 16,
+                //                     .textColor = { 255, 255, 255, 255 }
+                //                 }));
+                //                 CLAY_TEXT(CLAY_STRING("Machiavelli"), CLAY_TEXT_CONFIG({
+                //                     .fontId = FONT_ID_BODY_16,
+                //                     .fontSize = 16,
+                //                     .textColor = { 255, 255, 255, 255 }
+                //                 }));
+                //             }
+                //         }
+                //     }
+                // }
             }
             player_node = player_node->next;
         }
@@ -811,64 +961,6 @@ LayoutRounds(StringList players)
 //     }
 // }
 // 
-// void
-// LayoutTournamentsWindow(void)
-// {
-//     StringList string_list = list_registrations(layoutData.arena_frame, layoutData.tournament_map);
-//     StringNode *node = string_list.head;
-//     CLAY({
-//         .id = CLAY_ID("TEST"),
-//         .layout = {
-//             .sizing = layoutExpand, .layoutDirection = CLAY_LEFT_TO_RIGHT, .childGap = 16
-//         },
-//     }) {
-//         CLAY({
-//             .id = CLAY_ID("TournamentSidebar"),
-//             .layout = {
-//                 .sizing = { .width = CLAY_SIZING_FIT(200), .height = CLAY_SIZING_GROW(0) },
-//                 .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16,
-//             },
-//             .backgroundColor = blue,
-//         }) {
-//             while (node) {
-//                 String *string = &node->str;
-//                 Clay_String clay_string = Clay_String_from_String(node->str);
-//                 CLAY({
-//                     .id = CLAY_SID(clay_string),
-//                     .layout = {
-//                         .sizing = { .width = CLAY_SIZING_FIT(200), .height = 0 },
-//                         .padding = CLAY_PADDING_ALL(12)
-//                     },
-//                     .backgroundColor = Clay_Hovered() ? gray_lighter : gray_light,
-//                     .cornerRadius = CLAY_CORNER_RADIUS(5)
-//                 }) {
-//                     // NOTE: node is not actually used
-//                     Clay_OnHover(HandleTournamentSelection, (intptr_t)node);
-//                     CLAY({
-//                         .layout = {
-//                             .sizing = { .width = CLAY_SIZING_FIT(150) },
-//                         },
-//                     }) {
-//                         CLAY_TEXT(clay_string, CLAY_TEXT_CONFIG({
-//                             .fontId = FONT_ID_BODY_16,
-//                             .fontSize = 24,
-//                             .textColor = white
-//                         }));
-//                         if (layoutData.last_element_clicked.id == CLAY_SID(clay_string).id) {
-//                             LayoutTournamentFloatingMenu(node->str, layoutData.player_map,
-//                                 layoutData.tournament_map);
-//                         }
-//                     }
-//                 }
-//                 node = node->next;
-//             }
-//         }
-//         if (layoutData.selectedTournamentChart) {
-//             u32 numPlayers = 8;
-//             RecursiveLayout(numPlayers, 0);
-//             // LayoutTournamentChart(layoutData.selectedTournamentChart);
-//         }
-//     }
-// }
+
 
 #endif

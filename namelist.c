@@ -110,8 +110,10 @@ namelist_pop(NameList *namelist, Name name, NameState *name_state)
         if (namelist->tail == node->next) {
             namelist->tail = node;
         }
-        name_node_free(node->next, name_state);
-        node->next = node->next->next;
+
+        NameNode *toremove = node->next;
+        node->next = toremove->next;
+        name_node_free(toremove, name_state);
         --namelist->len;
     }
 }

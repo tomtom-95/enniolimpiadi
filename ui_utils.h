@@ -12,8 +12,8 @@ u16 strLenMax = 255;
 static Clay_ElementId g_lastClicked = {0};
 
 typedef enum {
-    TAB_PLAYERS = 0,
-    TAB_TOURNAMENTS,
+    TAB_TOURNAMENTS = 0,
+    TAB_PLAYERS,
     TAB_NEW_PLAYER,
     TAB_NEW_TOURNAMENT
 } Tab;
@@ -57,12 +57,23 @@ typedef struct {
     Clay_ElementId last_element_clicked;
     s32 playerIdx;
     Clay_ElementId clickedPlayerId;
+    Name selectedTournament;
 } LayoutData;
 
 typedef enum {
     CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL,
-    CUSTOM_LAYOUT_TEXTBOX
+    CUSTOM_LAYOUT_TEXTBOX,
+    CUSTOM_LAYOUT_X,
+    CUSTOM_LAYOUT_RIGHT_POINTING_TRIANGLE
 } CustomLayoutElementType;
+
+// typedef enum {
+//     CUSTOM_ELEMENT_TYPE_X,
+// } CustomElementType;
+// 
+// typedef struct {
+//     CustomElementType type;
+// } CustomElementData;
 
 typedef enum {
     ADD_PLAYER_TEXTBOX,
@@ -90,6 +101,7 @@ const int FONT_ID_BODY_16 = 0;
 Font fonts[1];
 
 Clay_Color black = {0, 0, 0, 255};
+Clay_Color black_light = {20, 20, 20, 255};
 Clay_Color white = {255, 255, 255, 255};
 
 Clay_Color blue = {33, 31, 41, 255};
@@ -117,12 +129,15 @@ Clay_String_from_String(String string)
     return clay_string;
 }
 
+String strFeedbackAddPlayer0 = string_from_lit_comp("Insert new player name");
 String strFeedbackAddPlayer1 = string_from_lit_comp("Cannot create player without name");
 String strFeedbackAddPlayer2 = string_from_lit_comp("Player already created");
 String strFeedbackAddPlayer3 = string_from_lit_comp("Player successfully created");
+String strFeedbackAddPlayer4 = string_from_lit_comp("Select a tournament before adding a player");
 
+String strFeedbackAddTournament0 = string_from_lit_comp("Insert new tournament");
 String strFeedbackAddTournament1 = string_from_lit_comp("Cannot create tournament without name");
-String strFeedbackAddTournament2 = string_from_lit_comp("Tournament already created");
+String strFeedbackAddTournamentAlreadyCreated = string_from_lit_comp("Tournament already created");
 String strFeedbackAddTournament3 = string_from_lit_comp("Tournament successfully created");
 
 Clay_String addPlayerTextBoxStr     = CLAY_STRING("AddPlayerTextBox");

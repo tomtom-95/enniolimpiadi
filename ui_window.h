@@ -21,8 +21,8 @@ Clay_RenderCommandArray GetLayout(void);
 // void LayoutFloatingMenu_(String string, RegistrationMap *primary_map, RegistrationMap *link_map);
 // void LayoutPlayerFloatingMenu(String player_string, RegistrationMap *player_map, RegistrationMap *tournament_map);
 // void LayoutTournamentFloatingMenu(String tournament_string, RegistrationMap *player_map, RegistrationMap *tournament_map);
-void LayoutAddPlayerWindow(LayoutData *layoutData);
-void LayoutAddTournamentWindow(LayoutData *layoutData);
+void LayoutAddPlayerWindow(void);
+void LayoutAddTournamentWindow(void);
 void LayoutPlayersWindow(void);
 void LayoutTournamentsWindow(void);
 

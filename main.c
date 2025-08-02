@@ -55,7 +55,7 @@ main(void) {
     Ctx ctx = {0};
     ctx_init(&ctx);
 
-    Arena *arena_permanent = arena_alloc(MegaByte(20));
+    Arena *arena_permanent = arena_alloc(MegaByte(2));
     Arena *arena_frame = arena_alloc(MegaByte(20));
 
     NameState name_state = name_state_init(arena_permanent);
@@ -91,6 +91,10 @@ main(void) {
     tournament_player_enroll(&tournament_map, ping_pong, persona8, &name_state);
     tournament_player_enroll(&tournament_map, ping_pong, persona9, &name_state);
     tournament_player_enroll(&tournament_map, ping_pong, persona10, &name_state);
+
+    tournament_player_enroll(&tournament_map, machiavelli, persona1, &name_state);
+    tournament_player_enroll(&tournament_map, machiavelli, persona2, &name_state);
+    tournament_player_enroll(&tournament_map, machiavelli, persona3, &name_state);
 
     ////////////////////////////////////////////////////////////////
     // layoutData initialization
@@ -140,7 +144,7 @@ main(void) {
     // Main loop
 
     // Loaded in CPU memory (RAM)
-    Image image = LoadImage("resources/Ennio.jpg");
+    Image image = LoadImage("resources/delete_icon_v2.jpg");
 
     // Image converted to texture, GPU memory (VRAM)
     texture = LoadTextureFromImage(image);

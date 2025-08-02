@@ -130,6 +130,18 @@ tournament_player_withdraw(TournamentMap *map, Name tournament_name,
     namelist_pop(&tournament->players_enrolled, player_name, name_state);
 }
 
+void
+tournament_player_delete(TournamentMap *map, Name player_name, NameState *name_state)
+{
+    for (u64 i = 0; i < map->bucket_count; ++i) {
+        u64 j = map->index_array[i];
+        while (j != 0) {
+            namelist_pop(&map->tournaments[j].players_enrolled, player_name, name_state);
+            j = map->tournaments[j].next;
+        }
+    }
+}
+
 NameList *
 list_all_tournaments(TournamentMap *map, NameState *name_state, Arena *arena)
 {

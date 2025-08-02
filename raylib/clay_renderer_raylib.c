@@ -385,6 +385,38 @@ Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts, LayoutDa
 
                         break;
                     }
+                    case CUSTOM_LAYOUT_X: {
+                        DrawRectangle(
+                            (int)(boundingBox.x), (int)(boundingBox.y),
+                            (int)(boundingBox.width), (int)(boundingBox.height),
+                            CLAY_COLOR_TO_RAYLIB_COLOR(config->backgroundColor)
+                        );
+
+                        Vector2 startPos0 = { .x = boundingBox.x + 5, .y = boundingBox.y + 5 };
+                        Vector2 endPos0   = { .x = boundingBox.x + boundingBox.width - 5 , .y = boundingBox.y + boundingBox.height - 5 };
+                        Vector2 startPos1 = { .x = boundingBox.x + 5, .y = boundingBox.y + boundingBox.height - 5 };
+                        Vector2 endPos1   = { .x = boundingBox.x + boundingBox.width - 5, .y = boundingBox.y + 5 };
+
+                        DrawLineEx(startPos0, endPos0, 2, RED);
+                        DrawLineEx(startPos1, endPos1, 2, RED);
+
+                        break;
+                    }
+                    case CUSTOM_LAYOUT_RIGHT_POINTING_TRIANGLE: {
+                        DrawRectangle(
+                            (int)(boundingBox.x), (int)(boundingBox.y),
+                            (int)(boundingBox.width), (int)(boundingBox.height),
+                            CLAY_COLOR_TO_RAYLIB_COLOR(config->backgroundColor)
+                        );
+
+                        Vector2 v0 = { .x = boundingBox.x + 5, .y = boundingBox.y + 5 };
+                        Vector2 v1 = { .x = boundingBox.x + 5, .y = boundingBox.y + boundingBox.height - 5 };
+                        Vector2 v2 = { .x = boundingBox.x + boundingBox.width - 5, .y = boundingBox.y + boundingBox.height / 2 };
+
+                        DrawTriangle(v0, v1, v2, RED);
+
+                        break;
+                    }
                     default: break;
                 } 
                 break;

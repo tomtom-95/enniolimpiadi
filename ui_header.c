@@ -16,17 +16,6 @@ LayoutHeaderBar(LayoutData *data) {
         .cornerRadius = CLAY_CORNER_RADIUS(8)
     }) {
         CLAY({
-            .id = CLAY_ID("PlayersButton"),
-            .layout = { .padding = { 16, 16, 8, 8 } },
-            .backgroundColor = Clay_Hovered() ? gray_lighter : gray_light,
-            .cornerRadius = CLAY_CORNER_RADIUS(5)
-        }) {
-            Clay_OnHover(HandlePlayersButtonInteraction, (intptr_t)data);
-            CLAY_TEXT(CLAY_STRING("Players"), CLAY_TEXT_CONFIG({
-                .fontId = FONT_ID_BODY_16, .fontSize = 16, .textColor = white
-            }));
-        }
-        CLAY({
             .id = CLAY_ID("TournamentsButton"),
             .layout = { .padding = { 16, 16, 8, 8 } },
             .backgroundColor = Clay_Hovered() ? gray_lighter : gray_light,
@@ -34,6 +23,17 @@ LayoutHeaderBar(LayoutData *data) {
         }) {
             Clay_OnHover(HandleTournamentsButtonInteraction, (intptr_t)data);
             CLAY_TEXT(CLAY_STRING("Tournaments"), CLAY_TEXT_CONFIG({
+                .fontId = FONT_ID_BODY_16, .fontSize = 16, .textColor = white
+            }));
+        }
+        CLAY({
+            .id = CLAY_ID("PlayersButton"),
+            .layout = { .padding = { 16, 16, 8, 8 } },
+            .backgroundColor = Clay_Hovered() ? gray_lighter : gray_light,
+            .cornerRadius = CLAY_CORNER_RADIUS(5)
+        }) {
+            Clay_OnHover(HandlePlayersButtonInteraction, (intptr_t)data);
+            CLAY_TEXT(CLAY_STRING("Players"), CLAY_TEXT_CONFIG({
                 .fontId = FONT_ID_BODY_16, .fontSize = 16, .textColor = white
             }));
         }
